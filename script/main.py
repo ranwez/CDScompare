@@ -6,13 +6,23 @@ Created on Thu May  2 11:57:29 2024
 @author: vetea
 """
 
+##@package main
+# This script is used to compute the distance between multiple structural annotations of a same genome. # It expects as input the path to the folder containing all annotation files (in GFF format), 
+# displays the computed distances between all annotation pairs, and returns a dictionary of lists of
+# lists detailing the matchs/mismatchs between the two annotations' structure string
+
+# si vrai, affiche plusieurs messages de debug lors de l'éxécution du script
+# sera transformé en une option d'appel du scipt
 debug = True
 
+# cette variable ne sera pas présente dans le script final
 path = "../data/tests/basic_test.gff3"
 
-# This function expects a string corresponding to the file path of the GFF file to read, and returns
-# a dictionary of lists with the keys corresponding to a locus identifier, and the values corresponding to 
-# a list of the start and end position of each coding sequence ('CDS') of the locus 
+## This function expects a string corresponding to the file path of the GFF file to read, and returns
+# a dictionary of lists with the keys corresponding to a locus identifier, and the values 
+# corresponding to a list of the start and end position of each coding sequence ('CDS') of the locus 
+#
+# @param path Path of the file to read
 def get_gff_borders(path):
     
     file = open(path, "r") # the file to read
@@ -46,10 +56,14 @@ def get_gff_borders(path):
     return borders
 
 
-# This function expects a dictionary with keys corresponding to gene IDs and values corresponding
+## This function expects a dictionary with keys corresponding to gene IDs and values corresponding
 # to a list of all CDS coordinates (start and end) of the gene. It returns a dictionary with the
 # same keys, and as values a string describing the codon position of each nucleotide (1,2,3, or 
 # 0 in the case of a non-CDS nucleotide) of the locus/gene
+#
+# @param borders The dictionary containing all start-end coordinates of the annotation's CDS
+#
+# @see get_gff_borders()
 def create_vectors(borders):
     
     vectors = {} # this variable takes in the strings of gene annotation structure for each gene
@@ -106,6 +120,9 @@ def create_vectors(borders):
             
     return vectors
             
+# ATTENTION : PART DU PRINCIPE QUE LES ANNOTATIONS ONT LA MEME TAILLE
+#TODO : def pair_vector_comparison(vect_a, vect_b):
+    
     
     
 create_vectors( get_gff_borders(path) )
