@@ -11,14 +11,8 @@ Created on Thu May  2 11:57:29 2024
 # displays the computed distances between all annotation pairs, and returns a dictionary of lists of
 # lists detailing the matchs/mismatchs between the two annotations' structure string
 
-# si vrai, affiche plusieurs messages de debug lors de l'éxécution du script
-# sera transformé en une option d'appel du scipt
-debug = True
-
-# ces variables ne seront pas présentes dans le script final
-path = "../data/tests/basic_test.gff3"
-path2 = "../data/tests/identical_test.gff3"
-path3 = "../data/tests/minus-CDS_test.gff3"
+import getopt
+import sys
 
 ## This function expects a string corresponding to the file path of the GFF file to read, and returns
 # a dictionary of lists with the keys corresponding to a locus identifier, and the values 
@@ -156,16 +150,52 @@ def pair_vector_comparison(vect_a, vect_b):
     
     return comp_matrix
     
-    
-vect1 = create_vectors( get_gff_borders(path) )
-vect2 = create_vectors( get_gff_borders(path2) )
-vect3 = create_vectors( get_gff_borders(path3) )
 
-pair_vector_comparison(vect1["chr2A_00611930"], vect2["chr2A_00611930"])
-pair_vector_comparison(vect1["chr2A_00611930"], vect3["chr2A_00611930"])
+def usage():
     
+    print("Syntax : main.py [ -h/--help -d/--debug ] [ -i/--input <input_folder_path> ]")
+
+def main():
     
+    # get all script call options
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hdi:", ["help", "debug", "input="])
+    except getopt.GetoptError as err:
+        print(err)
+        usage()
+        sys.exit(2)
+        
+    global debug
+    debug = False
     
+    for o, a in opts:
+        if o == "-d":
+            debug = True
+        elif o in ("-h", "--help"):
+            usage()
+            sys.exit()
+        elif o in ("-i", "--input"):
+            path = a
+        else:
+            assert False, "unhandled option"
+            
+    # ces variables ne seront pas présentes dans le script final
+    path1 = "../data/tests/basic_test.gff3"
+    path2 = "../data/tests/identical_test.gff3"
+    path3 = "../data/tests/minus-CDS_test.gff3"
+            
+    create_vectors( get_gff_borders(path) )
+    
+    vect1 = create_vectors( get_gff_borders(path1) )
+    vect2 = create_vectors( get_gff_borders(path2) )
+    vect3 = create_vectors( get_gff_borders(path3) )
+    
+    pair_vector_comparison(vect1["chr2A_00611930"], vect2["chr2A_00611930"])
+    pair_vector_comparison(vect1["chr2A_00611930"], vect3["chr2A_00611930"])
+        
+    
+if __name__ == "__main__":
+    main()
     
     
     
