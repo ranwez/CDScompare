@@ -15,14 +15,19 @@ Created on Thu May  2 11:57:29 2024
 # sera transformé en une option d'appel du scipt
 debug = True
 
-# cette variable ne sera pas présente dans le script final
+# ces variables ne seront pas présentes dans le script final
 path = "../data/tests/basic_test.gff3"
+path2 = "../data/tests/identical_test.gff3"
+path3 = "../data/tests/minus-CDS_test.gff3"
 
 ## This function expects a string corresponding to the file path of the GFF file to read, and returns
 # a dictionary of lists with the keys corresponding to a locus identifier, and the values 
 # corresponding to a list of the start and end position of each coding sequence ('CDS') of the locus 
 #
 # @param path Path of the file to read
+#
+# @return Returns a dictionary of lists containing the start and end coordinates of 
+# all CDS of each locus
 def get_gff_borders(path):
     
     file = open(path, "r") # the file to read
@@ -64,6 +69,8 @@ def get_gff_borders(path):
 # @param borders The dictionary containing all start-end coordinates of the annotation's CDS
 #
 # @see get_gff_borders()
+#
+# @return Returns a dictionary of strings describing the annotation structure of each locus
 def create_vectors(borders):
     
     vectors = {} # this variable takes in the strings of gene annotation structure for each gene
@@ -73,7 +80,7 @@ def create_vectors(borders):
     for gene in borders:
         
         if debug:
-            print("Converting the locus " + gene + " with coordinates " + str(borders[gene]))
+            print("\nConverting the locus " + gene + " with coordinates " + str(borders[gene]))
         
         vectors[gene] = ""
         
@@ -116,16 +123,46 @@ def create_vectors(borders):
             in_exon += 1    
             
         if debug:
-            print("Structure string of the " + gene + " locus :\n" + vectors[gene])
+            print("\nStructure string of the " + gene + " locus :\n" + vectors[gene] + "\n")
             
     return vectors
-            
-# ATTENTION : PART DU PRINCIPE QUE LES ANNOTATIONS ONT LA MEME TAILLE
-#TODO : def pair_vector_comparison(vect_a, vect_b):
+  
+## This function expects two structure strings corresponding to two annotations of the same
+# genome, and returns a list of lists describing the comparison of each position of each string
+#
+# @param vect_a Structure string of the first annotation
+#
+# @param vect_b Structure string of the second annotation
+#
+# @see create_vectors()
+#
+# @return Returns a list of lists (matrix) describing the matchs/mismatchs for each position
+# of the strings
+#
+# @remark This function expects both annotations to be of the same size, but doesn't expect any to be a # 'reference'
+def pair_vector_comparison(vect_a, vect_b):
+    
+    # initialising the return matrix with 4 'lines'  and 4 'columns' (for 0, 1, 2, 3)
+    comp_matrix = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+    
+    # for every comparison of the numbers at each position in the two strings, we increment by one 
+    # the corresponding 'cell'
+    for i in range(len(vect_a)):
+        
+        comp_matrix[int(vect_a[i])][int(vect_b[i])] += 1
+        
+    if debug:
+        print("\n" + str(comp_matrix[0]) + "\n" + str(comp_matrix[1]) + "\n" + str(comp_matrix[2]) + "\n" + str(comp_matrix[3]) + "\n" )
+    
+    return comp_matrix
     
     
-    
-create_vectors( get_gff_borders(path) )
+vect1 = create_vectors( get_gff_borders(path) )
+vect2 = create_vectors( get_gff_borders(path2) )
+vect3 = create_vectors( get_gff_borders(path3) )
+
+pair_vector_comparison(vect1["chr2A_00611930"], vect2["chr2A_00611930"])
+pair_vector_comparison(vect1["chr2A_00611930"], vect3["chr2A_00611930"])
     
     
     
