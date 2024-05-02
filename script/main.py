@@ -8,15 +8,15 @@ Created on Thu May  2 11:57:29 2024
 
 debug = True
 
-path = "../data/tests/test_basique.gff3"
+path = "../data/tests/basic_test.gff3"
 
 # This function expects a string corresponding to the file path of the GFF file to read, and returns
 # a dictionary of lists with the keys corresponding to a locus identifier, and the values corresponding to 
 # a list of the start and end position of each coding sequence ('CDS') of the locus 
 def get_gff_borders(path):
     
-    file = open(path, "r")
-    borders = {} # This variable takes in the borders of each CDS of each gene
+    file = open(path, "r") # the file to read
+    borders = {} # this variable takes in the borders of each CDS of each gene
     locus_id = "" # the current gene being analyzed
     
     for l in file:
@@ -24,7 +24,7 @@ def get_gff_borders(path):
         # if we encounter a new gene, we get its ID and create a key in 'borders' with an empty list
         if str(l.split("\t")[2]) == "gene": 
             
-            locus_id = l.split("\t")[8].split(";")[0][3:]
+            locus_id = l.split("\t")[8].split(";")[0].split("\n")[0][3:]
             
             borders[locus_id] = []     
             
@@ -34,8 +34,8 @@ def get_gff_borders(path):
         # if we encounter a CDS, we add its start and end positions to corresponding gene key in 'borders'
         if str(l.split("\t")[2]) == "CDS":
             
-            borders[locus_id].append(l.split("\t")[3])
-            borders[locus_id].append(l.split("\t")[4])
+            borders[locus_id].append(int(l.split("\t")[3]))
+            borders[locus_id].append(int(l.split("\t")[4]))
             
             if debug:
                 print("Adding borders to " + locus_id + " : " + l.split("\t")[3] + ", " + l.split("\t")[4])
@@ -45,3 +45,74 @@ def get_gff_borders(path):
     # we return the entire dictionary with all borders
     return borders
 
+
+# This function expects a dictionary with keys corresponding to gene IDs and values corresponding
+# to a list of all CDS coordinates (start and end) of the gene. It returns a dictionary with the
+# same keys, and as values a string describing the codon position of each nucleotide (1,2,3, or 
+# 0 in the case of a non-CDS nucleotide) of the locus/gene
+def create_vectors(borders):
+    
+    vectors = {} # this variable takes in the strings of gene annotation structure for each gene
+    
+    # for each locus indexed in the 'borders' dictionary, we create a new key in 'vectors' and 
+    # create the structure string as its value
+    for gene in borders:
+        
+        if debug:
+            print("Converting the locus " + gene + " with coordinates " + str(borders[gene]))
+        
+        vectors[gene] = ""
+        
+        # this variable takes the codon position of the next CDS nucleotide and loops
+        # between the values 1, 2, and 3
+        codon_pos = 1 
+        
+        # this variable indicates if we are in an exon/CDS or not.
+        # it is incremented at each transition between annotations (each element in the 'borders' list)
+        # to represent the exon-intron change along the gene
+        in_exon = 1
+        
+        # for each coordinate indexed for this locus in 'borders'
+        for i in range(len(borders[gene])-1):
+        
+            # if we are in a CDS, we append the numbers 1, 2, and 3 (with looping) 
+            if in_exon % 2 == 1:
+                
+                # for each nucleotide between this coordinate and the next...
+                for j in range( borders[gene][i+1] - borders[gene][i] ):
+                    
+                    # we append the codon position to the structure string 
+                    vectors[gene] += str(codon_pos)
+                    
+                    # we increment the codon position with looping
+                    if codon_pos == 3:
+                        codon_pos = 1
+                    else:
+                        codon_pos += 1
+                
+                
+            # if we are not in a CDS, we append 0
+            if in_exon % 2 == 0:
+                
+                # for each nucleotide between this coordinate and the next...
+                for j in range( borders[gene][i+1] - borders[gene][i] ):                
+                
+                    vectors[gene] += "0"
+            
+            in_exon += 1    
+            
+        if debug:
+            print("Structure string of the " + gene + " locus :\n" + vectors[gene])
+            
+    return vectors
+            
+    
+    
+create_vectors( get_gff_borders(path) )
+    
+    
+    
+    
+    
+    
+    
