@@ -93,35 +93,70 @@ def create_vectors(borders):
         # to represent the exon-intron change along the gene
         in_exon = 1
         
-        # for each coordinate indexed for this locus in 'borders'
-        for i in range(len(borders[gene])-1):
+        if borders[gene][1] > borders[gene][0]:
         
-            # if we are in a CDS, we append the numbers 1, 2, and 3 (with looping) 
-            if in_exon % 2 == 1:
-                
-                # for each nucleotide between this coordinate and the next...
-                for j in range( borders[gene][i+1] - borders[gene][i] ):
-                    
-                    # we append the codon position to the structure string 
-                    vectors[gene] += str(codon_pos)
-                    
-                    # we increment the codon position with looping
-                    if codon_pos == 3:
-                        codon_pos = 1
-                    else:
-                        codon_pos += 1
-                
-                
-            # if we are not in a CDS, we append 0
-            if in_exon % 2 == 0:
-                
-                # for each nucleotide between this coordinate and the next...
-                for j in range( borders[gene][i+1] - borders[gene][i] ):                
-                
-                    vectors[gene] += "0"
+            # for each coordinate indexed for this locus in 'borders'
+            for i in range(len(borders[gene])-1):
             
-            in_exon += 1    
+                # if we are in a CDS, we append the numbers 1, 2, and 3 (with looping) 
+                if in_exon % 2 == 1:
+                    
+                    # for each nucleotide between this coordinate and the next...
+                    for j in range( borders[gene][i+1] - borders[gene][i] ):
+                        
+                        # we append the codon position to the structure string 
+                        vectors[gene] += str(codon_pos)
+                        
+                        # we increment the codon position with looping
+                        if codon_pos == 3:
+                            codon_pos = 1
+                        else:
+                            codon_pos += 1
+                    
+                    
+                # if we are not in a CDS, we append 0
+                if in_exon % 2 == 0:
+                    
+                    # for each nucleotide between this coordinate and the next...
+                    for j in range( borders[gene][i+1] - borders[gene][i] ):                
+                    
+                        vectors[gene] += "0"
+                
+                in_exon += 1    
             
+        elif borders[gene][1] < borders[gene][0]:
+
+            # for each coordinate indexed for this locus in 'borders' in reverse order
+            for i in range(len(borders[gene])-1, 0, -1):
+            
+                # if we are in a CDS, we append the numbers 1, 2, and 3 (with looping) 
+                if in_exon % 2 == 1:
+                    
+                    # for each nucleotide between this coordinate and the next...
+                    for j in range( borders[gene][i-1] - borders[gene][i] ):
+                        
+                        print("j = " + str(j))
+                        
+                        # we append the codon position to the structure string 
+                        vectors[gene] += str(codon_pos)
+                        
+                        # we increment the codon position with looping
+                        if codon_pos == 3:
+                            codon_pos = 1
+                        else:
+                            codon_pos += 1
+                    
+                    
+                # if we are not in a CDS, we append 0
+                if in_exon % 2 == 0:
+                    
+                    # for each nucleotide between this coordinate and the next...
+                    for j in range( borders[gene][i-1] - borders[gene][i] ):
+                    
+                        vectors[gene] += "0"
+                
+                in_exon += 1   
+        
         if verbose:
             print("\nStructure string of the " + gene + " locus :\n" + vectors[gene] + "\n")
             

@@ -24,6 +24,7 @@ def test_basic():
     path3 = "minus-CDS_test.gff3"
     path4 = "fusion_test.gff3"
     path5 = "shift_test.gff3"
+    path6 = "reverse_test.gff3"
     
     # test of the CDS coordinates acquisition
     
@@ -41,6 +42,9 @@ def test_basic():
     
     bord5 = get_gff_borders(path5)
     assert bord5 == {'chr2A_00611930': [100, 130, 151, 210, 240, 300]}
+    
+    bord6 = get_gff_borders(path6)
+    assert bord6 == {'chr2A_00611930': [300, 240, 210, 150, 130, 100]}
     
     
     # test of the structure string creation
@@ -60,6 +64,9 @@ def test_basic():
     vect5 = create_vectors( bord5 )
     assert vect5 == {'chr2A_00611930': "12312312312312312312312312312300000000000000000000012312312312312312312312312312312312312312312312312312312312000000000000000000000000000000312312312312312312312312312312312312312312312312312312312312"}
     
+    vect6 = create_vectors( bord6 )
+    assert vect6 =={'chr2A_00611930': "12312312312312312312312312312300000000000000000000123123123123123123123123123123123123123123123123123123123123000000000000000000000000000000123123123123123123123123123123123123123123123123123123123123"}
+    
     
     # test of the vector comparisons of the test files
     
@@ -75,6 +82,9 @@ def test_basic():
     comp4 = pair_vector_comparison(vect1["chr2A_00611930"], vect5["chr2A_00611930"])
     assert comp4 == [[50, 0, 0, 0],[1, 10, 0, 39],[0, 40, 10, 0],[0, 0, 40, 10]]
     
+    comp5 = pair_vector_comparison(vect1["chr2A_00611930"], vect6["chr2A_00611930"])
+    assert comp5 == [[50, 0, 0, 0],[0, 50, 0, 0],[0, 0, 50, 0],[0, 0, 0, 50]]
+    
     
     # test of the identity computation from the pair comparison matrix
     
@@ -89,5 +99,8 @@ def test_basic():
     
     ident4 = matrix_to_identity(comp4)
     assert ident4 == 40.0
+    
+    ident5 = matrix_to_identity(comp5)
+    assert ident5 == 100.0
     
     
