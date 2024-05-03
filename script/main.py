@@ -24,6 +24,8 @@ import sys
 # all CDS of each locus
 def get_gff_borders(path):
     
+    verbose = True # temporary workaround so that unitary tests work
+    
     file = open(path, "r") # the file to read
     borders = {} # this variable takes in the borders of each CDS of each gene
     locus_id = "" # the current gene being analyzed
@@ -37,7 +39,7 @@ def get_gff_borders(path):
             
             borders[locus_id] = []     
             
-            if debug :
+            if verbose :
                 print("Reading the locus " + locus_id)
 
         # if we encounter a CDS, we add its start and end positions to corresponding gene key in 'borders'
@@ -46,7 +48,7 @@ def get_gff_borders(path):
             borders[locus_id].append(int(l.split("\t")[3]))
             borders[locus_id].append(int(l.split("\t")[4]))
             
-            if debug:
+            if verbose:
                 print("Adding borders to " + locus_id + " : " + l.split("\t")[3] + ", " + l.split("\t")[4])
     
     file.close()
@@ -66,6 +68,8 @@ def get_gff_borders(path):
 #
 # @return Returns a dictionary of strings describing the annotation structure of each locus
 def create_vectors(borders):
+
+    verbose = True # temporary workaround so that unitary tests work
     
     vectors = {} # this variable takes in the strings of gene annotation structure for each gene
     
@@ -73,7 +77,7 @@ def create_vectors(borders):
     # create the structure string as its value
     for gene in borders:
         
-        if debug:
+        if verbose:
             print("\nConverting the locus " + gene + " with coordinates " + str(borders[gene]))
         
         vectors[gene] = ""
@@ -116,7 +120,7 @@ def create_vectors(borders):
             
             in_exon += 1    
             
-        if debug:
+        if verbose:
             print("\nStructure string of the " + gene + " locus :\n" + vectors[gene] + "\n")
             
     return vectors
@@ -135,7 +139,9 @@ def create_vectors(borders):
 #
 # @remark This function expects both annotations to be of the same size, but doesn't expect any to be a # 'reference'
 def pair_vector_comparison(vect_a, vect_b):
-    
+ 
+    verbose = True # temporary workaround so that unitary tests work    
+ 
     # initialising the return matrix with 4 'lines'  and 4 'columns' (for 0, 1, 2, 3)
     comp_matrix = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
     
@@ -145,32 +151,38 @@ def pair_vector_comparison(vect_a, vect_b):
         
         comp_matrix[int(vect_a[i])][int(vect_b[i])] += 1
         
-    if debug:
+    if verbose:
         print("\n" + str(comp_matrix[0]) + "\n" + str(comp_matrix[1]) + "\n" + str(comp_matrix[2]) + "\n" + str(comp_matrix[3]) + "\n" )
     
     return comp_matrix
-    
+
 
 def usage():
     
-    print("Syntax : main.py [ -h/--help -d/--debug ] [ -i/--input <input_folder_path> ]")
+    print("Syntax : path/to/main.py [ -h/--help -d/--debug -v/--verbose ] [ -i/--input <input_folder_path> ]")
+    
 
 def main():
     
     # get all script call options
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hdi:", ["help", "debug", "input="])
+        opts, args = getopt.getopt(sys.argv[1:], "hdvi:", ["help", "debug", "verbose", "input="])
     except getopt.GetoptError as err:
         print(err)
         usage()
         sys.exit(2)
         
     global debug
+    global verbose
+    global test
     debug = False
+    verbose = False
     
     for o, a in opts:
-        if o == "-d":
+        if o in ("-d", "--debug"):
             debug = True
+        elif o in ("-v", "--verbose"):
+            verbose = True
         elif o in ("-h", "--help"):
             usage()
             sys.exit()
@@ -179,20 +191,21 @@ def main():
         else:
             assert False, "unhandled option"
             
-    # ces variables ne seront pas présentes dans le script final
-    path1 = "../data/tests/basic_test.gff3"
     path2 = "../data/tests/identical_test.gff3"
     path3 = "../data/tests/minus-CDS_test.gff3"
+    path4 = "../data/tests/fusion_test.gff3"
+    path5 = "../data/tests/shift_test.gff3"
             
-    create_vectors( get_gff_borders(path) )
-    
-    vect1 = create_vectors( get_gff_borders(path1) )
+    vect = create_vectors( get_gff_borders(path) )
     vect2 = create_vectors( get_gff_borders(path2) )
     vect3 = create_vectors( get_gff_borders(path3) )
+    vect4 = create_vectors( get_gff_borders(path4) )
+    vect5 = create_vectors( get_gff_borders(path5) )
     
-    pair_vector_comparison(vect1["chr2A_00611930"], vect2["chr2A_00611930"])
-    pair_vector_comparison(vect1["chr2A_00611930"], vect3["chr2A_00611930"])
-        
+    pair_vector_comparison(vect["chr2A_00611930"], vect2["chr2A_00611930"])
+    pair_vector_comparison(vect["chr2A_00611930"], vect3["chr2A_00611930"])
+    pair_vector_comparison(vect["chr2A_00611930"], vect4["chr2A_00611930"])
+    pair_vector_comparison(vect["chr2A_00611930"], vect5["chr2A_00611930"])
     
 if __name__ == "__main__":
     main()

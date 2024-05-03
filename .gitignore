@@ -1,2 +1,4 @@
 documentation/html
 documentation/latex
+script/__pycache__/
+data/tests/__pycache__/
