@@ -158,6 +158,29 @@ def pair_vector_comparison(vect_a, vect_b):
     return comp_matrix
 
 
+## This function creates a dictionary of dictionaries of structure strings corresponding to the
+# structure string for each locus of each annotation found in the given list of file paths.
+#
+# @param file_list List of file paths corresponding to all annotations analyzed (including reference)
+#
+# @return Returns a dictionary of dictionaries of the structure strings for each locus of 
+# each annotation
+#
+def create_all_vectors(file_list):
+    
+    annotations = {}
+    
+    for file in file_list:
+        
+        filename = file.split("/")[-1]
+        
+        annotations[filename] = ( create_vectors( get_gff_borders(file) ) )
+        
+    if verbose:
+        print("Finished creating all annotation structure strings")
+        
+    return annotations
+
 ## This function gets all GFF files from the given folder path and returns a list of file paths
 # corresponding to each GFF file encountered
 #
@@ -170,10 +193,14 @@ def get_files(folder_path):
     # code adapted from https://stackoverflow.com/questions/10377998/how-can-i-iterate-over-files-in-a-given-directory
     folder = os.fsencode(folder_path)
 
+    # for each file in the given folder
     for file in os.listdir(folder):
+        
         filename = os.fsdecode(file)
+        
+        # if the file has a GFF/GTF extension, we add its path to the list
         if filename.endswith(".gff") or filename.endswith(".gff3") or filename.endswith(".gtf"):
-            file_list.append(filename)
+            file_list.append(folder_path+filename)
             continue
         else:
             continue
@@ -233,8 +260,9 @@ def main():
         else:
             assert False, "unhandled option"
             
-    get_files(path)
-            
+    files = get_files(path)
+    create_all_vectors(files)        
+    
     path2 = "../data/tests/identical_test.gff3"
     path3 = "../data/tests/minus-CDS_test.gff3"
     path4 = "../data/tests/fusion_test.gff3"
