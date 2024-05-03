@@ -14,6 +14,7 @@ Created on Thu May  2 11:57:29 2024
 import getopt
 import sys
 import os
+import pprint
 
 ## This function expects a string corresponding to the file path of the GFF file to read, and returns
 # a dictionary of lists with the keys corresponding to a locus identifier, and the values 
@@ -158,6 +159,29 @@ def pair_vector_comparison(vect_a, vect_b):
     return comp_matrix
 
 
+## This function computes the identity of structure strings of two loci from the given comparison 
+# matrix (list of lists). Returns the identity as a percentage.
+#
+# @param matrix The comparison matrix returned by pair_vector_comparison()
+#
+# @see pair_vector_comparison()
+#
+# @return Returns the identity of the two structure strings describded by the matrix
+#
+def matrix_to_identity(matrix):
+    
+    # number of string positions for which 'caracters' were found to be identical
+    match = matrix[0][0] + matrix[1][1] + matrix[2][2] + matrix[3][3]
+    
+    print(match)
+
+    # number of string positions for which 'caracters' were found to be identical
+    mismatch = matrix[0][1] + matrix[0][2] + matrix[0][3] + matrix[1][0] + matrix[1][2] + matrix[1][3] + matrix[2][0] + matrix[2][1] + matrix[2][3] + matrix[3][0] + matrix[3][1] + matrix[3][2]
+    
+    print(mismatch)
+
+    return( float(match) / (float(match) + float(mismatch) ) * 100)
+
 ## This function creates a dictionary of dictionaries of structure strings corresponding to the
 # structure string for each locus of each annotation found in the given list of file paths.
 #
@@ -217,23 +241,48 @@ def get_files(folder_path):
 #
 # @param folder_path Path of the folder from which to get the GFF files
 #
-# @param ref_path Path of the reference annotation file
+# @param ref_name Name of the reference annotation file
 #
 # @return Returns a dictionary of dictionaries of floats corresponding to the structure
 # string identity between each locus of each annotation compared to those of the reference
-#TODO def annotation_comparison()
+#
+# @remark Loci found in one annotation but not the other are ignored
+def annotation_comparison(folder_path, ref_name):
+    
+    # get all annotation files and generate the annotation data structure
+    files = get_files(folder_path)
+    annotations = create_all_vectors(files)
+    
+    identities = {}
+
+    # for each annotation...
+    for ann in annotations:
+
+        identities[ann] = {}
+        
+        # for each locus of the annotation...
+        for locus in annotations[ann]:
+            
+            # if the locus is present in the reference annotation...
+            if locus in annotations[ref_name]:
+                
+                # compute identity and index it in the identities dictionary
+                identities[ann][locus] = matrix_to_identity( pair_vector_comparison( annotations[ann][locus], annotations[ref_name][locus]) )
+                
+            
+    return identities
 
 
 def usage():
     
-    print("Syntax : path/to/main.py [ -h/--help -d/--debug -v/--verbose ] [ -i/--input <input_folder_path> ] [ -r/--reference <reference_file_path> ]")
+    print("Syntax : path/to/main.py [ -h/--help -d/--debug -v/--verbose ] [ -i/--input <input_folder_path> ] [ -r/--reference <reference_file_name> ]")
     
 
 def main():
     
     # get all script call options
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hdvi:r:", ["help", "debug", "verbose", "input", "reference"])
+        opts, args = getopt.getopt(sys.argv[1:], "hdvi:r:", ["help", "debug", "verbose", "input=", "reference="])
     except getopt.GetoptError as err:
         print(err)
         usage()
@@ -254,30 +303,17 @@ def main():
             usage()
             sys.exit()
         elif o in ("-i", "--input"):
-            path = a
+            folder_path = a
         elif o in ("-r", "--reference"):
-            reference = a
+            ref_name = a
         else:
             assert False, "unhandled option"
             
-    files = get_files(path)
-    create_all_vectors(files)        
-    
-    path2 = "../data/tests/identical_test.gff3"
-    path3 = "../data/tests/minus-CDS_test.gff3"
-    path4 = "../data/tests/fusion_test.gff3"
-    path5 = "../data/tests/shift_test.gff3"
+    print(ref_name)
             
-    vect = create_vectors( get_gff_borders(path) )
-    vect2 = create_vectors( get_gff_borders(path2) )
-    vect3 = create_vectors( get_gff_borders(path3) )
-    vect4 = create_vectors( get_gff_borders(path4) )
-    vect5 = create_vectors( get_gff_borders(path5) )
+    comparison = annotation_comparison(folder_path, ref_name)
     
-    pair_vector_comparison(vect["chr2A_00611930"], vect2["chr2A_00611930"])
-    pair_vector_comparison(vect["chr2A_00611930"], vect3["chr2A_00611930"])
-    pair_vector_comparison(vect["chr2A_00611930"], vect4["chr2A_00611930"])
-    pair_vector_comparison(vect["chr2A_00611930"], vect5["chr2A_00611930"])
+    pprint.pprint(comparison)
     
 if __name__ == "__main__":
     main()
