@@ -12,7 +12,7 @@ import os, sys
 script_dir = os.path.dirname( __file__ )
 main_dir = os.path.join( script_dir, '..', '..', 'script' )
 sys.path.append( main_dir )
-from main import get_gff_borders, create_vectors, pair_vector_comparison
+from main import get_gff_borders, create_vectors, pair_vector_comparison, matrix_to_identity
 
 ## This function tests the program on multiple basic 'artificial' test files and checks if their
 # return values correspodn to what is expected
@@ -42,6 +42,7 @@ def test_basic():
     bord5 = get_gff_borders(path5)
     assert bord5 == {'chr2A_00611930': [100, 130, 151, 210, 240, 300]}
     
+    
     # test of the structure string creation
     
     vect1 = create_vectors( bord1 )
@@ -59,12 +60,34 @@ def test_basic():
     vect5 = create_vectors( bord5 )
     assert vect5 == {'chr2A_00611930': "12312312312312312312312312312300000000000000000000012312312312312312312312312312312312312312312312312312312312000000000000000000000000000000312312312312312312312312312312312312312312312312312312312312"}
     
+    
     # test of the vector comparisons of the test files
     
-    assert(pair_vector_comparison(vect1["chr2A_00611930"], vect2["chr2A_00611930"])) == [[50, 0, 0, 0],[0, 50, 0, 0],[0, 0, 50, 0],[0, 0, 0, 50]]
+    comp1 = pair_vector_comparison(vect1["chr2A_00611930"], vect2["chr2A_00611930"])
+    assert comp1 == [[50, 0, 0, 0],[0, 50, 0, 0],[0, 0, 50, 0],[0, 0, 0, 50]]
     
-    assert(pair_vector_comparison(vect1["chr2A_00611930"], vect3["chr2A_00611930"])) == [[50, 0, 0, 0],[20, 30, 0, 0],[20, 0, 30, 0],[20, 0, 0, 30]]
+    comp2 = pair_vector_comparison(vect1["chr2A_00611930"], vect3["chr2A_00611930"])
+    assert comp2 == [[50, 0, 0, 0],[20, 30, 0, 0],[20, 0, 30, 0],[20, 0, 0, 30]]
     
-    assert(pair_vector_comparison(vect1["chr2A_00611930"], vect4["chr2A_00611930"])) == [[30, 7, 7, 6],[0, 10, 0, 40],[0, 40, 10, 0],[0, 0, 40, 10]]
+    comp3 = pair_vector_comparison(vect1["chr2A_00611930"], vect4["chr2A_00611930"])
+    assert comp3 == [[30, 7, 7, 6],[0, 10, 0, 40],[0, 40, 10, 0],[0, 0, 40, 10]]
     
-    assert(pair_vector_comparison(vect1["chr2A_00611930"], vect5["chr2A_00611930"])) == [[50, 0, 0, 0],[1, 10, 0, 39],[0, 40, 10, 0],[0, 0, 40, 10]]
+    comp4 = pair_vector_comparison(vect1["chr2A_00611930"], vect5["chr2A_00611930"])
+    assert comp4 == [[50, 0, 0, 0],[1, 10, 0, 39],[0, 40, 10, 0],[0, 0, 40, 10]]
+    
+    
+    # test of the identity computation from the pair comparison matrix
+    
+    ident1 = matrix_to_identity(comp1)
+    assert ident1 == 100.0
+    
+    ident2 = matrix_to_identity(comp2)
+    assert ident2 == 70.0
+    
+    ident3 = matrix_to_identity(comp3)
+    assert ident3 == 30.0
+    
+    ident4 = matrix_to_identity(comp4)
+    assert ident4 == 40.0
+    
+    
