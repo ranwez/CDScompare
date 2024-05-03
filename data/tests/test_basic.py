@@ -15,16 +15,16 @@ sys.path.append( main_dir )
 from main import get_gff_borders, create_vectors, pair_vector_comparison, matrix_to_identity
 
 ## This function tests the program on multiple basic 'artificial' test files and checks if their
-# return values correspodn to what is expected
+# return values correspond to what is expected
 #
 def test_basic():
     
-    path1 = "basic_test.gff3"
-    path2 = "identical_test.gff3"
-    path3 = "minus-CDS_test.gff3"
-    path4 = "fusion_test.gff3"
-    path5 = "shift_test.gff3"
-    path6 = "reverse_test.gff3"
+    path1 = "./data/tests/" + "basic_test.gff3"
+    path2 = "./data/tests/" + "identical_test.gff3"
+    path3 = "./data/tests/" + "minus-CDS_test.gff3"
+    path4 = "./data/tests/" + "fusion_test.gff3"
+    path5 = "./data/tests/" + "shift_test.gff3"
+    path6 = "./data/tests/" + "reverse_test.gff3"
     
     # test of the CDS coordinates acquisition
     
