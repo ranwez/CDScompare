@@ -13,6 +13,7 @@ Created on Thu May  2 11:57:29 2024
 
 import getopt
 import sys
+import os
 
 ## This function expects a string corresponding to the file path of the GFF file to read, and returns
 # a dictionary of lists with the keys corresponding to a locus identifier, and the values 
@@ -157,16 +158,55 @@ def pair_vector_comparison(vect_a, vect_b):
     return comp_matrix
 
 
+## This function gets all GFF files from the given folder path and returns a list of file paths
+# corresponding to each GFF file encountered
+#
+# @param folder_path Path of the folder from which to retrieve GFF files
+#
+def get_files(folder_path):
+    
+    file_list = []
+    
+    # code adapted from https://stackoverflow.com/questions/10377998/how-can-i-iterate-over-files-in-a-given-directory
+    folder = os.fsencode(folder_path)
+
+    for file in os.listdir(folder):
+        filename = os.fsdecode(file)
+        if filename.endswith(".gff") or filename.endswith(".gff3") or filename.endswith(".gtf"):
+            file_list.append(filename)
+            continue
+        else:
+            continue
+        
+    if verbose:
+        
+        print(str(file_list))
+
+    return file_list
+
+## Main function of this program. Given a folder path, gets all GFF files in it, 
+# creates structure strings dictionaries for each annotation, and compares each annotation with
+# the indicated reference annotation.
+#
+# @param folder_path Path of the folder from which to get the GFF files
+#
+# @param ref_path Path of the reference annotation file
+#
+# @return Returns a dictionary of dictionaries of floats corresponding to the structure
+# string identity between each locus of each annotation compared to those of the reference
+#TODO def annotation_comparison()
+
+
 def usage():
     
-    print("Syntax : path/to/main.py [ -h/--help -d/--debug -v/--verbose ] [ -i/--input <input_folder_path> ]")
+    print("Syntax : path/to/main.py [ -h/--help -d/--debug -v/--verbose ] [ -i/--input <input_folder_path> ] [ -r/--reference <reference_file_path> ]")
     
 
 def main():
     
     # get all script call options
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hdvi:", ["help", "debug", "verbose", "input="])
+        opts, args = getopt.getopt(sys.argv[1:], "hdvi:r:", ["help", "debug", "verbose", "input", "reference"])
     except getopt.GetoptError as err:
         print(err)
         usage()
@@ -188,8 +228,12 @@ def main():
             sys.exit()
         elif o in ("-i", "--input"):
             path = a
+        elif o in ("-r", "--reference"):
+            reference = a
         else:
             assert False, "unhandled option"
+            
+    get_files(path)
             
     path2 = "../data/tests/identical_test.gff3"
     path3 = "../data/tests/minus-CDS_test.gff3"
