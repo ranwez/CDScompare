@@ -224,39 +224,24 @@ def pair_vector_comparison(loc_a, loc_b):
     # if the two loci don't start at the same position
     if loc_a[0] != loc_b[0]:
         
-        tic = 0
-        tac = 0
-        toc = 0
-        
         # if the locus 'a' starts before the start of locus 'b'
         if minv == loc_a[0]:
             
             # for every comparison of the numbers at each position in the two strings, we increment by one the corresponding 'cell'. We account for the difference in start positions by adding the difference to the locus 'a' codon position retrieval
             for i in range( min(len(loc_a[1]), len(loc_b[1])) + diff ):
                 
-                print(i)
-                
                 # if we are outside the coordinates of locus 'b', we replace its codon position with 0
                 if i<diff:
-                    
-                    tic += 1
-                    print("tic " + str(tic))
                     
                     comp_matrix[ int(loc_a[1][i]) ][0] += 1
                 
                 # if we are outside the coordinates of locus 'a', we replace its codon position with 0
-                elif i >= len(loc_a[1]): 
-                    
-                    tac += 1
-                    print("tac " + str(tac))
+                elif i >= len(loc_a[1]):
                     
                     comp_matrix[0][ int(loc_b[1][i-diff]) ] += 1
                 
                 # if we are in both coordinates, get each codon position
                 else:
-                    
-                    toc += 1
-                    print("toc " + str(toc))
                 
                     comp_matrix[ int(loc_a[1][i]) ][ int(loc_b[1][i-diff]) ] += 1
         
@@ -264,34 +249,20 @@ def pair_vector_comparison(loc_a, loc_b):
         elif minv == loc_b[0]:
             
             # for every comparison of the numbers at each position in the two strings, we increment by one the corresponding 'cell'. We account for the difference in start positions by adding the difference to the locus 'b' codon position retrieval
-            for i in range( min(len(loc_a[1]), len(loc_b[1])) + diff ):    
-                
-                print(i)
+            for i in range( min(len(loc_a[1]), len(loc_b[1])) + diff ):
                 
                 # if we are outside the coordinates of locus 'a', we replace its codon position with 0
-                if i<diff: 
-                    
-                    tic += 1
-                    print("tic " + str(tic))
+                if i<diff:
                     
                     comp_matrix[0][ int(loc_b[1][i]) ] += 1
                     
                 # if we are outside the coordinates of locus 'b', we replace its codon position with 0
                 elif i >= len(loc_b[1]):
                     
-                    tac += 1
-                    print("tac " + str(tac))
-                    
                     comp_matrix[ int(loc_a[1][i-diff]) ][0] += 1
             
                 # if we are in both coordinates, get each codon position
                 else:
-                    
-                    toc += 1
-                    print("toc " + str(toc))
-                    
-                    print(loc_a[1][i-diff])
-                    print(loc_b[1][i])
                     
                     comp_matrix[ int(loc_a[1][i-diff]) ][ int(loc_b[1][i]) ] += 1
     
@@ -323,8 +294,8 @@ def matrix_to_identity(matrix):
     
     verbose = True # temporary workaround so that unitary tests work
     
-    # number of string positions for which 'caracters' were found to be identical
-    match = matrix[0][0] + matrix[1][1] + matrix[2][2] + matrix[3][3]
+    # number of string positions for which 'caracters' were found to be identical. 'matrix[0][0]' is not taken into account so as to reduce the impact of large introns correctly prédicted
+    match = matrix[1][1] + matrix[2][2] + matrix[3][3]
     
     if verbose:
         print("matching codon positions in both annotations = " + str(match))

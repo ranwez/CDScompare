@@ -112,21 +112,21 @@ def test_basic():
     assert ident1 == 100.0
     
     ident2 = matrix_to_identity(comp2)
-    assert ident2 == 70.0
+    assert ident2 == 60.0
     
     ident3 = matrix_to_identity(comp3)
-    assert ident3 == 30.0
+    assert ident3 == 17.6
     
     ident4 = matrix_to_identity(comp4)
-    assert ident4 == 40.0
+    assert ident4 == 20.0
     
     ident5 = matrix_to_identity(comp5)
     assert ident5 == 100.0
     
     ident6 = matrix_to_identity(comp6)
-    assert ident6 == 19.2
+    assert ident6 == 12.5
     
     ident7 = matrix_to_identity(comp7)
-    assert ident7 == 19.2
+    assert ident7 == 12.5
     
     
