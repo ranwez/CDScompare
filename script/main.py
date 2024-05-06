@@ -16,6 +16,7 @@ import sys
 import os
 import pprint
 
+
 ## This function expects a string corresponding to the file path of the GFF file to read, and returns
 # a dictionary of lists with the keys corresponding to a locus identifier, and the values 
 # corresponding to a list of the start and end position of each coding sequence ('CDS') of the locus 
@@ -42,7 +43,7 @@ def get_gff_borders(path):
             borders[locus_id] = []     
             
             if verbose :
-                print("Reading the locus " + locus_id)
+                print("\nReading the locus " + locus_id)
 
         # if we encounter a CDS, we add its start and end positions to corresponding gene key in 'borders'
         if str(l.split("\t")[2]) == "CDS":
@@ -61,14 +62,14 @@ def get_gff_borders(path):
 
 ## This function expects a dictionary with keys corresponding to gene IDs and values corresponding
 # to a list of all CDS coordinates (start and end) of the gene. It returns a dictionary with the
-# same keys, and as values a string describing the codon position of each nucleotide (1,2,3, or 
-# 0 in the case of a non-CDS nucleotide) of the locus/gene
+# same keys, and as values an int indicating the start of the locus and a string describing the codon
+# position of each nucleotide (1,2,3, or 0 in the case of a non-CDS nucleotide) of the locus/gene
 #
 # @param borders The dictionary containing all start-end coordinates of the annotation's CDS
 #
 # @see get_gff_borders()
 #
-# @return Returns a dictionary of strings describing the annotation structure of each locus
+# @return Returns a dictionary of lists describing the start of the locus and the annotation structure of each locus
 def create_vectors(borders):
 
     verbose = True # temporary workaround so that unitary tests work
@@ -82,7 +83,16 @@ def create_vectors(borders):
         if verbose:
             print("\nConverting the locus " + gene + " with coordinates " + str(borders[gene]))
         
-        vectors[gene] = ""
+        # if the locus is on the direct strand
+        if borders[gene][1] > borders[gene][0]:
+            
+            # we get the start of the locus
+            vectors[gene] = [ borders[gene][0] , "" ]
+            
+        # if the locus is on the reverse strand
+        else:
+            # we get the start (the last CDS value since the locus is reversed) of the locus
+            vectors[gene] = [ borders[gene][-1] , "" ]
         
         # this variable takes the codon position of the next CDS nucleotide and loops
         # between the values 1, 2, and 3
@@ -105,7 +115,7 @@ def create_vectors(borders):
                     for j in range( borders[gene][i+1] - borders[gene][i] ):
                         
                         # we append the codon position to the structure string 
-                        vectors[gene] += str(codon_pos)
+                        vectors[gene][1] += str(codon_pos)
                         
                         # we increment the codon position with looping
                         if codon_pos == 3:
@@ -120,7 +130,7 @@ def create_vectors(borders):
                     # for each nucleotide between this coordinate and the next...
                     for j in range( borders[gene][i+1] - borders[gene][i] ):                
                     
-                        vectors[gene] += "0"
+                        vectors[gene][1] += "0"
                 
                 in_exon += 1    
             
@@ -135,10 +145,8 @@ def create_vectors(borders):
                     # for each nucleotide between this coordinate and the next...
                     for j in range( borders[gene][i-1] - borders[gene][i] ):
                         
-                        print("j = " + str(j))
-                        
                         # we append the codon position to the structure string 
-                        vectors[gene] += str(codon_pos)
+                        vectors[gene][1] += str(codon_pos)
                         
                         # we increment the codon position with looping
                         if codon_pos == 3:
@@ -153,21 +161,48 @@ def create_vectors(borders):
                     # for each nucleotide between this coordinate and the next...
                     for j in range( borders[gene][i-1] - borders[gene][i] ):
                     
-                        vectors[gene] += "0"
+                        vectors[gene][1] += "0"
                 
                 in_exon += 1   
         
         if verbose:
-            print("\nStructure string of the " + gene + " locus :\n" + vectors[gene] + "\n")
+            print("\nStructure string of the " + gene + " locus :\n" + vectors[gene][1] + "\n")
             
     return vectors
+
+
+## This function creates a dictionary of dictionaries of structure strings corresponding to the
+# structure string for each locus of each annotation found in the given list of file paths.
+#
+# @param file_list List of file paths corresponding to all annotations analyzed (including reference)
+#
+# @return Returns a dictionary of dictionaries of the structure strings for each locus of 
+# each annotation
+#
+def create_all_vectors(file_list):
+    
+    verbose = True # temporary workaround so that unitary tests work    
+    
+    annotations = {}
+    
+    for file in file_list:
+        
+        filename = file.split("/")[-1]
+        
+        annotations[filename] = ( create_vectors( get_gff_borders(file) ) )
+        
+    if verbose:
+        print("Finished creating all annotation structure strings")
+        
+    return annotations
   
+    
 ## This function expects two structure strings corresponding to two annotations of the same
 # genome, and returns a list of lists describing the comparison of each position of each string
 #
-# @param vect_a Structure string of the first annotation
+# @param loc_a List of start position and vector of the locus of the first annotation
 #
-# @param vect_b Structure string of the second annotation
+# @param loc_b List of start position and vector of the locus of the second annotation
 #
 # @see create_vectors()
 #
@@ -175,18 +210,99 @@ def create_vectors(borders):
 # of the strings
 #
 # @remark This function expects both annotations to be of the same size, but doesn't expect any to be a # 'reference'
-def pair_vector_comparison(vect_a, vect_b):
+def pair_vector_comparison(loc_a, loc_b):
  
     verbose = True # temporary workaround so that unitary tests work    
  
     # initialising the return matrix with 4 'lines'  and 4 'columns' (for 0, 1, 2, 3)
     comp_matrix = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
     
-    # for every comparison of the numbers at each position in the two strings, we increment by one 
-    # the corresponding 'cell'
-    for i in range(len(vect_a)):
+    # we get the minimum start positions, maximum end positions, and position difference of the loci
+    minv = min(loc_a[0], loc_b[0]) # minimum start position
+    diff = abs(loc_a[0] - loc_b[0]) # difference between the start positions
+    
+    # if the two loci don't start at the same position
+    if loc_a[0] != loc_b[0]:
         
-        comp_matrix[int(vect_a[i])][int(vect_b[i])] += 1
+        tic = 0
+        tac = 0
+        toc = 0
+        
+        # if the locus 'a' starts before the start of locus 'b'
+        if minv == loc_a[0]:
+            
+            # for every comparison of the numbers at each position in the two strings, we increment by one the corresponding 'cell'. We account for the difference in start positions by adding the difference to the locus 'a' codon position retrieval
+            for i in range( min(len(loc_a[1]), len(loc_b[1])) + diff ):
+                
+                print(i)
+                
+                # if we are outside the coordinates of locus 'b', we replace its codon position with 0
+                if i<diff:
+                    
+                    tic += 1
+                    print("tic " + str(tic))
+                    
+                    comp_matrix[ int(loc_a[1][i]) ][0] += 1
+                
+                # if we are outside the coordinates of locus 'a', we replace its codon position with 0
+                elif i >= len(loc_a[1]): 
+                    
+                    tac += 1
+                    print("tac " + str(tac))
+                    
+                    comp_matrix[0][ int(loc_b[1][i-diff]) ] += 1
+                
+                # if we are in both coordinates, get each codon position
+                else:
+                    
+                    toc += 1
+                    print("toc " + str(toc))
+                
+                    comp_matrix[ int(loc_a[1][i]) ][ int(loc_b[1][i-diff]) ] += 1
+        
+        # if the locus'a' starts after the start of locus 'b'
+        elif minv == loc_b[0]:
+            
+            # for every comparison of the numbers at each position in the two strings, we increment by one the corresponding 'cell'. We account for the difference in start positions by adding the difference to the locus 'b' codon position retrieval
+            for i in range( min(len(loc_a[1]), len(loc_b[1])) + diff ):    
+                
+                print(i)
+                
+                # if we are outside the coordinates of locus 'a', we replace its codon position with 0
+                if i<diff: 
+                    
+                    tic += 1
+                    print("tic " + str(tic))
+                    
+                    comp_matrix[0][ int(loc_b[1][i]) ] += 1
+                    
+                # if we are outside the coordinates of locus 'b', we replace its codon position with 0
+                elif i >= len(loc_b[1]):
+                    
+                    tac += 1
+                    print("tac " + str(tac))
+                    
+                    comp_matrix[ int(loc_a[1][i-diff]) ][0] += 1
+            
+                # if we are in both coordinates, get each codon position
+                else:
+                    
+                    toc += 1
+                    print("toc " + str(toc))
+                    
+                    print(loc_a[1][i-diff])
+                    print(loc_b[1][i])
+                    
+                    comp_matrix[ int(loc_a[1][i-diff]) ][ int(loc_b[1][i]) ] += 1
+    
+    # if the two loci start at the same position
+    else:
+    
+        # for every comparison of the numbers at each position in the two strings, we increment by one 
+        # the corresponding 'cell'
+        for i in range(len(loc_a[1])):
+            
+            comp_matrix[ int(loc_a[1][i]) ][ int(loc_b[1][i]) ] += 1
         
     if verbose:
         print("\n" + str(comp_matrix[0]) + "\n" + str(comp_matrix[1]) + "\n" + str(comp_matrix[2]) + "\n" + str(comp_matrix[3]) + "\n" )
@@ -205,40 +321,22 @@ def pair_vector_comparison(vect_a, vect_b):
 #
 def matrix_to_identity(matrix):
     
+    verbose = True # temporary workaround so that unitary tests work
+    
     # number of string positions for which 'caracters' were found to be identical
     match = matrix[0][0] + matrix[1][1] + matrix[2][2] + matrix[3][3]
     
-    print(match)
+    if verbose:
+        print("matching codon positions in both annotations = " + str(match))
 
     # number of string positions for which 'caracters' were found to be identical
     mismatch = matrix[0][1] + matrix[0][2] + matrix[0][3] + matrix[1][0] + matrix[1][2] + matrix[1][3] + matrix[2][0] + matrix[2][1] + matrix[2][3] + matrix[3][0] + matrix[3][1] + matrix[3][2]
     
-    print(mismatch)
-
-    return( float(match) / (float(match) + float(mismatch) ) * 100)
-
-## This function creates a dictionary of dictionaries of structure strings corresponding to the
-# structure string for each locus of each annotation found in the given list of file paths.
-#
-# @param file_list List of file paths corresponding to all annotations analyzed (including reference)
-#
-# @return Returns a dictionary of dictionaries of the structure strings for each locus of 
-# each annotation
-#
-def create_all_vectors(file_list):
-    
-    annotations = {}
-    
-    for file in file_list:
-        
-        filename = file.split("/")[-1]
-        
-        annotations[filename] = ( create_vectors( get_gff_borders(file) ) )
-        
     if verbose:
-        print("Finished creating all annotation structure strings")
-        
-    return annotations
+        print("mismatching codon positions in both annotations = " + str(mismatch) + "\n")
+
+    return( round( float(match) / (float(match) + float(mismatch) ) * 100 , 1 ) )
+
 
 ## This function gets all GFF files from the given folder path and returns a list of file paths
 # corresponding to each GFF file encountered
@@ -246,6 +344,8 @@ def create_all_vectors(file_list):
 # @param folder_path Path of the folder from which to retrieve GFF files
 #
 def get_files(folder_path):
+    
+    verbose = True # temporary workaround so that unitary tests work
     
     file_list = []
     
@@ -270,6 +370,7 @@ def get_files(folder_path):
 
     return file_list
 
+
 ## Main function of this program. Given a folder path, gets all GFF files in it, 
 # creates structure strings dictionaries for each annotation, and compares each annotation with
 # the indicated reference annotation.
@@ -284,6 +385,8 @@ def get_files(folder_path):
 # @remark Loci found in one annotation but not the other are ignored
 def annotation_comparison(folder_path, ref_name):
     
+    verbose = True # temporary workaround so that unitary tests work    
+
     # get all annotation files and generate the annotation data structure
     files = get_files(folder_path)
     annotations = create_all_vectors(files)
@@ -301,8 +404,17 @@ def annotation_comparison(folder_path, ref_name):
             # if the locus is present in the reference annotation...
             if locus in annotations[ref_name]:
                 
-                # compute identity and index it in the identities dictionary
-                identities[ann][locus] = matrix_to_identity( pair_vector_comparison( annotations[ann][locus], annotations[ref_name][locus]) )
+                # construct the comparison matrix
+                if verbose:
+                    print("Comparison matrix of locus " + locus + " of annotation " + str(ann) + "with equivalent of reference annotation")
+                comp_mat = pair_vector_comparison( annotations[ref_name][locus], annotations[ann][locus])
+                
+                # compute identity from the matrix and index it in the identities dictionary
+                ident = matrix_to_identity(comp_mat)
+                identities[ann][locus] = ident
+                
+                if verbose:
+                    print("identity of comparison of locus " + locus + " of annotation " + str(ann) + "with equivalent of reference annotation : " + str(ident) + "\n")
                 
             
     return identities
