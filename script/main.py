@@ -390,42 +390,113 @@ def annotation_comparison(folder_path, ref_name):
             
     return identities
 
-
+## This function compares two annotations' loci from their CDS border list returned by the function get_gff_borders and creates a comparison matrix detailing the identities and differences between the two annotations's codon position structure
+#
+# @see get_gff_borders
+#
+# @param ref The reference annotation's border list
+#
+# @param alt The alternative annotation's border list
+#
+# @return Returns a list of list (matrix) indicating what codon position is indicated in the reference and alternative annotations (values : 1, 2, 3 (CDS), or 0 (intron))
 def compare(ref, alt):
     
+    # initialisation of the border list iterators (i iterator of the reference annotation and j iterator of the alternative annotation)
     i = 0
     j = 0
-    cpa = 1
-    cpb = 1
+    
+    # initialisation of the variables indicating the codon position of the next CDS nucleotide
+    codon_position_ref = 1
+    codon_position_alt = 1
+    
+    # initialisation of the comparison area delimitation variables. 'upper' indicates the upper border of the zone of comparison of the two annotations and 'lower' indicates the lower border
     upper = 0
     lower = 0
     
+    # if i and j indicate the same start position in the genome for the two loci...
+    if ref[i] == alt[j]:
+        
+        # then we know both will be in a CDS at the start of the comparison
+        ref_in_CDS = True
+        alt_in_CDS = True
+        
+    # if i indicates an later start position than j...
+    elif ref[i] > alt[j]:
+        
+        # then we know the comparison will begin outside of the reference annotation (--> outside of a CDS), but inside a CDS of the alternative annotation
+        ref_in_CDS = False
+        alt_in_CDS = True
+        
+    # if i indicates an earlier start position than j...
+    else:
+        
+        # then we know the comparison will begin outside of the alternative annotation (--> outside of a CDS), but inside a CDS of the reference annotation
+        ref_in_CDS = True
+        alt_in_CDS = False
+        
+    
+    # while the comparison is not outside of the bounds of the border lists...
     while i <= len(ref)-1 and j <= len(alt)-1:
         
+        # if the comparison reached the last border coordinate of the reference list...
         if i == len(ref)-1:
             
-            for k in range(j, len(alt)-1):
+            # we add the nucleotide comparisons of the last comparison area of the reference annotation (which is inside a CDS)
+            
+            ref_in_CDS = True
+            
+            lower = alt[j]
+            upper = alt[j+1]
+            alt_in_CDS = not alt_in_CDS
+                
+            print(lower, upper, ref_in_CDS, alt_in_CDS)
+            
+            # then we add the nucleotide comparisons for all the comparison areas after the end of the reference annotation (outside a reference CDS)
+            
+            ref_in_CDS = False
+            
+            for k in range(j+1, len(alt)-1):
                 
                 lower = alt[k]
                 upper = alt[k+1]
+                alt_in_CDS = not alt_in_CDS
                 
-                print(lower, upper)
+                print(lower, upper, ref_in_CDS, alt_in_CDS)
                 
             i += 1
             
+        # if the comparison reached the last border coordinate of the alternative list...            
         elif j == len(alt)-1:
             
-            for k in range(i, len(ref)-1):
+            # we add the nucleotide comparisons of the last comparison area of the alternative annotation (which is inside a CDS)            
+            
+            alt_in_CDS = True
+                
+            lower = ref[i]
+            upper = ref[i+1]
+            ref_in_CDS = not ref_in_CDS
+                
+            print(lower, upper, ref_in_CDS, alt_in_CDS)
+            
+            # then we add the nucleotide comparisons for all the comparison areas after the end of the alternative annotation (outside a reference CDS)
+            
+            alt_in_CDS = False
+            
+            for k in range(i+1, len(ref)-1):
                 
                 lower = ref[k]
                 upper = ref[k+1]
+                ref_in_CDS = not ref_in_CDS
                 
-                print(lower, upper)
+                print(lower, upper, ref_in_CDS, alt_in_CDS)
                 
             j += 1
 
+        # if the genomic positions indicated by i and j are the same for both annotations...
         elif ref[i] == alt[j]:
     
+            # then we increment i or j to circumvent a problem with the function counting two times the same area
+            
             if ref[i+1] <= alt[j+1]:
                 
                 i += 1
@@ -434,27 +505,76 @@ def compare(ref, alt):
                 
                 j += 1
     
+        # if the coordinates i and j do not indicate the same genomic position and we did not reach the end of the border lists...
         else:
             
+            # if the position indicated by i is less than the position of j...
             if min(ref[i], alt[j]) == ref[i]:
                 
+                # then the position of i is used as the lower border...
                 lower = ref[i]
+                
+                # and we can deduce that the comparison area will include a reference annotation's CDS
+                ref_in_CDS = True if i%2 == 0 else False
+                
                 i += 1
                 
+            # if the position indicated by j is less than the position of i...
             else:
                 
+                # then the position of j is used as the lower border...
                 lower = alt[j]
+                
+                # and we can deduce that the comparison area will include an alternative annotation's CDS
+                alt_in_CDS = True if j%2 == 0 else False
+                
                 j += 1
             
+            # if we are at a last position of the border lists...
             if i == len(ref) or j == len(alt): 
             
-                upper = max(ref[-1], alt[-1]) 
+                # if the reference's last position is greater than the alternative's...
+                if ref[-1] > alt[-1]:
+                    
+                    # then we use it as an upper border of the comparison area
+                    upper = ref[-1]
+                    
+                    # and we can deduce that the comparison area will include a reference annotation's CDS
+                    ref_in_CDS = True
+
+                # if the alternative's last position is greater than the reference's...                    
+                else:
+                    
+                    # then we use it as an upper border of the comparison area
+                    upper = alt[-1]
+                    
+                    # and we can deduce that the comparison area will include an alternative annotation's CDS
+                    alt_in_CDS = True
             
+            # if we are not at a last position (still inside both loci)...
             else:
                 
-                upper = min(ref[i], alt[j])
+                # if the next position in both lists is in the reference...
+                if ref[i] < alt[j]:
+                    
+                    # then we use the next reference annotation position as an upper comparison area border...
+                    upper = ref[i]
+                    
+                    # and we can deduce that the comparison area will include a reference annotation's CDS
+                    ref_in_CDS = True if i%2 == 1 else False
+                    
+                # if the next position in both lists is in the reference...
+                else:
+                    
+                    # then we use the next alternative annotation position as an upper comparison area border...
+                    upper = alt[j]
+                    
+                    # and we can deduce that the comaprison area will include an alternative annotation's CDS
+                    alt_in_CDS = True if j%2 == 1 else False
             
-            print(lower, upper)
+            # TODO
+            # we call the function 'XXXXXXX' to add to the comparison matrix the nucleotide comparisons corresponding to the comparison area selected 
+            print(lower, upper, ref_in_CDS, alt_in_CDS)
 
 def usage():
     
