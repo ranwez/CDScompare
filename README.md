@@ -11,7 +11,7 @@ Run following command :
 path/to/main.py [ -h/--help -d/--debug -v/--verbose ] [ -i/--input <input_folder_path> ] [ -r/--reference <reference_file_name> ]
 ```
 
-where <input_folder_path> is the path to the folder containing all GFF files to analyze (including the reference file), and <reference_file_name> is the name of the reference file *without its extension* (exemple : 'basic_test'). These two parameters are required, while all others are not.
+where <input_folder_path> is the path to the folder containing all GFF files to analyze (including the reference file), and <reference_file_name> is the name of the reference file *with its extension* (exemple : 'basic_test'). These two parameters are required, while all others are not.
 
 ## Testing the program
 

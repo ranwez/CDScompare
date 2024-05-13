@@ -348,7 +348,7 @@ def get_files(folder_path):
 #
 # @param folder_path Path of the folder from which to get the GFF files
 #
-# @param ref_name Name of the reference annotation file
+# @param ref_name Complete name of the reference annotation file (without the folder path)
 #
 # @return Returns a dictionary of dictionaries of floats corresponding to the structure
 # string identity between each locus of each annotation compared to those of the reference
@@ -390,6 +390,71 @@ def annotation_comparison(folder_path, ref_name):
             
     return identities
 
+
+def compare(ref, alt):
+    
+    i = 0
+    j = 0
+    cpa = 1
+    cpb = 1
+    upper = 0
+    lower = 0
+    
+    while i <= len(ref)-1 and j <= len(alt)-1:
+        
+        if i == len(ref)-1:
+            
+            for k in range(j, len(alt)-1):
+                
+                lower = alt[k]
+                upper = alt[k+1]
+                
+                print(lower, upper)
+                
+            i += 1
+            
+        elif j == len(alt)-1:
+            
+            for k in range(i, len(ref)-1):
+                
+                lower = ref[k]
+                upper = ref[k+1]
+                
+                print(lower, upper)
+                
+            j += 1
+
+        elif ref[i] == alt[j]:
+    
+            if ref[i+1] <= alt[j+1]:
+                
+                i += 1
+                
+            else:
+                
+                j += 1
+    
+        else:
+            
+            if min(ref[i], alt[j]) == ref[i]:
+                
+                lower = ref[i]
+                i += 1
+                
+            else:
+                
+                lower = alt[j]
+                j += 1
+            
+            if i == len(ref) or j == len(alt): 
+            
+                upper = max(ref[-1], alt[-1]) 
+            
+            else:
+                
+                upper = min(ref[i], alt[j])
+            
+            print(lower, upper)
 
 def usage():
     
