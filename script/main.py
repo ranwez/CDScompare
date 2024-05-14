@@ -390,6 +390,80 @@ def annotation_comparison(folder_path, ref_name):
             
     return identities
 
+
+## This function uses the variables created by the function @see compare_loci() to compute the comparison matrix of the comparison of the two areas delimited by lower and upper. It takes a comparison matrix as input to add each area comparison to the global locus comparison matrix.
+#
+# @see compare_loci()
+#
+# @param comp_matrix The initial comparison matrix in which to add the result of the area's nucleotide comparisons. It is a list of lists of dimensions (4,4).
+#
+# @param upper The upper bound on the genome of the locus area to consider
+#
+# @param lower The lower bound on the genome of the locus area to consider
+#
+# @param codon_position_ref The codon position of the next CDS nucleotide of the reference annotation
+#
+# @param codon_position_alt The codon position of the next CDS nucleotide of the alternative annotation
+#
+# @param ref_in_CDS Boolean indicating if the area includes a reference annotation's CDS
+#
+# @param alt_in_CDS Boolean indicating if the area includes an alternative annotation's CDS
+#
+# @return Returns the initial comparison matrix (list of lists of dimensions (4,4)) with the area's comparison results added to it
+#
+def increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS):
+    
+    # initialisation of the variables indicating in which line (corresponding to the reference) and in which column (corresponding to the alternative) to increment the nucleotide count
+    ref_nucl = 0
+    alt_nucl = 0
+    
+    for i in range(0, upper-lower):
+        
+        # if the area includes a reference annotation's CDS...
+        if ref_in_CDS:
+            
+            # then the line in which to increment the nucleotide count is indicated by the current reference codon position
+            ref_nucl = codon_position_ref
+            
+        else:
+            
+            # if it does not, then we increment in the line '0'
+            ref_nucl = 0
+            
+        # if the area includes an alternative annotation's CDS...
+        if alt_in_CDS:
+            
+            # then the column in which to increment the nucleotide count is indicated by the current alternative codon position
+            alt_nucl = codon_position_alt
+            
+        else:
+            
+            # if it does not, then we increment in the column '0'
+            alt_nucl = 0
+            
+        # we increment the corresponding 'cell'
+        comp_matrix[ref_nucl][alt_nucl] += 1
+        
+        # we increment the codon positions if we are in an annotation's CDS
+        if ref_in_CDS:
+            
+            codon_position_ref += 1
+            
+            if codon_position_ref == 4:
+                
+                codon_position_ref = 1
+                
+        if alt_in_CDS:
+            
+            codon_position_alt += 1
+            
+            if codon_position_alt == 4:
+                
+                codon_position_alt = 1
+    
+    return comp_matrix, codon_position_ref, codon_position_alt
+
+
 ## This function compares two annotations' loci from their CDS border list returned by the function get_gff_borders and creates a comparison matrix detailing the identities and differences between the two annotations's codon position structure
 #
 # @see get_gff_borders
@@ -399,7 +473,8 @@ def annotation_comparison(folder_path, ref_name):
 # @param alt The alternative annotation's border list
 #
 # @return Returns a list of list (matrix) indicating what codon position is indicated in the reference and alternative annotations (values : 1, 2, 3 (CDS), or 0 (intron))
-def compare(ref, alt):
+#
+def compare_loci(ref, alt):
     
     # initialisation of the border list iterators (i iterator of the reference annotation and j iterator of the alternative annotation)
     i = 0
@@ -412,6 +487,9 @@ def compare(ref, alt):
     # initialisation of the comparison area delimitation variables. 'upper' indicates the upper border of the zone of comparison of the two annotations and 'lower' indicates the lower border
     upper = 0
     lower = 0
+    
+    # initialisation of the comparison matrix to return
+    comp_matrix = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
     
     # if i and j indicate the same start position in the genome for the two loci...
     if ref[i] == alt[j]:
@@ -449,7 +527,8 @@ def compare(ref, alt):
             upper = alt[j+1]
             alt_in_CDS = not alt_in_CDS
                 
-            print(lower, upper, ref_in_CDS, alt_in_CDS)
+            # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
+            comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS)
             
             # then we add the nucleotide comparisons for all the comparison areas after the end of the reference annotation (outside a reference CDS)
             
@@ -461,7 +540,8 @@ def compare(ref, alt):
                 upper = alt[k+1]
                 alt_in_CDS = not alt_in_CDS
                 
-                print(lower, upper, ref_in_CDS, alt_in_CDS)
+                # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
+                comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS)
                 
             i += 1
             
@@ -476,7 +556,8 @@ def compare(ref, alt):
             upper = ref[i+1]
             ref_in_CDS = not ref_in_CDS
                 
-            print(lower, upper, ref_in_CDS, alt_in_CDS)
+            # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
+            comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS)
             
             # then we add the nucleotide comparisons for all the comparison areas after the end of the alternative annotation (outside a reference CDS)
             
@@ -488,7 +569,8 @@ def compare(ref, alt):
                 upper = ref[k+1]
                 ref_in_CDS = not ref_in_CDS
                 
-                print(lower, upper, ref_in_CDS, alt_in_CDS)
+                # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
+                comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS)
                 
             j += 1
 
@@ -571,10 +653,11 @@ def compare(ref, alt):
                     
                     # and we can deduce that the comaprison area will include an alternative annotation's CDS
                     alt_in_CDS = True if j%2 == 1 else False
+                    
+            # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
+            comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS)
             
-            # TODO
-            # we call the function 'XXXXXXX' to add to the comparison matrix the nucleotide comparisons corresponding to the comparison area selected 
-            print(lower, upper, ref_in_CDS, alt_in_CDS)
+    return comp_matrix
 
 def usage():
     
