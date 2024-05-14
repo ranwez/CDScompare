@@ -14,7 +14,6 @@ Created on Thu May  2 11:57:29 2024
 
 import getopt
 import sys
-import os
 import pprint
 
 
@@ -44,7 +43,7 @@ def get_gff_borders(path, debug, verbose):
         # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
         if str(l.split("\t")[2]) == "gene": 
             
-            locus_id = l.split("\t")[8].split(";")[0].split("\n")[0][3:]
+            locus_id = l.split("\t")[8].split("")[0].split("\n")[0][3:]
             
             # the locus list is intialised with a strand number of '1', which is the corrected if necessary
             borders[locus_id] = [1, []]
@@ -55,87 +54,93 @@ def get_gff_borders(path, debug, verbose):
         # if we encounter a CDS, we add its start and end positions to corresponding gene key in 'borders'
         if str(l.split("\t")[2]) == "CDS":
             
-            borders[locus_id[1]].append(int(l.split("\t")[3]))
-            borders[locus_id[1]].append(int(l.split("\t")[4]))
+            borders[locus_id][1].append(int(l.split("\t")[3]))
+            borders[locus_id][1].append(int(l.split("\t")[4]))
             
             if verbose:
                 print("Adding borders to " + locus_id + " : " + l.split("\t")[3] + ", " + l.split("\t")[4])
-            # if the retrieved borders indicate the locus is on the reverse strand, we change the strand number to '0'
-            if borders[locus_id[0]] == 1 and borders[locus_id[1][1]] < borders[locus_id[1][0]]:
                 
-                borders[locus_id[0]] = 0
+            # if the retrieved borders indicate the locus is on the reverse strand, we change the strand number to '0'
+            if borders[locus_id][0] == 1 and borders[locus_id][1][1] < borders[locus_id][1][0]:
+                
+                borders[locus_id][0] = 0
         
     file.close()
     
     # we return the entire dictionary with all borders
     return borders
 
-def get_in_cds(cds_bounds, area_bounds):
-    cds_id=0;
-    i=0;
-    in_cds=[];
-    while (i < len(area_bounds)-1 and cds_id < len(cds_bounds)-1):
-        current_cds=[cds_bounds[cds_id],cds_bounds[cds_id]];
-        lb= area_bounds[i];
-        ub= area_bounds[i+1];
 
-        if(current_cds[0]<=lb[0] and lb[1]<=current_cds[1]):
-            in_cds.append(True);
-        else:
-            in_cds.append(False);
-        if(ub==current_cds[1]):
-            cds_id+=2;
-        i+=1;
-    while(i < len(area_bounds)-1):
-        in_cds.append(False);
-           
-
-def get_area_bounds(ref, alt):
-    bounds=[];
-    i=0; j=0;    
-    while i <= len(ref)-1 and j <= len(alt)-1:
-        bounds.append(min(ref[i],alt[j]));
-        if(i==bounds[-1]):
-            i+=1;
-        if(j==bounds[-1]):
-            j+=1;
-    return bounds;
-
-def compare_loci(ref, alt, debug, verbose):
-    area_bounds=get_area_bounds(ref, alt);
-    ref_in_CDS=get_in_cds(ref, area_bounds);
-    alt_in_CDS=get_in_cds(alt, area_bounds);
-
-    ref_in_CDS = True if (ref[0]==area_bounds[0]) else False
-    alt_in_CDS = True if (alt[0]==area_bounds[0]) else False
-    if( ref_in_CDS):
-        codon_position_ref=0;
-    if( alt_in_CDS):
-        codon_position_alt=0;
-  
-    comp_matrix = [0,0]
-    bound_id=0;
-    prev_bounds=area_bounds[0];
-    for bound in area_bounds[1:] :
-        if(prev_bounds>0):
-            if(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt==codon_position_ref):
-                comp_matrix[1]+=bound-prev_bounds;
-                codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 ;
-                codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 ;
-            elif(ref_in_CDS[bound_id]):
-                comp_matrix[0]+=bound-prev_bounds;
-                codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 ;
-            elif(alt_in_CDS[bound_id]):
-                comp_matrix[0]+=bound-prev_bounds;
-                codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 ;
-       
-        prev_bounds=bound;
-    return comp_matrix;
-   
-
-## This function compares two annotations' loci from their CDS border list returned by the function get_gff_borders and creates a comparison matrix detailing the identities and differences between the two annotations's codon position structure
+## This function retrieves all the CDS coordinates from the given lists of coordinates of the reference (@param ref) and of the alternative (@param alt) and includes them in a unique list of coordinates. The coordinates are sorted in ascending order.
 #
-# @see get_gff_borders
+# @param ref List of CDS coordinates of the reference annotation returned
+#
+# @param alt List of CDS coordinates of the alternative annotation returned
+#
+# @return Returns a list of coordinates compiling all coordinates from both initial lists in ascending order
+def get_area_bounds(ref, alt):
+    
+    bounds=[] # the return list
+    i=0
+    j=0    
+    
+    # while we did not reach the end of the coordinates lists...
+    while i <= len(ref)-1 and j <= len(alt)-1:
+        
+        # we add the next coordinate to the result list
+        bounds.append(min(ref[i],alt[j]))
+        
+        if(i==bounds[-1]):
+            i+=1
+        
+        if(j==bounds[-1]):
+            j+=1
+            
+    return bounds
+
+## This function indicates for each couple of bounds in the given list of area bounds (@param area_bounds), if they delimit an area which includes a CDS from the given CDS coordinates list (@param cds_bounds). It is used during the comparison of areas in compare_loci() to know if the reference or alternative have a CDS in the area
+#
+# @see compare_loci()
+#
+# @param cds_bounds List of CDS coordinates for an annotation
+#
+# @param area_bounds List of area bounds
+#
+# @return Returns a list indicating for each couple of bounds if they include a CDS ('True') or not ('False')
+def is_in_cds(cds_bounds, area_bounds):
+    
+    cds_id=0
+    i=0
+    in_cds=[] # return list
+    
+    # while we did not yet reach the end of the bounds list or the CDS coordinates list...
+    while (i < len(area_bounds)-1 and cds_id < len(cds_bounds)-1):
+        
+        current_cds=[cds_bounds[cds_id],cds_bounds[cds_id+1]]
+        lb= area_bounds[i]
+        ub= area_bounds[i+1]
+
+        # if the current CDS is included in the area bounds, 'True' is used to index it in the return list, else 'False'
+        if(current_cds[0]<=lb[0] and lb[1]<=current_cds[1]):
+            in_cds.append(True)
+        else:
+            in_cds.append(False)
+            
+        # if the current area reaches the end of the current CDS, we skip to the next CDS
+        if(ub==current_cds[1]):
+            cds_id+=2
+            
+        i+=1
+        
+    # if we reached the end of the CDS coordinates list, we continue until all area bounds are exhausted by appending 'False'
+    while(i < len(area_bounds)-1):
+        in_cds.append(False)
+        
+    return in_cds
+
+## This function compares two annotations' loci from their CDS border list returned by the function get_gff_borders() and creates a comparison list detailing the identities and differences between the two annotations's codon position structure
+#
+# @see get_gff_borders()
 #
 # @param ref The reference annotation's border list
 #
@@ -145,174 +150,64 @@ def compare_loci(ref, alt, debug, verbose):
 #
 # @param verbose If True, triggers display of more information messages. Default is 'False'
 #
-# @return Returns a list of list (matrix) indicating what codon position is indicated in the reference and alternative annotations (values : 1, 2, 3 (CDS), or 0 (intron))
+# @return Returns a list indicating the number of codon position mismatches (first position) and matches (second position) between the two border lists
 #
-def compare_loci_origin(ref, alt, debug, verbose):
+def compare_loci(ref, alt, debug, verbose):
     
-    # initialisation of the border list iterators (i iterator of the reference annotation and j iterator of the alternative annotation)
-    i = 0
-    j = 0
+    # we retrieve the bounds of all areas delimited by all the CDS coordinates of both border lists
+    area_bounds = get_area_bounds(ref, alt)
     
-    # initialisation of the variables indicating the codon position of the next CDS nucleotide
-    codon_position_ref = 1
-    codon_position_alt = 1
-    
-    # initialisation of the comparison area delimitation variables. 'upper' indicates the upper border of the zone of comparison of the two annotations and 'lower' indicates the lower border
-    upper = 0
-    lower = 0
-    
-    # initialisation of the comparison matrix to return
-    comp_matrix = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
-    
-        
-    ref_in_CDS = True if (ref[0]==min(ref[0],alt[0])) else False
-    alt_in_CDS = True if (alt[0]==min(ref[0],alt[0])) else False
-    
-    # while the comparison is not outside of the bounds of the border lists...
-    while i <= len(ref)-1 and j <= len(alt)-1:
-        
-        # if the comparison reached the last border coordinate of the reference list...
-        if i == len(ref)-1:
-            
-            # we add the nucleotide comparisons of the last comparison area of the reference annotation (which is inside a CDS)
-            
-            ref_in_CDS = True
-            
-            lower = alt[j]
-            upper = alt[j+1]
-            alt_in_CDS = not alt_in_CDS
-                
-            # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
-            comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS, debug, verbose)
-            
-            # then we add the nucleotide comparisons for all the comparison areas after the end of the reference annotation (outside a reference CDS)
-            
-            ref_in_CDS = False
-            
-            for k in range(j+1, len(alt)-1):
-                
-                lower = alt[k]
-                upper = alt[k+1]
-                alt_in_CDS = not alt_in_CDS
-                
-                # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
-                comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS, debug, verbose)
-                
-            i += 1
-            
-        # if the comparison reached the last border coordinate of the alternative list...            
-        elif j == len(alt)-1:
-            
-            # we add the nucleotide comparisons of the last comparison area of the alternative annotation (which is inside a CDS)            
-            
-            alt_in_CDS = True
-                
-            lower = ref[i]
-            upper = ref[i+1]
-            ref_in_CDS = not ref_in_CDS
-                
-            # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
-            comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS, debug, verbose)
-            
-            # then we add the nucleotide comparisons for all the comparison areas after the end of the alternative annotation (outside a reference CDS)
-            
-            alt_in_CDS = False
-            
-            for k in range(i+1, len(ref)-1):
-                
-                lower = ref[k]
-                upper = ref[k+1]
-                ref_in_CDS = not ref_in_CDS
-                
-                # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
-                comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS, debug, verbose)
-                
-            j += 1
+    # we retrieve the list indicating the areas which include or not a CDS for bot hannotations
+    ref_in_CDS = is_in_cds(ref, area_bounds)
+    alt_in_CDS = is_in_cds(alt, area_bounds)
 
-        # if the genomic positions indicated by i and j are the same for both annotations...
-        elif ref[i] == alt[j]:
+    # initialisation of the variables indicating if the annotations have a CDS in the current area, and of the variables keeping track of the current codon position
+    ref_in_CDS = True if (ref[0]==area_bounds[0]) else False
+    alt_in_CDS = True if (alt[0]==area_bounds[0]) else False
     
-            # then we increment i or j to circumvent a problem with the function counting two times the same area
-            
-            if ref[i+1] <= alt[j+1]:
-                
-                i += 1
-                
-            else:
-                
-                j += 1
+    if( ref_in_CDS):
+        codon_position_ref=0
+    if( alt_in_CDS):
+        codon_position_alt=0
+  
     
-        # if the coordinates i and j do not indicate the same genomic position and we did not reach the end of the border lists...
-        else:
+    comparison = [0,0] # return list. First value is mismatches, second value is identities
+    bound_id=0
+    prev_bounds=area_bounds[0]
+    
+    # for each comparison area delimited by the bounds in the list 'area_bounds'...
+    for bound in area_bounds[1:] :
+        
+        if(prev_bounds>0):
             
-            # if the position indicated by i is less than the position of j...
-            if min(ref[i], alt[j]) == ref[i]:
+            # if both annotations are in a CDS and have the same codon position, then all codon positions for the rest of the area will be identical, so we add the length of the area to the second value of the comparison list and update both codon positions
+            if(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt==codon_position_ref):
+                comparison[1]+=bound-prev_bounds
+                codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
+                codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
                 
-                # then the position of i is used as the lower border...
-                lower = ref[i]
-                
-                # and we can deduce that the comparison area will include a reference annotation's CDS
-                ref_in_CDS = True if i%2 == 0 else False
-                
-                i += 1
-                
-            # if the position indicated by j is less than the position of i...
-            else:
-                
-                # then the position of j is used as the lower border...
-                lower = alt[j]
-                
-                # and we can deduce that the comparison area will include an alternative annotation's CDS
-                alt_in_CDS = True if j%2 == 0 else False
-                
-                j += 1
+            # if both annotations are in a CDS but don't have the same codon position, then all codon positions for the rest of the area will be different, so we add the length of the are to the first value of the comparison list and update both codon positions
+            elif(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt!=codon_position_ref):
+                comparison[0]+=bound-prev_bounds
+                codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
+                codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
             
-            # if we are at a last position of the border lists...
-            if i == len(ref) or j == len(alt): 
+            # if only one annotation has a CDS in the comparison area, we add to the first value of the comparison list and update only one codon position
             
-                # if the reference's last position is greater than the alternative's...
-                if ref[-1] > alt[-1]:
-                    
-                    # then we use it as an upper border of the comparison area
-                    upper = ref[-1]
-                    
-                    # and we can deduce that the comparison area will include a reference annotation's CDS
-                    ref_in_CDS = True
-
-                # if the alternative's last position is greater than the reference's...                    
-                else:
-                    
-                    # then we use it as an upper border of the comparison area
-                    upper = alt[-1]
-                    
-                    # and we can deduce that the comparison area will include an alternative annotation's CDS
-                    alt_in_CDS = True
-            
-            # if we are not at a last position (still inside both loci)...
-            else:
+            elif(ref_in_CDS[bound_id]):
+                comparison[0]+=bound-prev_bounds
+                codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
                 
-                # if the next position in both lists is in the reference...
-                if ref[i] < alt[j]:
-                    
-                    # then we use the next reference annotation position as an upper comparison area border...
-                    upper = ref[i]
-                    
-                    # and we can deduce that the comparison area will include a reference annotation's CDS
-                    ref_in_CDS = True if i%2 == 1 else False
-                    
-                # if the next position in both lists is in the reference...
-                else:
-                    
-                    # then we use the next alternative annotation position as an upper comparison area border...
-                    upper = alt[j]
-                    
-                    # and we can deduce that the comaprison area will include an alternative annotation's CDS
-                    alt_in_CDS = True if j%2 == 1 else False
-                    
-            # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
-            comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS, debug, verbose)
             
-    return comp_matrix
+            elif(alt_in_CDS[bound_id]):
+                comparison[0]+=bound-prev_bounds
+                codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
+                
+            # the case of both annotations being outside of a CDS is not used in the computation of global loci identity, and is ignored
+       
+        prev_bounds=bound
+        
+    return comparison
 
 
 ## This function uses the variables created by the function @see compare_loci() to compute the comparison matrix of the comparison of the two areas delimited by lower and upper. It takes a comparison matrix as input to add each area comparison to the global locus comparison matrix.
