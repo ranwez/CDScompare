@@ -7,7 +7,8 @@ Created on Thu May  2 11:57:29 2024
 """
 
 ##@package main
-# This script is used to compute the distance between multiple structural annotations of a same genome. # It expects as input the path to the folder containing all annotation files (in GFF format), 
+# This script is used to compute the distance between two structural annotations of a same genome, one reference and one alternative annotation. 
+# It expects as input the paths to the annotation files (in GFF format), 
 # displays the computed distances between all annotation pairs, and returns a dictionary of lists of
 # lists detailing the matchs/mismatchs between the two annotations' structure string
 
@@ -19,28 +20,34 @@ import pprint
 
 ## This function expects a string corresponding to the file path of the GFF file to read, and returns
 # a dictionary of lists with the keys corresponding to a locus identifier, and the values 
-# corresponding to a list of the start and end position of each coding sequence ('CDS') of the locus 
+# corresponding to a list of a number indicating the strand supporting the locus (1 for direct 
+# strand, 0 for reverse strand) and a list of the start and end position of each coding 
+# sequence ('CDS') of the locus 
 #
 # @param path Path of the file to read
 #
-# @return Returns a dictionary of lists containing the start and end coordinates of 
-# all CDS of each locus
-def get_gff_borders(path):
-    
-    verbose = True # temporary workaround so that unitary tests work
+# @param debug If True, triggers display of many messages intended for debugging the program
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
+#
+# @return Returns a dictionary of lists containing the number associated with the strand of the locus (1 : direct, 0: reverse) and a list containing the start and end coordinates of all CDS for each locus
+def get_gff_borders(path, debug, verbose):
     
     file = open(path, "r") # the file to read
     borders = {} # this variable takes in the borders of each CDS of each gene
     locus_id = "" # the current gene being analyzed
     
     for l in file:
+        
+        print(l)
 
-        # if we encounter a new gene, we get its ID and create a key in 'borders' with an empty list
+        # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
         if str(l.split("\t")[2]) == "gene": 
             
             locus_id = l.split("\t")[8].split(";")[0].split("\n")[0][3:]
             
-            borders[locus_id] = []     
+            # the locus list is intialised with a strand number of '1', which is the corrected if necessary
+            borders[locus_id] = [1, []]
             
             if verbose :
                 print("\nReading the locus " + locus_id)
@@ -48,420 +55,20 @@ def get_gff_borders(path):
         # if we encounter a CDS, we add its start and end positions to corresponding gene key in 'borders'
         if str(l.split("\t")[2]) == "CDS":
             
-            borders[locus_id].append(int(l.split("\t")[3]))
-            borders[locus_id].append(int(l.split("\t")[4]))
+            borders[locus_id[1]].append(int(l.split("\t")[3]))
+            borders[locus_id[1]].append(int(l.split("\t")[4]))
             
             if verbose:
                 print("Adding borders to " + locus_id + " : " + l.split("\t")[3] + ", " + l.split("\t")[4])
-    
+            # if the retrieved borders indicate the locus is on the reverse strand, we change the strand number to '0'
+            if borders[locus_id[0]] == 1 and borders[locus_id[1][1]] < borders[locus_id[1][0]]:
+                
+                borders[locus_id[0]] = 0
+        
     file.close()
     
     # we return the entire dictionary with all borders
     return borders
-
-
-## This function expects a dictionary with keys corresponding to gene IDs and values corresponding
-# to a list of all CDS coordinates (start and end) of the gene. It returns a dictionary with the
-# same keys, and as values an int indicating the start of the locus and a string describing the codon
-# position of each nucleotide (1,2,3, or 0 in the case of a non-CDS nucleotide) of the locus/gene
-#
-# @param borders The dictionary containing all start-end coordinates of the annotation's CDS
-#
-# @see get_gff_borders()
-#
-# @return Returns a dictionary of lists describing the start of the locus and the annotation structure of each locus
-def create_vectors(borders):
-
-    verbose = True # temporary workaround so that unitary tests work
-    
-    vectors = {} # this variable takes in the strings of gene annotation structure for each gene
-    
-    # for each locus indexed in the 'borders' dictionary, we create a new key in 'vectors' and 
-    # create the structure string as its value
-    for gene in borders:
-        
-        if verbose:
-            print("\nConverting the locus " + gene + " with coordinates " + str(borders[gene]))
-        
-        # if the locus is on the direct strand
-        if borders[gene][1] > borders[gene][0]:
-            
-            # we get the start of the locus
-            vectors[gene] = [ borders[gene][0] , "" ]
-            
-        # if the locus is on the reverse strand
-        else:
-            # we get the start (the last CDS value since the locus is reversed) of the locus
-            vectors[gene] = [ borders[gene][-1] , "" ]
-        
-        # this variable takes the codon position of the next CDS nucleotide and loops
-        # between the values 1, 2, and 3
-        codon_pos = 1 
-        
-        # this variable indicates if we are in an exon/CDS or not.
-        # it is incremented at each transition between annotations (each element in the 'borders' list)
-        # to represent the exon-intron change along the gene
-        in_exon = 1
-        
-        if borders[gene][1] > borders[gene][0]:
-        
-            # for each coordinate indexed for this locus in 'borders'
-            for i in range(len(borders[gene])-1):
-            
-                # if we are in a CDS, we append the numbers 1, 2, and 3 (with looping) 
-                if in_exon % 2 == 1:
-                    
-                    # for each nucleotide between this coordinate and the next...
-                    for j in range( borders[gene][i+1] - borders[gene][i] ):
-                        
-                        # we append the codon position to the structure string 
-                        vectors[gene][1] += str(codon_pos)
-                        
-                        # we increment the codon position with looping
-                        if codon_pos == 3:
-                            codon_pos = 1
-                        else:
-                            codon_pos += 1
-                    
-                    
-                # if we are not in a CDS, we append 0
-                if in_exon % 2 == 0:
-                    
-                    # for each nucleotide between this coordinate and the next...
-                    for j in range( borders[gene][i+1] - borders[gene][i] ):                
-                    
-                        vectors[gene][1] += "0"
-                
-                in_exon += 1    
-            
-        elif borders[gene][1] < borders[gene][0]:
-
-            # for each coordinate indexed for this locus in 'borders' in reverse order
-            for i in range(len(borders[gene])-1, 0, -1):
-            
-                # if we are in a CDS, we append the numbers 1, 2, and 3 (with looping) 
-                if in_exon % 2 == 1:
-                    
-                    # for each nucleotide between this coordinate and the next...
-                    for j in range( borders[gene][i-1] - borders[gene][i] ):
-                        
-                        # we append the codon position to the structure string 
-                        vectors[gene][1] += str(codon_pos)
-                        
-                        # we increment the codon position with looping
-                        if codon_pos == 3:
-                            codon_pos = 1
-                        else:
-                            codon_pos += 1
-                    
-                    
-                # if we are not in a CDS, we append 0
-                if in_exon % 2 == 0:
-                    
-                    # for each nucleotide between this coordinate and the next...
-                    for j in range( borders[gene][i-1] - borders[gene][i] ):
-                    
-                        vectors[gene][1] += "0"
-                
-                in_exon += 1   
-        
-        if verbose:
-            print("\nStructure string of the " + gene + " locus :\n" + vectors[gene][1] + "\n")
-            
-    return vectors
-
-
-## This function creates a dictionary of dictionaries of structure strings corresponding to the
-# structure string for each locus of each annotation found in the given list of file paths.
-#
-# @param file_list List of file paths corresponding to all annotations analyzed (including reference)
-#
-# @return Returns a dictionary of dictionaries of the structure strings for each locus of 
-# each annotation
-#
-def create_all_vectors(file_list):
-    
-    verbose = True # temporary workaround so that unitary tests work    
-    
-    annotations = {}
-    
-    for file in file_list:
-        
-        filename = file.split("/")[-1]
-        
-        annotations[filename] = ( create_vectors( get_gff_borders(file) ) )
-        
-    if verbose:
-        print("Finished creating all annotation structure strings")
-        
-    return annotations
-  
-    
-## This function expects two structure strings corresponding to two annotations of the same
-# genome, and returns a list of lists describing the comparison of each position of each string
-#
-# @param loc_a List of start position and vector of the locus of the first annotation
-#
-# @param loc_b List of start position and vector of the locus of the second annotation
-#
-# @see create_vectors()
-#
-# @return Returns a list of lists (matrix) describing the matchs/mismatchs for each position
-# of the strings
-#
-# @remark This function expects both annotations to be of the same size, but doesn't expect any to be a # 'reference'
-def pair_vector_comparison(loc_a, loc_b):
- 
-    verbose = True # temporary workaround so that unitary tests work    
- 
-    # initialising the return matrix with 4 'lines'  and 4 'columns' (for 0, 1, 2, 3)
-    comp_matrix = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
-    
-    # we get the minimum start positions, maximum end positions, and position difference of the loci
-    minv = min(loc_a[0], loc_b[0]) # minimum start position
-    diff = abs(loc_a[0] - loc_b[0]) # difference between the start positions
-    
-    # if the two loci don't start at the same position
-    if loc_a[0] != loc_b[0]:
-        
-        # if the locus 'a' starts before the start of locus 'b'
-        if minv == loc_a[0]:
-            
-            # for every comparison of the numbers at each position in the two strings, we increment by one the corresponding 'cell'. We account for the difference in start positions by adding the difference to the locus 'a' codon position retrieval
-            for i in range( min(len(loc_a[1]), len(loc_b[1])) + diff ):
-                
-                # if we are outside the coordinates of locus 'b', we replace its codon position with 0
-                if i<diff:
-                    
-                    comp_matrix[ int(loc_a[1][i]) ][0] += 1
-                
-                # if we are outside the coordinates of locus 'a', we replace its codon position with 0
-                elif i >= len(loc_a[1]):
-                    
-                    comp_matrix[0][ int(loc_b[1][i-diff]) ] += 1
-                
-                # if we are in both coordinates, get each codon position
-                else:
-                
-                    comp_matrix[ int(loc_a[1][i]) ][ int(loc_b[1][i-diff]) ] += 1
-        
-        # if the locus'a' starts after the start of locus 'b'
-        elif minv == loc_b[0]:
-            
-            # for every comparison of the numbers at each position in the two strings, we increment by one the corresponding 'cell'. We account for the difference in start positions by adding the difference to the locus 'b' codon position retrieval
-            for i in range( min(len(loc_a[1]), len(loc_b[1])) + diff ):
-                
-                # if we are outside the coordinates of locus 'a', we replace its codon position with 0
-                if i<diff:
-                    
-                    comp_matrix[0][ int(loc_b[1][i]) ] += 1
-                    
-                # if we are outside the coordinates of locus 'b', we replace its codon position with 0
-                elif i >= len(loc_b[1]):
-                    
-                    comp_matrix[ int(loc_a[1][i-diff]) ][0] += 1
-            
-                # if we are in both coordinates, get each codon position
-                else:
-                    
-                    comp_matrix[ int(loc_a[1][i-diff]) ][ int(loc_b[1][i]) ] += 1
-    
-    # if the two loci start at the same position
-    else:
-    
-        # for every comparison of the numbers at each position in the two strings, we increment by one 
-        # the corresponding 'cell'
-        for i in range(len(loc_a[1])):
-            
-            comp_matrix[ int(loc_a[1][i]) ][ int(loc_b[1][i]) ] += 1
-        
-    if verbose:
-        print("\n" + str(comp_matrix[0]) + "\n" + str(comp_matrix[1]) + "\n" + str(comp_matrix[2]) + "\n" + str(comp_matrix[3]) + "\n" )
-    
-    return comp_matrix
-
-
-## This function computes the identity of structure strings of two loci from the given comparison 
-# matrix (list of lists). Returns the identity as a percentage.
-#
-# @param matrix The comparison matrix returned by pair_vector_comparison()
-#
-# @see pair_vector_comparison()
-#
-# @return Returns the identity of the two structure strings describded by the matrix
-#
-def matrix_to_identity(matrix):
-    
-    verbose = True # temporary workaround so that unitary tests work
-    
-    # number of string positions for which 'caracters' were found to be identical. 'matrix[0][0]' is not taken into account so as to reduce the impact of large introns correctly prédicted
-    match = matrix[1][1] + matrix[2][2] + matrix[3][3]
-    
-    if verbose:
-        print("matching codon positions in both annotations = " + str(match))
-
-    # number of string positions for which 'caracters' were found to be identical
-    mismatch = matrix[0][1] + matrix[0][2] + matrix[0][3] + matrix[1][0] + matrix[1][2] + matrix[1][3] + matrix[2][0] + matrix[2][1] + matrix[2][3] + matrix[3][0] + matrix[3][1] + matrix[3][2]
-    
-    if verbose:
-        print("mismatching codon positions in both annotations = " + str(mismatch) + "\n")
-
-    return( round( float(match) / (float(match) + float(mismatch) ) * 100 , 1 ) )
-
-
-## This function gets all GFF files from the given folder path and returns a list of file paths
-# corresponding to each GFF file encountered
-#
-# @param folder_path Path of the folder from which to retrieve GFF files
-#
-def get_files(folder_path):
-    
-    verbose = True # temporary workaround so that unitary tests work
-    
-    file_list = []
-    
-    # code adapted from https://stackoverflow.com/questions/10377998/how-can-i-iterate-over-files-in-a-given-directory
-    folder = os.fsencode(folder_path)
-
-    # for each file in the given folder
-    for file in os.listdir(folder):
-        
-        filename = os.fsdecode(file)
-        
-        # if the file has a GFF/GTF extension, we add its path to the list
-        if filename.endswith(".gff") or filename.endswith(".gff3") or filename.endswith(".gtf"):
-            file_list.append(folder_path+filename)
-            continue
-        else:
-            continue
-        
-    if verbose:
-        
-        print(str(file_list))
-
-    return file_list
-
-
-## Main function of this program. Given a folder path, gets all GFF files in it, 
-# creates structure strings dictionaries for each annotation, and compares each annotation with
-# the indicated reference annotation.
-#
-# @param folder_path Path of the folder from which to get the GFF files
-#
-# @param ref_name Complete name of the reference annotation file (without the folder path)
-#
-# @return Returns a dictionary of dictionaries of floats corresponding to the structure
-# string identity between each locus of each annotation compared to those of the reference
-#
-# @remark Loci found in one annotation but not the other are ignored
-def annotation_comparison(folder_path, ref_name):
-    
-    verbose = True # temporary workaround so that unitary tests work    
-
-    # get all annotation files and generate the annotation data structure
-    files = get_files(folder_path)
-    annotations = create_all_vectors(files)
-    
-    identities = {}
-
-    # for each annotation...
-    for ann in annotations:
-
-        identities[ann] = {}
-        
-        # for each locus of the annotation...
-        for locus in annotations[ann]:
-            
-            # if the locus is present in the reference annotation...
-            if locus in annotations[ref_name]:
-                
-                # construct the comparison matrix
-                if verbose:
-                    print("Comparison matrix of locus " + locus + " of annotation " + str(ann) + "with equivalent of reference annotation")
-                comp_mat = pair_vector_comparison( annotations[ref_name][locus], annotations[ann][locus])
-                
-                # compute identity from the matrix and index it in the identities dictionary
-                ident = matrix_to_identity(comp_mat)
-                identities[ann][locus] = ident
-                
-                if verbose:
-                    print("identity of comparison of locus " + locus + " of annotation " + str(ann) + "with equivalent of reference annotation : " + str(ident) + "\n")
-                
-            
-    return identities
-
-
-## This function uses the variables created by the function @see compare_loci() to compute the comparison matrix of the comparison of the two areas delimited by lower and upper. It takes a comparison matrix as input to add each area comparison to the global locus comparison matrix.
-#
-# @see compare_loci()
-#
-# @param comp_matrix The initial comparison matrix in which to add the result of the area's nucleotide comparisons. It is a list of lists of dimensions (4,4).
-#
-# @param upper The upper bound on the genome of the locus area to consider
-#
-# @param lower The lower bound on the genome of the locus area to consider
-#
-# @param codon_position_ref The codon position of the next CDS nucleotide of the reference annotation
-#
-# @param codon_position_alt The codon position of the next CDS nucleotide of the alternative annotation
-#
-# @param ref_in_CDS Boolean indicating if the area includes a reference annotation's CDS
-#
-# @param alt_in_CDS Boolean indicating if the area includes an alternative annotation's CDS
-#
-# @return Returns the initial comparison matrix (list of lists of dimensions (4,4)) with the area's comparison results added to it
-#
-def increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS):
-    
-    # initialisation of the variables indicating in which line (corresponding to the reference) and in which column (corresponding to the alternative) to increment the nucleotide count
-    ref_nucl = 0
-    alt_nucl = 0
-    
-    for i in range(0, upper-lower):
-        
-        # if the area includes a reference annotation's CDS...
-        if ref_in_CDS:
-            
-            # then the line in which to increment the nucleotide count is indicated by the current reference codon position
-            ref_nucl = codon_position_ref
-            
-        else:
-            
-            # if it does not, then we increment in the line '0'
-            ref_nucl = 0
-            
-        # if the area includes an alternative annotation's CDS...
-        if alt_in_CDS:
-            
-            # then the column in which to increment the nucleotide count is indicated by the current alternative codon position
-            alt_nucl = codon_position_alt
-            
-        else:
-            
-            # if it does not, then we increment in the column '0'
-            alt_nucl = 0
-            
-        # we increment the corresponding 'cell'
-        comp_matrix[ref_nucl][alt_nucl] += 1
-        
-        # we increment the codon positions if we are in an annotation's CDS
-        if ref_in_CDS:
-            
-            codon_position_ref += 1
-            
-            if codon_position_ref == 4:
-                
-                codon_position_ref = 1
-                
-        if alt_in_CDS:
-            
-            codon_position_alt += 1
-            
-            if codon_position_alt == 4:
-                
-                codon_position_alt = 1
-    
-    return comp_matrix, codon_position_ref, codon_position_alt
 
 
 ## This function compares two annotations' loci from their CDS border list returned by the function get_gff_borders and creates a comparison matrix detailing the identities and differences between the two annotations's codon position structure
@@ -472,9 +79,13 @@ def increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_positi
 #
 # @param alt The alternative annotation's border list
 #
+# @param debug If True, triggers display of many messages intended for debugging the program
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
+#
 # @return Returns a list of list (matrix) indicating what codon position is indicated in the reference and alternative annotations (values : 1, 2, 3 (CDS), or 0 (intron))
 #
-def compare_loci(ref, alt):
+def compare_loci(ref, alt, debug, verbose):
     
     # initialisation of the border list iterators (i iterator of the reference annotation and j iterator of the alternative annotation)
     i = 0
@@ -491,27 +102,11 @@ def compare_loci(ref, alt):
     # initialisation of the comparison matrix to return
     comp_matrix = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
     
-    # if i and j indicate the same start position in the genome for the two loci...
-    if ref[i] == alt[j]:
         
-        # then we know both will be in a CDS at the start of the comparison
-        ref_in_CDS = True
-        alt_in_CDS = True
-        
-    # if i indicates an later start position than j...
-    elif ref[i] > alt[j]:
-        
-        # then we know the comparison will begin outside of the reference annotation (--> outside of a CDS), but inside a CDS of the alternative annotation
-        ref_in_CDS = False
-        alt_in_CDS = True
-        
-    # if i indicates an earlier start position than j...
-    else:
-        
-        # then we know the comparison will begin outside of the alternative annotation (--> outside of a CDS), but inside a CDS of the reference annotation
-        ref_in_CDS = True
-        alt_in_CDS = False
-        
+    ref_in_CDS = True if (ref[0]==min(ref[0],alt[0])) else False
+    alt_in_CDS = True if (alt[0]==min(ref[0],alt[0])) else False
+
+   
     
     # while the comparison is not outside of the bounds of the border lists...
     while i <= len(ref)-1 and j <= len(alt)-1:
@@ -528,7 +123,7 @@ def compare_loci(ref, alt):
             alt_in_CDS = not alt_in_CDS
                 
             # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
-            comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS)
+            comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS, debug, verbose)
             
             # then we add the nucleotide comparisons for all the comparison areas after the end of the reference annotation (outside a reference CDS)
             
@@ -541,7 +136,7 @@ def compare_loci(ref, alt):
                 alt_in_CDS = not alt_in_CDS
                 
                 # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
-                comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS)
+                comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS, debug, verbose)
                 
             i += 1
             
@@ -557,7 +152,7 @@ def compare_loci(ref, alt):
             ref_in_CDS = not ref_in_CDS
                 
             # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
-            comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS)
+            comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS, debug, verbose)
             
             # then we add the nucleotide comparisons for all the comparison areas after the end of the alternative annotation (outside a reference CDS)
             
@@ -570,7 +165,7 @@ def compare_loci(ref, alt):
                 ref_in_CDS = not ref_in_CDS
                 
                 # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
-                comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS)
+                comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS, debug, verbose)
                 
             j += 1
 
@@ -655,31 +250,195 @@ def compare_loci(ref, alt):
                     alt_in_CDS = True if j%2 == 1 else False
                     
             # we call the increment_matrix function to add the area's nucleotide comparisons to the locus' comparison matrix
-            comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS)
+            comp_matrix, codon_position_ref, codon_position_alt = increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS, debug, verbose)
             
     return comp_matrix
 
+
+## This function uses the variables created by the function @see compare_loci() to compute the comparison matrix of the comparison of the two areas delimited by lower and upper. It takes a comparison matrix as input to add each area comparison to the global locus comparison matrix.
+#
+# @see compare_loci()
+#
+# @param comp_matrix The initial comparison matrix in which to add the result of the area's nucleotide comparisons. It is a list of lists of dimensions (4,4).
+#
+# @param upper The upper bound on the genome of the locus area to consider
+#
+# @param lower The lower bound on the genome of the locus area to consider
+#
+# @param codon_position_ref The codon position of the next CDS nucleotide of the reference annotation
+#
+# @param codon_position_alt The codon position of the next CDS nucleotide of the alternative annotation
+#
+# @param ref_in_CDS Boolean indicating if the area includes a reference annotation's CDS
+#
+# @param alt_in_CDS Boolean indicating if the area includes an alternative annotation's CDS
+#
+# @param debug If True, triggers display of many messages intended for debugging the program
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
+#
+# @return Returns the initial comparison matrix (list of lists of dimensions (4,4)) with the area's comparison results added to it
+#
+def increment_matrix(comp_matrix, upper, lower, codon_position_ref, codon_position_alt, ref_in_CDS, alt_in_CDS, debug, verbose):
+    
+    # initialisation of the variables indicating in which line (corresponding to the reference) and in which column (corresponding to the alternative) to increment the nucleotide count
+    ref_nucl = 0
+    alt_nucl = 0
+    
+    for i in range(0, upper-lower):
+        
+        # if the area includes a reference annotation's CDS...
+        if ref_in_CDS:
+            
+            # then the line in which to increment the nucleotide count is indicated by the current reference codon position
+            ref_nucl = codon_position_ref
+            
+        else:
+            
+            # if it does not, then we increment in the line '0'
+            ref_nucl = 0
+            
+        # if the area includes an alternative annotation's CDS...
+        if alt_in_CDS:
+            
+            # then the column in which to increment the nucleotide count is indicated by the current alternative codon position
+            alt_nucl = codon_position_alt
+            
+        else:
+            
+            # if it does not, then we increment in the column '0'
+            alt_nucl = 0
+            
+        # we increment the corresponding 'cell'
+        comp_matrix[ref_nucl][alt_nucl] += 1
+        
+        # we increment the codon positions if we are in an annotation's CDS
+        if ref_in_CDS:
+            
+            codon_position_ref += 1
+            
+            if codon_position_ref == 4:
+                
+                codon_position_ref = 1
+                
+        if alt_in_CDS:
+            
+            codon_position_alt += 1
+            
+            if codon_position_alt == 4:
+                
+                codon_position_alt = 1
+    
+    return comp_matrix, codon_position_ref, codon_position_alt
+
+
+## This function computes the identity of structure strings of two loci from the given comparison 
+# matrix (list of lists). Returns the identity as a percentage.
+#
+# @param matrix The comparison matrix returned by pair_vector_comparison()
+#
+# @param debug If True, triggers display of many messages intended for debugging the program
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
+#
+# @see pair_vector_comparison()
+#
+# @return Returns the identity of the two structure strings describded by the matrix
+#
+def matrix_to_identity(matrix, debug, verbose):
+    
+    # number of string positions for which 'caracters' were found to be identical. 'matrix[0][0]' is not taken into account so as to reduce the impact of large introns correctly prédicted
+    match = matrix[1][1] + matrix[2][2] + matrix[3][3]
+    
+    if verbose:
+        print("matching codon positions in both annotations = " + str(match))
+
+    # number of string positions for which 'caracters' were found to be identical
+    mismatch = matrix[0][1] + matrix[0][2] + matrix[0][3] + matrix[1][0] + matrix[1][2] + matrix[1][3] + matrix[2][0] + matrix[2][1] + matrix[2][3] + matrix[3][0] + matrix[3][1] + matrix[3][2]
+    
+    if verbose:
+        print("mismatching codon positions in both annotations = " + str(mismatch) + "\n")
+        
+    result = round( float(match) / (float(match) + float(mismatch) ) * 100 , 1 )
+    
+    if verbose:
+        print("Proportion of matching codon positions in both annotations = " + str(result) + "\n")
+
+    return(result)
+
+
+## Main function of this program. Given a reference and alternative path, gets the corresponding GFF files and compares the two annotations
+#
+# @param ref_path Path of the GFF file describing the reference annotation
+#
+# @param alt_path Path of the GFF file describing the aternative annotation
+#
+# @param debug If True, triggers display of many messages intended for debugging the program
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
+#
+# @return Returns a dictionary of dictionaries of floats corresponding to the structure
+# string identity between each locus of each annotation compared to those of the reference
+#
+# @remark Loci found in one annotation but not the other are ignored
+def annotation_comparison(ref_path, alt_path, debug, verbose):
+
+    # get all annotation files and generate the annotation data structure
+    ref_annotations = get_gff_borders(ref_path, debug, verbose)
+    alt_annotations = get_gff_borders(alt_path, debug, verbose)
+    
+    identities = {}
+    
+    # for each locus of the reference annotation...
+    for locus in ref_annotations:
+    
+        # if the two loci are on the same strand (same strand number)...
+        if ref_annotations[locus][0] == alt_annotations[locus][0]:
+        
+            # construct the comparison matrix for the reference and alternative locus annotation
+            if verbose:
+                print("Creation of comparison matrix of locus " + locus + "\n")
+            comp_mat = compare_loci(ref_annotations[locus][1], alt_annotations[locus][1], debug, verbose)
+            
+            # compute identity from the matrix and index it in the identities dictionary
+            ident = matrix_to_identity(comp_mat, debug, verbose)
+            identities[locus] = ident
+            
+            if verbose:
+                print("Finished computing the identity of the annotations of locus " + locus + "\n")
+             
+        # if the two loci are on different strands, we consider they have 0% identity
+        else:
+        
+            identities[locus] = 0.0
+            
+            if verbose:
+                print("Locus predicted on a different strand from the reference in the alternative. Identity : 0%\n")
+            
+    return identities
+
+
 def usage():
     
-    print("Syntax : path/to/main.py [ -h/--help -d/--debug -v/--verbose ] [ -i/--input <input_folder_path> ] [ -r/--reference <reference_file_name> ]")
+    # displayed when '-h' or '--help' is given, or when an invalid script call happens
+    print("Syntax : path/to/main.py [ -h/--help -d/--debug -v/--verbose ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ] ")
     
 
 def main():
     
-    # get all script call options
+    # we retrieve all script call options
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hdvi:r:", ["help", "debug", "verbose", "input=", "reference="])
+        opts, args = getopt.getopt(sys.argv[1:], "hdvcr:a:", ["help", "debug", "verbose", "chatty", "reference=", "alternative="])
     except getopt.GetoptError as err:
         print(err)
         usage()
         sys.exit(2)
         
-    global debug
-    global verbose
-    global test
+    # initialisation of the display parameters
     debug = False
     verbose = False
     
+    # we get the values given for each parameter
     for o, a in opts:
         if o in ("-d", "--debug"):
             debug = True
@@ -688,16 +447,15 @@ def main():
         elif o in ("-h", "--help"):
             usage()
             sys.exit()
-        elif o in ("-i", "--input"):
-            folder_path = a
         elif o in ("-r", "--reference"):
-            ref_name = a
+            ref_path = a
+        elif o in ("-a", "--alternative"):
+            alt_path = a
         else:
             assert False, "unhandled option"
             
-    print(ref_name)
-            
-    comparison = annotation_comparison(folder_path, ref_name)
+    # call of the annotation_comparison function
+    comparison = annotation_comparison(ref_path, alt_path, debug, verbose)
     
     pprint.pprint(comparison)
     
