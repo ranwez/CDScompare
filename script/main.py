@@ -70,6 +70,68 @@ def get_gff_borders(path, debug, verbose):
     # we return the entire dictionary with all borders
     return borders
 
+def get_in_cds(cds_bounds, area_bounds):
+    cds_id=0;
+    i=0;
+    in_cds=[];
+    while (i < len(area_bounds)-1 and cds_id < len(cds_bounds)-1):
+        current_cds=[cds_bounds[cds_id],cds_bounds[cds_id]];
+        lb= area_bounds[i];
+        ub= area_bounds[i+1];
+
+        if(current_cds[0]<=lb[0] and lb[1]<=current_cds[1]):
+            in_cds.append(True);
+        else:
+            in_cds.append(False);
+        if(ub==current_cds[1]):
+            cds_id+=2;
+        i+=1;
+    while(i < len(area_bounds)-1):
+        in_cds.append(False);
+           
+
+def get_area_bounds(ref, alt):
+    bounds=[];
+    i=0; j=0;    
+    while i <= len(ref)-1 and j <= len(alt)-1:
+        bounds.append(min(ref[i],alt[j]));
+        if(i==bounds[-1]):
+            i+=1;
+        if(j==bounds[-1]):
+            j+=1;
+    return bounds;
+
+def compare_loci(ref, alt, debug, verbose):
+    area_bounds=get_area_bounds(ref, alt);
+    ref_in_CDS=get_in_cds(ref, area_bounds);
+    alt_in_CDS=get_in_cds(alt, area_bounds);
+
+    ref_in_CDS = True if (ref[0]==area_bounds[0]) else False
+    alt_in_CDS = True if (alt[0]==area_bounds[0]) else False
+    if( ref_in_CDS):
+        codon_position_ref=0;
+    if( alt_in_CDS):
+        codon_position_alt=0;
+  
+    comp_matrix = [0,0]
+    bound_id=0;
+    prev_bounds=area_bounds[0];
+    for bound in area_bounds[1:] :
+        if(prev_bounds>0):
+            if(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt==codon_position_ref):
+                comp_matrix[1]+=bound-prev_bounds;
+                codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 ;
+                codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 ;
+            elif(ref_in_CDS[bound_id]):
+                comp_matrix[0]+=bound-prev_bounds;
+                codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 ;
+            elif(alt_in_CDS[bound_id]):
+                comp_matrix[0]+=bound-prev_bounds;
+                codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 ;
+       
+        prev_bounds=bound;
+    return comp_matrix;
+   
 
 ## This function compares two annotations' loci from their CDS border list returned by the function get_gff_borders and creates a comparison matrix detailing the identities and differences between the two annotations's codon position structure
 #
@@ -85,7 +147,7 @@ def get_gff_borders(path, debug, verbose):
 #
 # @return Returns a list of list (matrix) indicating what codon position is indicated in the reference and alternative annotations (values : 1, 2, 3 (CDS), or 0 (intron))
 #
-def compare_loci(ref, alt, debug, verbose):
+def compare_loci_origin(ref, alt, debug, verbose):
     
     # initialisation of the border list iterators (i iterator of the reference annotation and j iterator of the alternative annotation)
     i = 0
@@ -105,8 +167,6 @@ def compare_loci(ref, alt, debug, verbose):
         
     ref_in_CDS = True if (ref[0]==min(ref[0],alt[0])) else False
     alt_in_CDS = True if (alt[0]==min(ref[0],alt[0])) else False
-
-   
     
     # while the comparison is not outside of the bounds of the border lists...
     while i <= len(ref)-1 and j <= len(alt)-1:
