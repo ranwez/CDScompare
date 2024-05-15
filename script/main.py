@@ -101,6 +101,20 @@ def get_area_bounds(ref, alt, debug, verbose):
         if(alt[j] == bounds[-1]):
             j+=1
             
+    # after we get to the end of one annotation, we append the rest of the other one to the result list
+    
+    if i > len(ref)-1:
+        
+        for k in range(j, len(alt)):
+            
+            bounds.append(alt[j])
+        
+    if j > len(alt)-1:
+        
+        for k in range(i, len(ref)):
+            
+            bounds.append(ref[i])
+            
     if debug:
         print(f"Final area_bounds = {bounds}")
             
@@ -129,7 +143,7 @@ def is_in_cds(cds_bounds, area_bounds, debug, verbose):
         ub= area_bounds[i+1]
         
         if debug:
-            print(f"i = {i}")
+            print(f"\ni = {i}")
             print(f"cds_id = {cds_id}")
             print(f"current_cds = {current_cds}")
             print(f"Lower bound (lb) = {lb}")
@@ -158,8 +172,10 @@ def is_in_cds(cds_bounds, area_bounds, debug, verbose):
         
         in_cds.append(False)
         
+        i += 1
+        
     if debug:
-        print(f"Final in_cds = {in_cds}")
+        print(f"\nFinal in_cds = {in_cds}\n")
         
     return in_cds
 
@@ -263,6 +279,10 @@ def compare_loci(ref, alt, debug, verbose):
         
         bound_id += 1
         
+    # when the loci are on the reverse strand, matches and mismatches are counted in the negatives, so we convert them using the absolute value
+    comparison[0] = abs(comparison[0])
+    comparison[1] = abs(comparison[1])    
+    
     if verbose:
         print(f"\nResult of the comparison of the locus : {comparison[1]} matches and {comparison[0]} mismatches\n")
         
@@ -454,8 +474,16 @@ def old_compare_loci(borders_loc_a, borders_loc_b, debug, verbose):
             # for every comparison of the numbers at each position in the two strings, we increment by one the match or mismatch value of the return list. We account for the difference in start positions by adding the difference to the locus 'a' codon position retrieval
             for i in range( min(len(loc_a[1]), len(loc_b[1])) + diff ):
                 
-                a_in_CDS = loc_a[1][i] in ("1", "2", "3")
-                b_in_CDS = loc_b[1][i-diff] in ("1", "2", "3")
+                # try to know if the current position is in a CDS in the reference or alternative. If we are outside the string of an annotation the value 'False' is assigned
+                try:
+                    a_in_CDS = loc_a[1][i] in ("1", "2", "3") 
+                except IndexError:
+                    a_in_CDS = False
+                    
+                if i >= diff:
+                    b_in_CDS = loc_b[1][i-diff] in ("1", "2", "3")
+                else:
+                    b_in_CDS = False
                 
                 if debug:
                     print("Range of loop = {min(len(loc_a[1]), len(loc_b[1])) + diff}")
@@ -493,8 +521,16 @@ def old_compare_loci(borders_loc_a, borders_loc_b, debug, verbose):
             # for every comparison of the numbers at each position in the two strings, we increment by one the match or mismatch value of the return list. We account for the difference in start positions by adding the difference to the locus 'b' codon position retrieval
             for i in range( min(len(loc_a[1]), len(loc_b[1])) + diff ):
                 
-                a_in_CDS = loc_a[1][i-diff] in ("1", "2", "3")
-                b_in_CDS = loc_b[1][i] in ("1", "2", "3")
+                # try to know if the current position is in a CDS in the reference or alternative. If we are outside the string of an annotation the value 'False' is assigned
+                if i >= diff:
+                    a_in_CDS = loc_a[1][i-diff] in ("1", "2", "3")
+                else:
+                    a_in_CDS = False
+                    
+                try:
+                    b_in_CDS = loc_b[1][i] in ("1", "2", "3")
+                except IndexError:
+                    b_in_CDS = False
                 
                 if debug:
                     print("Range of loop = {min(len(loc_a[1]), len(loc_b[1])) + diff")
@@ -602,7 +638,7 @@ def annotation_comparison(ref_path, alt_path, debug, verbose, create_strings):
             if verbose:
                 print("Finished computing the identity of the annotations of locus " + locus + "\n")
              
-        # if the two loci are on different strands, we consider they have 0% identity
+        # if the two loci are on different strands, we assign them 0% identity
         else:
         
             identities[locus] = 0.0
@@ -659,6 +695,7 @@ def main():
     
     print("\nResult of the comparison of all loci of both annotations :\n")
     pprint.pprint(comparison)
+    print("\n\n")
     
 if __name__ == "__main__":
     main()
