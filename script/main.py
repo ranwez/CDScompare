@@ -76,7 +76,10 @@ def get_gff_borders(path, debug, verbose):
 # @param alt List of CDS coordinates of the alternative annotation returned
 #
 # @return Returns a list of coordinates compiling all coordinates from both initial lists in ascending order
-def get_area_bounds(ref, alt):
+def get_area_bounds(ref, alt, debug, verbose):
+    
+    if verbose:
+        print("\nCreating comparison areas for the two annotations")
     
     bounds=[] # the return list
     i=0
@@ -84,6 +87,10 @@ def get_area_bounds(ref, alt):
     
     # while we did not reach the end of the coordinates lists...
     while i <= len(ref)-1 and j <= len(alt)-1:
+        
+        if debug:
+            print(f"i = {i}, j = {j}")
+            print(f"minimum of ref[i] ({ref[i]}) and alt[j] ({alt[j]}) = {min(ref[i], alt[j])}")
         
         # we add the next coordinate to the result list
         bounds.append(min(ref[i],alt[j]))
@@ -93,6 +100,9 @@ def get_area_bounds(ref, alt):
         
         if(alt[j] == bounds[-1]):
             j+=1
+            
+    if debug:
+        print(f"Final area_bounds = {bounds}")
             
     return bounds
 
@@ -105,7 +115,7 @@ def get_area_bounds(ref, alt):
 # @param area_bounds List of area bounds
 #
 # @return Returns a list indicating for each couple of bounds if they include a CDS ('True') or not ('False')
-def is_in_cds(cds_bounds, area_bounds):
+def is_in_cds(cds_bounds, area_bounds, debug, verbose):
     
     cds_id=0
     i=0
@@ -117,12 +127,22 @@ def is_in_cds(cds_bounds, area_bounds):
         current_cds=[cds_bounds[cds_id],cds_bounds[cds_id+1]]
         lb= area_bounds[i]
         ub= area_bounds[i+1]
+        
+        if debug:
+            print(f"i = {i}")
+            print(f"cds_id = {cds_id}")
+            print(f"current_cds = {current_cds}")
+            print(f"Lower bound (lb) = {lb}")
+            print(f"Upper bound (ub) = {ub}")
 
         # if the current CDS is included in the area bounds, 'True' is used to index it in the return list, else 'False'
         if(current_cds[0]<=lb and ub<=current_cds[1]):
             in_cds.append(True)
         else:
             in_cds.append(False)
+            
+        if debug:
+            print(f"in_cds = {in_cds}")
             
         # if the current area reaches the end of the current CDS, we skip to the next CDS
         if(ub==current_cds[1]):
@@ -132,7 +152,14 @@ def is_in_cds(cds_bounds, area_bounds):
         
     # if we reached the end of the CDS coordinates list, we continue until all area bounds are exhausted by appending 'False'
     while(i < len(area_bounds)-1):
+        
+        if debug:
+            print(f"i (after end of CDS list) = {i}")
+        
         in_cds.append(False)
+        
+    if debug:
+        print(f"Final in_cds = {in_cds}")
         
     return in_cds
 
@@ -153,11 +180,15 @@ def is_in_cds(cds_bounds, area_bounds):
 def compare_loci(ref, alt, debug, verbose):
     
     # we retrieve the bounds of all areas delimited by all the CDS coordinates of both border lists
-    area_bounds = get_area_bounds(ref, alt)
+    area_bounds = get_area_bounds(ref, alt, debug, verbose)
     
     # we retrieve the list indicating the areas which include or not a CDS for both annotations
-    ref_in_CDS = is_in_cds(ref, area_bounds)
-    alt_in_CDS = is_in_cds(alt, area_bounds)
+    
+    if verbose:
+        print("\nEvaluating presence of CDS in the comparison areas")
+
+    ref_in_CDS = is_in_cds(ref, area_bounds, debug, verbose)
+    alt_in_CDS = is_in_cds(alt, area_bounds, debug, verbose)
     
     if debug:
         print("Ref_in_CDS = " + str(ref_in_CDS))
@@ -189,12 +220,20 @@ def compare_loci(ref, alt, debug, verbose):
                 
             # if both annotations are in a CDS and have the same codon position, then all codon positions for the rest of the area will be identical, so we add the length of the area to the second value of the comparison list and update both codon positions
             if(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt==codon_position_ref):
+                
+                if debug:
+                    print(f"Identical codon positions for the area, adding {bound-prev_bounds} to match values")
+                
                 comparison[1]+=bound-prev_bounds
                 codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
                 codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3
                 
             # if both annotations are in a CDS but don't have the same codon position, then all codon positions for the rest of the area will be different, so we add the length of the are to the first value of the comparison list and update both codon positions
             elif(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt!=codon_position_ref):
+                
+                if debug:
+                    print(f"Different codon positions for the area, adding {bound-prev_bounds} to mismatch values")
+                    
                 comparison[0]+=bound-prev_bounds
                 codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
                 codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
@@ -202,11 +241,19 @@ def compare_loci(ref, alt, debug, verbose):
             # if only one annotation has a CDS in the comparison area, we add to the first value of the comparison list and update only one codon position
             
             elif(ref_in_CDS[bound_id]):
+                
+                if debug:
+                    print(f"Alternative is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
+                    
                 comparison[0]+=bound-prev_bounds
                 codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
                 
             
             elif(alt_in_CDS[bound_id]):
+                
+                if debug:
+                    print(f"Reference is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
+                    
                 comparison[0]+=bound-prev_bounds
                 codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
                 
@@ -217,10 +264,295 @@ def compare_loci(ref, alt, debug, verbose):
         bound_id += 1
         
     if verbose:
-        print(f"Result of the comparison of the locus : {str(comparison)} ( {comparison[1]} matches and {comparison[0]} mismatches )\n")
+        print(f"\nResult of the comparison of the locus : {comparison[1]} matches and {comparison[0]} mismatches\n")
         
     return comparison
 
+
+## This function expects a list of all CDS coordinates (start and end) of a locus. It returns a list indicating the start of the locus as first value and a string describing the codon position of each nucleotide (1,2,3, or 0 in the case of a non-CDS nucleotide) of the locus/gene as second value
+#
+# @param borders The list containing all start-end coordinates of the annotation's locus' CDS
+#
+# @see get_gff_borders()
+#
+# @return Returns a list describing the start of the locus and the annotation structure of the locus
+def create_vectors(borders, debug, verbose):
+    
+    vectors = [0, ""] # this variable takes in the strings of gene annotation structure for each gene
+    
+    if verbose:
+        print("\nConverting the coordinates of the locus into a structure string")
+    
+    # if the locus is on the direct strand
+    if borders[1] > borders[0]:
+        
+        if debug:
+            print(f"\nLocus is on direct strand, retrieving start of locus : {borders[0]}")
+        
+        # we get the start of the locus
+        vectors[0] = borders[0]
+        
+    # if the locus is on the reverse strand
+    else:
+        
+        if debug:
+            print(f"\nLocus is on reverse strand, retrieving start of locus from end of coordinates list : {borders[-1]}")
+        
+        # we get the start (the last CDS value since the locus is reversed) of the locus
+        vectors[0] = borders[-1]
+    
+    # this variable takes the codon position of the next CDS nucleotide and loops
+    # between the values 1, 2, and 3
+    codon_pos = 1 
+    
+    # this variable indicates if we are in an exon/CDS or not.
+    # it is incremented at each transition between annotations (each element in the 'borders' list)
+    # to represent the exon-intron change along the gene
+    in_exon = 1
+    
+    if borders[1] > borders[0]:
+    
+        # for each coordinate indexed for this locus in 'borders'
+        for i in range(len(borders)-1):
+        
+            # if we are in a CDS, we append the numbers 1, 2, and 3 (with looping) 
+            if in_exon % 2 == 1:
+            
+                if debug:
+                    print(f"i = {i}")
+                    print("in_exon = True (adding codon positions to structure string)")
+                    print(f"Codon position = {codon_pos}")
+                    
+                # for each nucleotide between this coordinate and the next...
+                for j in range( borders[i+1] - borders[i] ):
+                    
+                    # we append the codon position to the structure string 
+                    vectors[1] += str(codon_pos)
+                    
+                    # we increment the codon position with looping
+                    if codon_pos == 3:
+                        codon_pos = 1
+                    else:
+                        codon_pos += 1
+                        
+                if debug:
+                    print(f"New codon position = {codon_pos}")
+                    print(f"New structure string : {vectors[1]}")
+                
+                
+            # if we are not in a CDS, we append 0
+            if in_exon % 2 == 0:
+                
+                if debug:
+                    print(f"i = {i}")
+                    print("in_exon = False (adding 0 to structure string)")
+                
+                # for each nucleotide between this coordinate and the next...
+                for j in range( borders[i+1] - borders[i] ):                
+                
+                    vectors[1] += "0"
+                    
+                if debug:
+                    print(f"New structure string : {vectors[1]}")
+            
+            in_exon += 1    
+        
+    elif borders[1] < borders[0]:
+
+        # for each coordinate indexed for this locus in 'borders' in reverse order
+        for i in range(len(borders)-1, 0, -1):
+        
+            # if we are in a CDS, we append the numbers 1, 2, and 3 (with looping) 
+            if in_exon % 2 == 1:
+                
+                if debug:
+                    print(f"i = {i}")
+                    print("in_exon = True (adding codon positions to structure string)")
+                    print(f"Codon position = {codon_pos}")
+                
+                # for each nucleotide between this coordinate and the next...
+                for j in range( borders[i-1] - borders[i] ):
+                    
+                    # we append the codon position to the structure string 
+                    vectors[1] += str(codon_pos)
+                    
+                    # we increment the codon position with looping
+                    if codon_pos == 3:
+                        codon_pos = 1
+                    else:
+                        codon_pos += 1
+                        
+                if debug:
+                    print(f"New codon position = {codon_pos}")
+                    print(f"New structure string : {vectors[1]}")
+                
+            # if we are not in a CDS, we append 0
+            if in_exon % 2 == 0:
+
+                if debug:
+                    print(f"i = {i}")
+                    print("in_exon = False (adding 0 to structure string)")
+                
+                # for each nucleotide between this coordinate and the next...
+                for j in range( borders[i-1] - borders[i] ):
+                
+                    vectors[1] += "0"
+                    
+                if debug:
+                    print(f"New structure string : {vectors[1]}")
+            
+            in_exon += 1   
+    
+    if verbose:
+        print("\nStructure string of the locus :\n" + vectors[1] + "\n")
+        
+    return vectors
+
+
+## This function expects two structure strings corresponding to two annotations of the same genome, and compares each position of each string to return a list of mismatches (first value of the return list) and matches (secodn value of the return list)
+#
+# @param borders_loc_a List of start position and vector of the locus of the first annotation
+#
+# @param borders_loc_b List of start position and vector of the locus of the second annotation
+#
+# @see create_vectors()
+#
+# @return Returns a list describing the matchs/mismatchs for each position of the strings
+#
+# @remark This function doesn't expect any annotation to be a 'reference'
+def old_compare_loci(borders_loc_a, borders_loc_b, debug, verbose): 
+ 
+    loc_a = create_vectors(borders_loc_a, debug, verbose)
+    loc_b = create_vectors(borders_loc_b, debug, verbose)
+    
+    if debug:
+        print(f"loc_a = {loc_a}")
+        print(f"loc_b = {loc_b}")
+ 
+    comp_list = [0,0]
+    
+    # we get the minimum start positions, maximum end positions, and position difference of the loci
+    minv = min(loc_a[0], loc_b[0]) # minimum start position
+    diff = abs(loc_a[0] - loc_b[0]) # difference between the start positions
+    
+    if debug:
+        print(f"minv = {minv}")
+        print(f"diff = {diff}")
+    
+    # if the two loci don't start at the same position
+    if loc_a[0] != loc_b[0]:
+        
+        if debug:
+            print("The two loci do not start at the same position")
+        
+        # if the locus 'a' starts before the start of locus 'b'
+        if minv == loc_a[0]:
+            
+            if debug:
+                print("Locus 'a' start before locus 'b'")
+            
+            # for every comparison of the numbers at each position in the two strings, we increment by one the match or mismatch value of the return list. We account for the difference in start positions by adding the difference to the locus 'a' codon position retrieval
+            for i in range( min(len(loc_a[1]), len(loc_b[1])) + diff ):
+                
+                a_in_CDS = loc_a[1][i] in ("1", "2", "3")
+                b_in_CDS = loc_b[1][i-diff] in ("1", "2", "3")
+                
+                if debug:
+                    print("Range of loop = {min(len(loc_a[1]), len(loc_b[1])) + diff}")
+                    print(f"i = {i}")
+                    print(f"a_in_CDS = {a_in_CDS}")
+                    print(f"b_in_CDS = {b_in_CDS}")
+                
+                # if we are outside the coordinates of locus 'b' and locus 'a' has a CDS in this position, we increment the mismatch count; else we do nothing
+                if i<diff and a_in_CDS:
+                    
+                    comp_list[0] += 1
+                
+                # if we are outside the coordinates of locus 'a' and locus 'b' has a CDS in this position, we increment the mismatch count; else we do nothing
+                elif i >= len(loc_a[1]) and b_in_CDS:
+                    
+                    comp_list[0] += 1
+                
+                # if we are in both coordinates, we increment the match count if both have the same non-zero value at the current position, else we increment the mismatch value if they don't have both '0' as a value
+                else:
+                    
+                    if a_in_CDS and loc_a[1][i] == loc_b[1][i-diff]:
+                        
+                        comp_list[1] +=1
+                
+                    elif a_in_CDS or b_in_CDS:
+                
+                        comp_list[0] += 1
+        
+        # if the locus'a' starts after the start of locus 'b'
+        elif minv == loc_b[0]:
+            
+            if debug:
+                print("Locus 'b' starts before locus 'a'")
+            
+            # for every comparison of the numbers at each position in the two strings, we increment by one the match or mismatch value of the return list. We account for the difference in start positions by adding the difference to the locus 'b' codon position retrieval
+            for i in range( min(len(loc_a[1]), len(loc_b[1])) + diff ):
+                
+                a_in_CDS = loc_a[1][i-diff] in ("1", "2", "3")
+                b_in_CDS = loc_b[1][i] in ("1", "2", "3")
+                
+                if debug:
+                    print("Range of loop = {min(len(loc_a[1]), len(loc_b[1])) + diff")
+                    print(f"i = {i}")
+                    print(f"a_in_CDS = {a_in_CDS}")
+                    print(f"b_in_CDS = {b_in_CDS}")
+                    
+                # if we are outside the coordinates of locus 'a' and locus 'b' has a CDS in this position, we increment the mismatch count; else we do nothing
+                if i<diff and b_in_CDS:
+                    
+                    comp_list[0] += 1
+                    
+                # if we are outside the coordinates of locus 'b' and locus 'a' has a CDS in this position, we increment the mismatch count; else we do nothing
+                elif i >= len(loc_b[1]) and a_in_CDS:
+                    
+                    comp_list[0] += 1
+            
+                # if we are in both coordinates, we increment the match count if both have the same non-zero value at the current position, else we increment the mismatch value if they don't have both '0' as a value
+                else:
+                    
+                    if a_in_CDS and loc_a[1][i-diff] == loc_b[1][i]:
+                        
+                        comp_list[1] +=1
+                
+                    elif a_in_CDS or b_in_CDS:
+                
+                        comp_list[0] += 1
+    
+    # if the two loci start at the same position
+    else:
+        
+        if debug:
+            print("The two loci start at the same position")
+    
+        # for every comparison of the numbers at each position in the two strings, we increment by the match value of the return list of the two string values at this position are equal, or the mismatch value if they are not or if only one annotation has a CDS at this position
+        for i in range(len(loc_a[1])):
+            
+            a_in_CDS = loc_a[1][i] in ("1", "2", "3")
+            b_in_CDS = loc_b[1][i] in ("1", "2", "3")
+            
+            if debug:
+                print(f"\nRange of loop = {len(loc_a[1])}")
+                print(f"i = {i}")
+                print(f"a_in_CDS = {a_in_CDS}")
+                print(f"b_in_CDS = {b_in_CDS}")
+            
+            if a_in_CDS and loc_a[1][i] == loc_b[1][i]:
+                          
+                comp_list[1] += 1
+                
+            elif a_in_CDS or b_in_CDS:
+                
+                comp_list[0] += 1
+        
+    if verbose:
+        print(f"\nResult of the comparison of the locus : {comp_list[1]} matches and {comp_list[0]} mismatches" )
+    
+    return comp_list
 
 ## Main function of this program. Given a reference and alternative path, gets the corresponding GFF files and compares the two annotations to return their structure's identity level
 #
@@ -236,7 +568,7 @@ def compare_loci(ref, alt, debug, verbose):
 # string identity between each locus of each annotation compared to those of the reference
 #
 # @remark Loci found in one annotation but not the other are ignored
-def annotation_comparison(ref_path, alt_path, debug, verbose):
+def annotation_comparison(ref_path, alt_path, debug, verbose, create_strings):
 
     # get all annotation files and generate the annotation data structure
     ref_annotations = get_gff_borders(ref_path, debug, verbose)
@@ -250,10 +582,19 @@ def annotation_comparison(ref_path, alt_path, debug, verbose):
         # if the two loci are on the same strand (same strand number)...
         if ref_annotations[locus][0] == alt_annotations[locus][0]:
         
-            # construct the comparison matrix for the reference and alternative locus annotation
-            if verbose:
-                print("\nStarting the comparison of the locus " + locus + "\n")
-            comp_res = compare_loci(ref_annotations[locus][1], alt_annotations[locus][1], debug, verbose)
+            # construct the comparison matrix for the reference and alternative locus annotation...
+              
+            # using the new version
+            if create_strings == False:
+                if verbose:
+                    print("\nStarting the comparison of the locus " + locus + " using the new program version\n")
+                comp_res = compare_loci(ref_annotations[locus][1], alt_annotations[locus][1], debug, verbose)
+                
+            # using the old version
+            else:
+                if verbose:
+                    print("\nStarting the comparison of the locus " + locus + " using the old program version (structure strings creation)\n")
+                comp_res = old_compare_loci(ref_annotations[locus][1], alt_annotations[locus][1], debug, verbose)
             
             # compute identity from the matrix and index it in the identities dictionary
             identities[locus] = round( float(comp_res[1]) / (float(comp_res[1]) + float(comp_res[0]) ) * 100 , 1 )
@@ -275,14 +616,14 @@ def annotation_comparison(ref_path, alt_path, debug, verbose):
 def usage():
     
     # displayed when '-h' or '--help' is given, or when an invalid script call happens
-    print("Syntax : path/to/main.py [ -h/--help -d/--debug -v/--verbose ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ] ")
+    print("Syntax : path/to/main.py [ -h/--help -d/--debug -v/--verbose -c/--create_strings ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ] ")
     
 
 def main():
     
     # we retrieve all script call options
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hdvcr:a:", ["help", "debug", "verbose", "chatty", "reference=", "alternative="])
+        opts, args = getopt.getopt(sys.argv[1:], "hdvor:a:", ["help", "debug", "verbose", "old_version", "reference=", "alternative="])
     except getopt.GetoptError as err:
         print(err)
         usage()
@@ -292,15 +633,20 @@ def main():
     debug = False
     verbose = False
     
-    # we get the values given for each parameter
+    # boolean indicating which version of the program to use: False = new version without any structure string creation, True = 'old' version with creation of structure strings to compare the loci of the annotations
+    create_strings = False
+    
+    # we retrieve the values given for each parameter
     for o, a in opts:
-        if o in ("-d", "--debug"):
+        if o in ("-h", "--help"):
+            usage()
+            sys.exit()
+        elif o in ("-d", "--debug"):
             debug = True
         elif o in ("-v", "--verbose"):
             verbose = True
-        elif o in ("-h", "--help"):
-            usage()
-            sys.exit()
+        elif o in ("-o", "--old_version"):
+            create_strings = True
         elif o in ("-r", "--reference"):
             ref_path = a
         elif o in ("-a", "--alternative"):
@@ -309,9 +655,9 @@ def main():
             assert False, "unhandled option"
             
     # call of the annotation_comparison function
-    comparison = annotation_comparison(ref_path, alt_path, debug, verbose)
+    comparison = annotation_comparison(ref_path, alt_path, debug, verbose, create_strings)
     
-    print("Result of the comparison of all loci of both annotations :\n")
+    print("\nResult of the comparison of all loci of both annotations :\n")
     pprint.pprint(comparison)
     
 if __name__ == "__main__":
