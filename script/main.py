@@ -12,9 +12,172 @@ Created on Thu May  2 11:57:29 2024
 # displays the computed distances between all annotation pairs, and returns a dictionary of lists of
 # lists detailing the matchs/mismatchs between the two annotations' structure string
 
+
 import getopt
 import sys
 import pprint
+
+
+## This function creates a list of all the locus coordinates for both annotations and sorts it in ascending order by their lower bound position. 
+#
+# @param dict_ref Dictionary containing all loci of the reference annotation, as returned by the 'get_gff_borders' function
+#
+# @param dict_alt Dictionary containing all loci of the alternative annotation, as returned by the 'get_gff_borders' function
+#
+# @param debug If True, triggers display of many messages intended for debugging the program
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
+#
+# @see get_gff_borders()
+#
+# @return Returns a list of tuples containing the lower and upper bounds of each locus, its locus ID, and a boolean indicating if the locus was retrieved from the reference (True) or the alternative (False)
+def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
+    
+    if verbose:
+        print("\nConstructing the locus order list of the two annotations")
+ 
+    locus_order = []
+    
+    # get all reference loci bounds and locus ids
+    for locus_id, borders in dict_ref.items():
+        locus_order.append((borders[1][0], borders[1][-1], locus_id, True)) # 'True' indicates the tuple is from the reference
+ 		
+    # get all alternative loci bounds and locus ids
+    for locus_id, borders in dict_alt.items():
+        locus_order.append((borders[1][0], borders[1][-1], locus_id, False)) # 'False' indicates the tuple is from the alternative
+        
+    if verbose:
+        print("\nSorting the locus order list")
+ 	
+    # sorts the list using the first valeu of each tuple (lower bound of the locus)
+    locus_order.sort()
+    
+    if debug:
+        print(f"\nlocus order list = {locus_order}")
+     
+    return locus_order
+
+
+## This function merges two loci from an annotation dictionary by appending each element (coordinate) of the second locus to the list of coordinates of the first locus and deleting the locus fro mthe annotation
+#
+# @param annotation_dict The dictionary of the annotation to modifiy, as returned by the function 'get_gff_borders'
+#
+# @param loc_a_id Locus id of the locus into which the other is merged
+#
+# @param loc_b_id Locus id of the locus to merge into the other and delete
+#
+# @param debug If True, triggers display of many messages intended for debugging the program
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
+#
+# @see get_gff_borders()
+#
+# @remark This function returns nothing and is expected to be used without affectation. This function modifies the original dictionary passed and deletes information from it.
+#
+# @return Returns nothing
+def locus_append_delete(annotation_dict, loc_a_id, loc_b_id, debug=False, verbose=False):
+    
+    if verbose:
+        print(f"\nFusing the locus {loc_b_id} into the locus {loc_a_id}")
+    
+    # append all coordinates of 'locus_b' to the list of 'locus a'
+    for i in range(len(annotation_dict[loc_b_id][1])):
+        
+        annotation_dict[loc_a_id][1].append(annotation_dict[loc_b_id][1][i])
+        
+    # delete 'locus b' from the dictionary
+    del annotation_dict[loc_b_id]
+
+
+## This function fuses all overlapping loci of both annotation dictionaries by appending their coordinates.
+#
+# @param dict_ref Dictionary of the reference annotation, as returned by the function 'get_gff_borders'
+#
+# @param dict_alt Dictionary of the alternative annotation, as returned by the function 'get_gff_borders'
+#
+# @param locus_order List of tuples of lower and upper bounds, locus id, and boolean of reference origin for each locus of both annotations, as returned by the function 'annotation_sort'
+#
+# @see get_gff_borders()
+# @see annotation_sort()
+#
+# @remark This function returns nothing and is expected to be used without affectation. This function modifies the original dictionaries passed and deletes information from them.
+def fuse_superloci(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
+
+    # for each locus in the loci list...
+    for i in range(len(locus_order)-1):   
+        locus_id = locus_order[i][2] # identifier of the current locus
+        is_ref = locus_order[i][3] # boolean indicating if current locus is from the reference
+        locus_borders = [locus_order[i][0], locus_order[i][1]] # lower and upper bounds of the current locus
+        if debug:
+            print(f"\nlocus borders = {locus_borders}")
+	 
+        # while we did not reach the end of the list and a 'stop signal' (j=-1) is not given, for each locus after the current one...
+        j = 1
+        while j != -1 and j <= len(locus_order)-i-1:
+            next_lower_border = locus_order[i+j][0] # lower bound of the locus pointed to by 'j'
+            next_is_ref = locus_order[i+j][3] # boolean indicating if locus pointed by 'j' is from the reference
+            if debug:
+                print(f"\nj = {j}")
+                print(f"next lower border = {next_lower_border}")
+            
+            if is_ref:
+                if debug:
+                    print("current is in ref")
+                
+                if next_lower_border <= locus_borders[1]: # if the lower bound of the locus pointed by 'j' is inside the current locus' bounds...
+                    if debug:
+                        print("next locus found in current borders")
+                    new_upper_border = locus_order[i+j][1]
+                    locus_borders[1] = new_upper_border # upper bound of the current locus is extended to upper bound of the 'j' locus               
+                    
+                    # if the locus pinted by 'j' is in the reference, it is merged with the current one, else we do nothing
+                    if next_is_ref:
+                        if debug:
+                            print("next is in ref, fusing with current locus")
+                        next_locus_id = locus_order[i+j][2]
+                        locus_append_delete(dict_ref, locus_id, next_locus_id, debug, verbose)
+                    else:
+                        if debug:
+                            print("next is not in ref")
+                    if debug:
+                        print(f"new locus borders = {locus_borders}")
+                    j += 1
+                        
+                else: # if no locus is found in the current locus bounds, a 'stop signal' is given to stop the 'j' loop
+                    if debug:
+                        print("next locus not found in current borders, continuing")
+                    j = -1
+                
+            else:
+                if debug:
+                    print("current is in alt")
+                
+                if next_lower_border <= locus_borders[1]: # if the lower bound of the locus pointed by 'j' is inside the current locus' bounds...
+                    if debug:
+                        print("next locus found in current borders")
+                    new_upper_border = locus_order[i+j][1]
+                    locus_borders[1] = new_upper_border # upper bound of the current locus is extended to upper bound of the 'j' locus
+                    
+                    # if the locus pinted by 'j' is in the alternative, it is merged with the current one, else we do nothing
+                    if not next_is_ref:
+                        if debug:
+                            print("next is in alt, fusing with current locus")
+                        next_locus_id = locus_order[i+j][2]
+                        locus_append_delete(dict_alt, locus_id, next_locus_id, debug, verbose)
+                    else:
+                        if debug:
+                            print("next is not in alt")
+                    if debug:
+                        print(f"new locus borders = {locus_borders}")
+                    j += 1
+                else: # if no locus is found in the current locus bounds, a 'stop signal' is given to stop the 'j' loop
+                    if debug:
+                        print("next locus not found in current borders, continuing")
+                    j = -1
+                     
+        if debug:
+            print(dict_ref)
+            print(dict_alt)
 
 
 ## This function expects a string corresponding to the file path of the GFF file to read, and returns
@@ -29,8 +192,8 @@ import pprint
 #
 # @param verbose If True, triggers display of more information messages. Default is 'False'
 #
-# @return Returns a dictionary of lists containing the number associated with the strand of the locus (1 : direct, 0: reverse) and a list containing the start and end coordinates of all CDS for each locus
-def get_gff_borders(path, debug, verbose):
+# @return Returns a dictionary of lists containing the number associated with the strand of the locus (1 : direct, 0: reverse) and a list containing the start and end coordinates of all CDS for each locus (identified with the locus ID)
+def get_gff_borders(path, debug=False, verbose=False):
     
     file = open(path, "r") # the file to read
     borders = {} # this variable takes in the borders of each CDS of each gene
@@ -75,8 +238,12 @@ def get_gff_borders(path, debug, verbose):
 #
 # @param alt List of CDS coordinates of the alternative annotation returned
 #
+# @param debug If True, triggers display of many messages intended for debugging the program
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
+#
 # @return Returns a list of coordinates compiling all coordinates from both initial lists in ascending order
-def get_area_bounds(ref, alt, debug, verbose):
+def get_area_bounds(ref, alt, debug=False, verbose=False):
     
     if verbose:
         print("\nCreating comparison areas for the two annotations")
@@ -128,8 +295,12 @@ def get_area_bounds(ref, alt, debug, verbose):
 #
 # @param area_bounds List of area bounds
 #
+# @param debug If True, triggers display of many messages intended for debugging the program
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
+#
 # @return Returns a list indicating for each couple of bounds if they include a CDS ('True') or not ('False')
-def is_in_cds(cds_bounds, area_bounds, debug, verbose):
+def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
     
     cds_id=0
     i=0
@@ -193,7 +364,7 @@ def is_in_cds(cds_bounds, area_bounds, debug, verbose):
 #
 # @return Returns a list indicating the number of codon position mismatches (first position) and matches (second position) between the two border lists
 #
-def compare_loci(ref, alt, debug, verbose):
+def compare_loci(ref, alt, debug=False, verbose=False):
     
     # we retrieve the bounds of all areas delimited by all the CDS coordinates of both border lists
     area_bounds = get_area_bounds(ref, alt, debug, verbose)
@@ -296,7 +467,7 @@ def compare_loci(ref, alt, debug, verbose):
 # @see get_gff_borders()
 #
 # @return Returns a list describing the start of the locus and the annotation structure of the locus
-def create_vectors(borders, debug, verbose):
+def create_vectors(borders, debug=False, verbose=False):
     
     vectors = [0, ""] # this variable takes in the strings of gene annotation structure for each gene
     
@@ -440,7 +611,7 @@ def create_vectors(borders, debug, verbose):
 # @return Returns a list describing the matchs/mismatchs for each position of the strings
 #
 # @remark This function doesn't expect any annotation to be a 'reference'
-def old_compare_loci(borders_loc_a, borders_loc_b, debug, verbose): 
+def old_compare_loci(borders_loc_a, borders_loc_b, debug=False, verbose=False): 
  
     loc_a = create_vectors(borders_loc_a, debug, verbose)
     loc_b = create_vectors(borders_loc_b, debug, verbose)
@@ -604,7 +775,7 @@ def old_compare_loci(borders_loc_a, borders_loc_b, debug, verbose):
 # string identity between each locus of each annotation compared to those of the reference
 #
 # @remark Loci found in one annotation but not the other are ignored
-def annotation_comparison(ref_path, alt_path, debug, verbose, create_strings):
+def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create_strings=False):
 
     # get all annotation files and generate the annotation data structure
     ref_annotations = get_gff_borders(ref_path, debug, verbose)
@@ -614,8 +785,6 @@ def annotation_comparison(ref_path, alt_path, debug, verbose, create_strings):
     
     # for each locus of the reference annotation...
     for locus in ref_annotations:
-    
-            
     
         # if the locus exists in the alternative annotation and if the two loci are on the same strand (same strand number)...
         if locus in alt_annotations and ref_annotations[locus][0] == alt_annotations[locus][0]:
@@ -645,11 +814,13 @@ def annotation_comparison(ref_path, alt_path, debug, verbose, create_strings):
         
             identities[locus] = 0.0
             
-            if verbose and locus in alt_annotations:
-                print("\nLocus predicted on a different strand from the reference in the alternative. Identity : 0%\n")
-            else:
-                print("\nLocus is not predicted in alternative annotation. Identity: 0%\n")
-            
+            if verbose:
+                
+                if locus in alt_annotations:
+                    print("\nAlternative locus is predicted on a different strand from the reference. Identity : 0%\n")
+                else:
+                    print("\nLocus is not predicted in alternative annotation. Identity: 0%\n")
+                
     return identities
 
 
