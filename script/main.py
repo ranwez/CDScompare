@@ -615,8 +615,10 @@ def annotation_comparison(ref_path, alt_path, debug, verbose, create_strings):
     # for each locus of the reference annotation...
     for locus in ref_annotations:
     
-        # if the two loci are on the same strand (same strand number)...
-        if ref_annotations[locus][0] == alt_annotations[locus][0]:
+            
+    
+        # if the locus exists in the alternative annotation and if the two loci are on the same strand (same strand number)...
+        if locus in alt_annotations and ref_annotations[locus][0] == alt_annotations[locus][0]:
         
             # construct the comparison matrix for the reference and alternative locus annotation...
               
@@ -638,13 +640,15 @@ def annotation_comparison(ref_path, alt_path, debug, verbose, create_strings):
             if verbose:
                 print("Finished computing the identity of the annotations of locus " + locus + "\n")
              
-        # if the two loci are on different strands, we assign them 0% identity
+        # if the two loci are on different strands or if the locus doesn't exist in the alternative annotation, we assign 0% identity to the locus
         else:
         
             identities[locus] = 0.0
             
-            if verbose:
+            if verbose and locus in alt_annotations:
                 print("\nLocus predicted on a different strand from the reference in the alternative. Identity : 0%\n")
+            else:
+                print("\nLocus is not predicted in alternative annotation. Identity: 0%\n")
             
     return identities
 
