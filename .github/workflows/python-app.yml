@@ -49,6 +49,8 @@ jobs:
         sudo apt install texlive-latex-extra
     - name: Run Doxygen
       uses: mattnotmitt/doxygen-action@v1.2.1
+      with:
+        working-directory: ./documentation/
     - name: Generate and move PDF documentation
       run: |
         cd latex/
