@@ -1,17 +1,29 @@
 
 # Annotation Comparison
 
-This is the repository for the 2024 internship of Vetea Jacot in the GE²pop team of the research unit AGAP. The goal of the program defined in this repo is to enable the comparison of multiple genome annotations to determine the closest automatic annotation to a reference. This program takes into account multiple caracteristics of the problem, for exemple the reading frames of a locus.
+This is the repository for the 2024 internship of Vetea Jacot in the GE²pop team of the research unit AGAP. The goal of the program defined in this repo is to enable the comparison of two genome annotations in GFF format (one reference and one alternative) to determine the structure identity of the alternative to the reference. This program takes into account multiple caracteristics of the problem, for exemple the reading frames of a locus and overlapping loci.
+
 
 ## Running the program
 
 Run following command :
 
 ```
-path/to/main.py [ -h/--help -d/--debug -v/--verbose ] [ -i/--input <input_folder_path> ] [ -r/--reference <reference_file_name> ]
+path/to/main.py [ -h/--help -d/--debug -v/--verbose -o/--old_version ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ]
 ```
 
-where <input_folder_path> is the path to the folder containing all GFF files to analyze (including the reference file), and <reference_file_name> is the name of the reference file *with its extension* (exemple : 'basic_test'). These two parameters are required, while all others are not.
+where <reference_file_path> is the path to the file containing the reference annotation to analyze, and <alternative_file_path> is the path to the file containing the alternative annotation. These two parameters are required, while all others are not.
+
+options:
+ 
+-h/--help : displays script usage
+
+-d/--debug : displays debug information during execution
+
+-v/--verbose : displays messages indicating progress during execution
+
+-o/--old_version : triggers use of the old program version which uses comparison of entire locus structure strings to compute identity, which can take up more memory during execution
+
 
 ## Testing the program
 
