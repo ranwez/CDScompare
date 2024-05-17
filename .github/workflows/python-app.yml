@@ -38,3 +38,20 @@ jobs:
       run: |
         pip install pytest pytest-cov
         pytest
+  documentation:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install LaTex
+      run: |
+        sudo apt install texlive-latex-extra
+    - name: Run Doxygen
+      uses: mattnotmitt/doxygen-action@v1.2.1
+    - name: Generate and move PDF documentation
+      run: |
+        cd latex/
+        make
+        cp refman.pdf ../
+        cd ../
