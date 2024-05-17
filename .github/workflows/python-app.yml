@@ -53,7 +53,7 @@ jobs:
         working-directory: ./documentation/
     - name: Generate and move PDF documentation
       run: |
-        cd latex/
+        cd documentation/latex/
         make
         cp refman.pdf ../
-        cd ../
+        cd ../../
