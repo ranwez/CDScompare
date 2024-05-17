@@ -51,10 +51,7 @@ def test_get_gff_borders():
         
         "identical-2-loci" : ["./data/tests/identical-2-loci_test.gff3",
                               {'chr2A_00611930': [1,[100, 130, 150, 210, 240, 300]],
-                               'chr2A_00620000': [1,[600, 700, 800, 900]]}],
-
-        "minus-locus-2-loci" : ["./data/tests/minus-locus-2-loci_test.gff3",
-                              {'chr2A_00611930': [1,[100, 130, 150, 210, 240, 300]]}]
+                               'chr2A_00620000': [1,[600, 700, 800, 900]]}]
         }
     
     print("\n*************Testing the get_gff_borders function*************")
@@ -68,6 +65,122 @@ def test_get_gff_borders():
         print(test_dict[test][1])
         assert result == test_dict[test][1]
         
+        
+# test function for the 'main.py' function 'annotation_sort' (locus list creation and sorting function)
+def test_annotation_sort():
+    
+    # dictionary of inputs and expected ouputs for each test file for the 'main.py' function 'annotation_sort' (locus list creation and sorting function)
+    test_dict = {
+        "overlapping-loci" : [{'chr_2A_1000' : [1,[50, 150]], 
+                    'chr_2A_2000' : [1,[200, 350]],
+                    'chr_2A_3000' : [1,[400, 550]],
+                    'chr_2A_4000' : [1,[650, 700]],
+                    'chr_2A_5000' : [1,[750, 800]]},
+                              {'chr_2A_1000' : [1,[100, 250]],
+                                          'chr_2A_2000' : [1,[300, 450]],
+                                          'chr_2A_3000' : [1,[500, 600]],
+                                          'chr_2A_4000' : [1,[650, 700]],
+                                          'chr_2A_5000' : [1,[750, 780]],
+                                          'chr_2A_6000' : [1,[790, 850]]},
+                              [(50, 150, 'chr_2A_1000', True), 
+                               (100, 250, 'chr_2A_1000', False), 
+                               (200, 350, 'chr_2A_2000', True), 
+                               (300, 450, 'chr_2A_2000', False), 
+                               (400, 550, 'chr_2A_3000', True), 
+                               (500, 600, 'chr_2A_3000', False), 
+                               (650, 700, 'chr_2A_4000', False), 
+                               (650, 700, 'chr_2A_4000', True), 
+                               (750, 780, 'chr_2A_5000', False), 
+                               (750, 800, 'chr_2A_5000', True), 
+                               (790, 850, 'chr_2A_6000', False)]]
+        }
+    
+    print("\n*************Testing the annotation_sort function*************")
+    
+    for test in test_dict:
+        
+        print(f"\n{test} file test")
+        
+        result = main.annotation_sort(test_dict[test][0], test_dict[test][1], False, False)
+        print(result)
+        print(test_dict[test][2])
+        assert result == test_dict[test][2]
+        
+        
+# test function for the 'main.py' function 'locus_append_delete' (locus fusion in dictionary function)
+def test_locus_append_delete():
+    
+    # dictionary of inputs and expected ouputs for each test file for the 'main.py' function 'locus_append_delete' (locus fusion in dictionary function)
+    test_dict = {
+        'simple' : [{'chr_2A_1000' : [1,[100,200, 300, 400]],
+                    'chr_2A_2000' : [1,[500, 600, 700, 800]]},
+                    'chr_2A_1000',
+                    'chr_2A_2000',
+                    {'chr_2A_1000' : [1,[100,200, 300, 400, 500, 600, 700, 800]]}]
+        }
+        
+    print("\n*************Testing the locus_append_delete function*************")
+    
+    for test in test_dict:
+        
+        print(f"\n{test} test")
+        
+        main.locus_append_delete(test_dict[test][0], test_dict[test][1], test_dict[test][2], False, False)
+        print(test_dict[test][0])
+        print(test_dict[test][3])
+        assert test_dict[test][0] == test_dict[test][3]
+        
+        
+# test function for the 'main.py' function 'fuse_superloci' (overlapping loci fusion function)
+def test_fuse_superloci():
+    
+    # dictionary of inputs and expected ouputs for each test file for the 'main.py' function 'fuse_superloci' (overlapping loci fusion function)
+    test_dict = {
+        'simple' : [{'chr_2A_1000' : [1,[50, 150]], 
+                     'chr_2A_2000' : [1,[200, 350]],
+                     'chr_2A_3000' : [1,[400, 550]],
+                     'chr_2A_4000' : [1,[650, 700]],
+                     'chr_2A_5000' : [1,[750, 800]]},
+                    {'chr_2A_1000' : [1,[100, 250]],
+                     'chr_2A_2000' : [1,[300, 450]],
+                     'chr_2A_3000' : [1,[500, 600]],
+                     'chr_2A_4000' : [1,[650, 700]],
+                     'chr_2A_5000' : [1,[750, 780]],
+                     'chr_2A_6000' : [1,[790, 850]]},
+                    [(50, 150, 'chr_2A_1000', True), 
+                     (100, 250, 'chr_2A_1000', False), 
+                     (200, 350, 'chr_2A_2000', True), 
+                     (300, 450, 'chr_2A_2000', False), 
+                     (400, 550, 'chr_2A_3000', True), 
+                     (500, 600, 'chr_2A_3000', False), 
+                     (650, 700, 'chr_2A_4000', False), 
+                     (650, 700, 'chr_2A_4000', True), 
+                     (750, 780, 'chr_2A_5000', False), 
+                     (750, 800, 'chr_2A_5000', True), 
+                     (790, 850, 'chr_2A_6000', False)],
+                    {'chr_2A_1000': [1, [50, 150, 200, 350, 400, 550]], 
+                     'chr_2A_4000': [1, [650, 700]], 
+                     'chr_2A_5000': [1, [750, 800]]},
+                    {'chr_2A_1000': [1, [100, 250, 300, 450, 500, 600]], 
+                     'chr_2A_4000': [1, [650, 700]], 
+                     'chr_2A_5000': [1, [750, 780, 790, 850]]}]
+        }
+
+    print("\n*************Testing the fuse_superloci function*************")
+    
+    for test in test_dict:
+        
+        print(f"\n{test} test")
+        
+        main.fuse_superloci(test_dict[test][0], test_dict[test][1], test_dict[test][2], False, False)
+        print(test_dict[test][0])
+        print(test_dict[test][3])
+        print("\n")
+        print(test_dict[test][1])
+        print(test_dict[test][4])
+        assert test_dict[test][0] == test_dict[test][3]
+        assert test_dict[test][1] == test_dict[test][4]
+    
 
 # test function for the 'main.py' function 'get_area_bounds' (CDS coordinates fusion function)
 def test_get_area_bounds():

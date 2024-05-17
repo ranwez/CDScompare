@@ -18,6 +18,72 @@ import sys
 import pprint
 
 
+## This function expects a string corresponding to the file path of the GFF file to read, and returns
+# a dictionary of lists with the keys corresponding to a locus identifier, and the values 
+# corresponding to a list of a number indicating the strand supporting the locus (1 for direct 
+# strand, 0 for reverse strand) and a list of the start and end position of each coding 
+# sequence ('CDS') of the locus 
+#
+# @param path Path of the file to read
+#
+# @param debug If True, triggers display of many messages intended for debugging the program
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
+#
+# @return Returns a dictionary of lists containing the number associated with the strand of the locus (1 : direct, 0: reverse) and a list containing the start and end coordinates of all CDS for each locus (identified with the locus ID)
+def get_gff_borders(path, debug=False, verbose=False):
+    
+    try:    
+        file = open(path, "r") # the file to read
+    except FileNotFoundError:
+        print(f"\nget_gff_borders() function error : file '{path}' does not exist or cannot be read from\n")
+        sys.exit(2)
+    
+    borders = {} # this variable takes in the borders of each CDS of each gene
+    locus_id = "" # the current gene being analyzed
+    
+    for l in file:
+
+        # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
+        if str(l.split("\t")[2]) == "gene": 
+            
+            if locus_id != "":
+                if borders[locus_id] == [1, []]:
+                    print(f"\nget_gff_borders() function error : no coding sequence (CDS) could be found for the locus '{locus_id}'\n")
+                    sys.exit(1)
+            
+            locus_id = l.split("\t")[8].split("\n")[0][3:]
+            
+            # the locus list is intialised with a strand number of '1', which is the corrected if necessary
+            borders[locus_id] = [1, []]
+            
+            if verbose :
+                print("\nReading the locus " + locus_id)
+
+        # if we encounter a CDS, we add its start and end positions to corresponding gene key in 'borders'
+        if str(l.split("\t")[2]) == "CDS":
+            
+            borders[locus_id][1].append(int(l.split("\t")[3]))
+            borders[locus_id][1].append(int(l.split("\t")[4]))
+            
+            if verbose:
+                print("Adding borders to " + locus_id + " : " + l.split("\t")[3] + ", " + l.split("\t")[4])
+                
+            # if the retrieved borders indicate the locus is on the reverse strand, we change the strand number to '0'
+            if borders[locus_id][0] == 1 and borders[locus_id][1][1] < borders[locus_id][1][0]:
+                
+                borders[locus_id][0] = 0
+                
+    if borders == {}:
+        print(f"\nget_gff_borders() function error : no locus could be found in file '{path}'\n")
+        sys.exit(1)
+        
+    file.close()
+    
+    # we return the entire dictionary with all borders
+    return borders
+
+
 ## This function creates a list of all the locus coordinates for both annotations and sorts it in ascending order by their lower bound position. 
 #
 # @param dict_ref Dictionary containing all loci of the reference annotation, as returned by the 'get_gff_borders' function
@@ -49,7 +115,7 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
     if verbose:
         print("\nSorting the locus order list")
  	
-    # sorts the list using the first valeu of each tuple (lower bound of the locus)
+    # sorts the list using the first value of each tuple (lower bound of the locus)
     locus_order.sort()
     
     if debug:
@@ -195,58 +261,6 @@ def fuse_superloci(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
             print(dict_ref)
             print(dict_alt)
     print("\n")
-
-
-## This function expects a string corresponding to the file path of the GFF file to read, and returns
-# a dictionary of lists with the keys corresponding to a locus identifier, and the values 
-# corresponding to a list of a number indicating the strand supporting the locus (1 for direct 
-# strand, 0 for reverse strand) and a list of the start and end position of each coding 
-# sequence ('CDS') of the locus 
-#
-# @param path Path of the file to read
-#
-# @param debug If True, triggers display of many messages intended for debugging the program
-#
-# @param verbose If True, triggers display of more information messages. Default is 'False'
-#
-# @return Returns a dictionary of lists containing the number associated with the strand of the locus (1 : direct, 0: reverse) and a list containing the start and end coordinates of all CDS for each locus (identified with the locus ID)
-def get_gff_borders(path, debug=False, verbose=False):
-    
-    file = open(path, "r") # the file to read
-    borders = {} # this variable takes in the borders of each CDS of each gene
-    locus_id = "" # the current gene being analyzed
-    
-    for l in file:
-
-        # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
-        if str(l.split("\t")[2]) == "gene": 
-            
-            locus_id = l.split("\t")[8].split("\n")[0][3:]
-            
-            # the locus list is intialised with a strand number of '1', which is the corrected if necessary
-            borders[locus_id] = [1, []]
-            
-            if verbose :
-                print("\nReading the locus " + locus_id)
-
-        # if we encounter a CDS, we add its start and end positions to corresponding gene key in 'borders'
-        if str(l.split("\t")[2]) == "CDS":
-            
-            borders[locus_id][1].append(int(l.split("\t")[3]))
-            borders[locus_id][1].append(int(l.split("\t")[4]))
-            
-            if verbose:
-                print("Adding borders to " + locus_id + " : " + l.split("\t")[3] + ", " + l.split("\t")[4])
-                
-            # if the retrieved borders indicate the locus is on the reverse strand, we change the strand number to '0'
-            if borders[locus_id][0] == 1 and borders[locus_id][1][1] < borders[locus_id][1][0]:
-                
-                borders[locus_id][0] = 0
-        
-    file.close()
-    
-    # we return the entire dictionary with all borders
-    return borders
 
 
 ## This function retrieves all the CDS coordinates from the given lists of coordinates of the reference (@param ref) and of the alternative (@param alt) and includes them in a unique list of coordinates. The coordinates are sorted in ascending order.
@@ -857,7 +871,9 @@ def main():
         usage()
         sys.exit(2)
         
-    # initialisation of the display parameters
+    # initialisation of the display parameters 
+    # debug: display lots of informations on internal function variables and mecanisms, not intended to be used by the end user
+    # verbose: display messages indicating which step the program is currently on, intended to be used when the program is called directly (not integrated in a pipeline or workflow)
     debug = False
     verbose = False
     
@@ -894,5 +910,7 @@ if __name__ == "__main__":
     
 #TODO Is the fact that the loci fused by the 'fuse_superloci' function have the same locus ID guaranted ?
 #TODO Multiple mRNAs problem (only use the alternative mRNA with the maximum identity ?)
+#TODO after running the main program, check if there are loci left in the alternative not present in the reference and assign them 0% identity
+#TODO what identity yields comparing overlapping-loci_test with overlapping-loci-alt_test ? (add unit test)
     
     
