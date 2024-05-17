@@ -103,6 +103,10 @@ def locus_append_delete(annotation_dict, loc_a_id, loc_b_id, debug=False, verbos
 # @remark This function returns nothing and is expected to be used without affectation. This function modifies the original dictionaries passed and deletes information from them.
 def fuse_superloci(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
 
+    # initialisation of the dictionary keeping track of what loci have already been fused
+    already_fused = {'ref': {},
+                     'alt': {}}
+
     # for each locus in the loci list...
     for i in range(len(locus_order)-1):   
         locus_id = locus_order[i][2] # identifier of the current locus
@@ -132,10 +136,16 @@ def fuse_superloci(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
                     
                     # if the locus pinted by 'j' is in the reference, it is merged with the current one, else we do nothing
                     if next_is_ref:
-                        if debug:
-                            print("next is in ref, fusing with current locus")
                         next_locus_id = locus_order[i+j][2]
-                        locus_append_delete(dict_ref, locus_id, next_locus_id, debug, verbose)
+                        
+                        if next_locus_id not in already_fused['ref']:
+                            if debug:
+                                print("next is in ref, fusing with current locus")
+                            locus_append_delete(dict_ref, locus_id, next_locus_id, debug, verbose)
+                            already_fused['ref'][next_locus_id] = True
+                        else:
+                            if debug:
+                                print("next was already fused, continuing...")
                     else:
                         if debug:
                             print("next is not in ref")
@@ -160,10 +170,16 @@ def fuse_superloci(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
                     
                     # if the locus pinted by 'j' is in the alternative, it is merged with the current one, else we do nothing
                     if not next_is_ref:
-                        if debug:
-                            print("next is in alt, fusing with current locus")
                         next_locus_id = locus_order[i+j][2]
-                        locus_append_delete(dict_alt, locus_id, next_locus_id, debug, verbose)
+                        
+                        if next_locus_id not in already_fused['alt']:
+                            if debug:
+                                print("next is in alt, fusing with current locus")
+                            locus_append_delete(dict_alt, locus_id, next_locus_id, debug, verbose)
+                            already_fused['alt'][next_locus_id] = True
+                        else:
+                            if debug:
+                                print("next was already fused, continuing...")
                     else:
                         if debug:
                             print("next is not in alt")
@@ -178,6 +194,7 @@ def fuse_superloci(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
         if debug:
             print(dict_ref)
             print(dict_alt)
+    print("\n")
 
 
 ## This function expects a string corresponding to the file path of the GFF file to read, and returns
@@ -875,6 +892,7 @@ def main():
 if __name__ == "__main__":
     main()
     
-    
+#TODO Is the fact that the loci fused by the 'fuse_superloci' function have the same locus ID guaranted ?
+#TODO Multiple mRNAs problem (only use the alternative mRNA with the maximum identity ?)
     
     
