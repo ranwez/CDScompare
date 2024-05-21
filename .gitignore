@@ -4,3 +4,4 @@ script/__pycache__/
 data/tests/__pycache__/
 data/real_data/
 data/tests/.~lock.test_files.odp#
+results/

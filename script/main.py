@@ -15,12 +15,17 @@ Created on Thu May  2 11:57:29 2024
 
 import getopt
 import sys
+import os
 import pprint
 
 
 ## This function retrieves and returns the id of the structure described from a line read from a GFF file.
 #
 # @param line The line read from the file (string)
+#
+# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
 #
 # @remark This function expects the file to be in GFF format
 #
@@ -57,6 +62,49 @@ def get_structure_id(line, debug=False, verbose=False):
     return structure_id
 
 
+## This function retrieves and returns the parent id of the structure described from a line read from a GFF file.
+#
+# @param line The line read from the file (string)
+#
+# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
+#
+# @remark This function expects the file to be in GFF format, and the parent id field to come after the id field
+#
+# @returns Returns the id of the parent of the structure described by the line
+def get_parent_id(line, debug=False, verbose=False):
+    
+    # try to retrieve the last column, else return an error
+    try: 
+        last_col = line.split("\t")[8]
+    except IndexError:
+        print("\nFile is not in GFF format (no ninth column)")
+        sys.exit(1)
+    
+    # retrieve the id with the rest of the column text (commentaries)
+    try:
+        id_and_rest = last_col.split("=")[2]
+    except IndexError:
+        print("\nNo parent ID field found in last column (ninth column)")
+    
+    structure_id = ""
+    i = 0
+    
+    # for each character from the first, we add it to the locus_id if it is not in a list of special characters. When the first special character is encountered, stop the loop and return the locus_id 
+    while id_and_rest[i] not in [",", "?", ";", ":", "/", "!", "*", "$", "%", "+", "@", "#", "~", "&", "\n", "\t"] :
+        
+        if debug:
+            print(f"Reading character {id_and_rest[i]}")
+        structure_id += id_and_rest[i]
+        i += 1
+         
+    if debug:
+        print(f"Structure parent ID = {structure_id}")
+        
+    return structure_id
+    
+
 ## This function expects a string corresponding to the file path of the GFF file to read, and returns
 # a dictionary of lists with the keys corresponding to a locus identifier, and the values 
 # corresponding to a list of a number indicating the strand supporting the locus (1 for direct 
@@ -65,9 +113,11 @@ def get_structure_id(line, debug=False, verbose=False):
 #
 # @param path Path of the file to read
 #
-# @param debug If True, triggers display of many messages intended for debugging the program
+# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
 #
 # @param verbose If True, triggers display of more information messages. Default is 'False'
+#
+# @remark If the parent ID of a CDS does not match the ID of the previous mRNA (indicating an incorrect file structure), an entry is added to a 'log' file but the function is not interrupted
 #
 # @return Returns a dictionary of lists containing the number associated with the strand of the locus (1 : direct, 0: reverse) and a list containing the start and end coordinates of all CDS for each locus (identified with the locus ID)
 def get_gff_borders(path, debug=False, verbose=False):
@@ -78,8 +128,15 @@ def get_gff_borders(path, debug=False, verbose=False):
         print(f"\nget_gff_borders() function error : file '{path}' does not exist or cannot be read from\n")
         sys.exit(2)
     
+    try:
+        log = open("./results/log.txt", "w") # file in which to write structure errors
+    except FileNotFoundError:
+        os.mkdir("./results/") # create 'results' subdirectory
+        log = open("./results/log.txt", "w") # file in which to write structure errors
+        
     borders = {} # this variable takes in the borders of each CDS of each gene
     locus_id = "" # the current gene being analyzed
+    line_index = 1 # number of the file line currently read
     
     for line in file:
 
@@ -101,6 +158,12 @@ def get_gff_borders(path, debug=False, verbose=False):
         # if we encounter a CDS, we add its start and end positions to the corresponding gene key in 'borders'
         if str(line.split("\t")[2]) == "CDS":
             
+            parent_id = get_parent_id(line, debug, verbose)
+            
+            if parent_id != locus_id:
+                print("\nIncorrect file structure (Parent of CDS is not previous mRNA). See 'log.txt' for more information")
+                log.write("Line " + str(line_index) + " : CDS parent ID (" + parent_id + ") does not match last mRNA ID (" + locus_id +")\n")
+            
             borders[locus_id][1].append(int(line.split("\t")[3]))
             borders[locus_id][1].append(int(line.split("\t")[4]))
             
@@ -111,12 +174,14 @@ def get_gff_borders(path, debug=False, verbose=False):
             if borders[locus_id][0] == 1 and borders[locus_id][1][1] < borders[locus_id][1][0]:
                 
                 borders[locus_id][0] = 0
+        line_index += 1
                 
     if borders == {}:
         print(f"\nget_gff_borders() function error : no locus could be found in file '{path}'\n")
         sys.exit(1)
         
     file.close()
+    log.close()
     
     # we return the entire dictionary with all borders
     return borders
@@ -128,7 +193,7 @@ def get_gff_borders(path, debug=False, verbose=False):
 #
 # @param dict_alt Dictionary containing all loci of the alternative annotation, as returned by the 'get_gff_borders' function
 #
-# @param debug If True, triggers display of many messages intended for debugging the program
+# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
 #
 # @param verbose If True, triggers display of more information messages. Default is 'False'
 #
@@ -170,7 +235,7 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
 #
 # @param loc_b_id Locus id of the locus to merge into the other and delete
 #
-# @param debug If True, triggers display of many messages intended for debugging the program
+# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
 #
 # @param verbose If True, triggers display of more information messages. Default is 'False'
 #
@@ -307,7 +372,7 @@ def fuse_superloci(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
 #
 # @param alt List of CDS coordinates of the alternative annotation returned
 #
-# @param debug If True, triggers display of many messages intended for debugging the program
+# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
 #
 # @param verbose If True, triggers display of more information messages. Default is 'False'
 #
@@ -364,7 +429,7 @@ def get_area_bounds(ref, alt, debug=False, verbose=False):
 #
 # @param area_bounds List of area bounds
 #
-# @param debug If True, triggers display of many messages intended for debugging the program
+# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
 #
 # @param verbose If True, triggers display of more information messages. Default is 'False'
 #
@@ -427,7 +492,7 @@ def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
 #
 # @param alt The alternative annotation's border list
 #
-# @param debug If True, triggers display of many messages intended for debugging the program
+# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
 #
 # @param verbose If True, triggers display of more information messages. Default is 'False'
 #
@@ -830,13 +895,39 @@ def old_compare_loci(borders_loc_a, borders_loc_b, debug=False, verbose=False):
     
     return comp_list
 
+## This function writes the results of the annotation comparison retrieved from the identities dictionary to a new 'results.csv' file
+#
+# @param identities The dictionary containing the locus names and computed identities, as returned by annotation_comparison
+#
+# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
+#
+# @see annotation_comparison()
+#
+def write_results(identities, debug=False, verbose=False):
+    
+    try:
+        results_file = open("./results/results.csv", "w") # file in which to write structure errors
+    except FileNotFoundError:
+        os.mkdir("./results/") # create 'results' subdirectory
+        results_file = open("./results/results.csv", "w") # file in which to write structure errors
+    
+    results_file.write("Locus\tIdentity\n")
+    
+    for locus in identities:
+        results_file.write(str(locus) + "\t" + str(identities[locus]) + "\n")
+        
+    results_file.close()
+    
+
 ## Main function of this program. Given a reference and alternative path, gets the corresponding GFF files and compares the two annotations to return their structure's identity level
 #
 # @param ref_path Path of the GFF file describing the reference annotation
 #
 # @param alt_path Path of the GFF file describing the aternative annotation
 #
-# @param debug If True, triggers display of many messages intended for debugging the program
+# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
 #
 # @param verbose If True, triggers display of more information messages. Default is 'False'
 #
@@ -906,6 +997,8 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
                 print(f"\nLocus {locus} found in alternative annotation, but not in reference. Identity: 0%\n")
             identities[locus] = 0.0
                 
+    write_results(identities, debug, verbose)        
+    
     return identities
 
 
