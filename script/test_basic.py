@@ -18,7 +18,7 @@ import main
 
 # test function for the 'main.py' function 'get_structure_id' (structure id acquisition function)
 def test_get_structure_id():
-    test_dict = {
+    test_dict = {        
         "TRITD_HC" : ["chr2A	PGSB_Jan2017	gene	22128	24635	.	-	.	ID=TRITD2Av1G000030;primconf=HC\n",
                       "TRITD2Av1G000030"],
         
@@ -53,51 +53,51 @@ def test_get_gff_borders():
     # dictionary of inputs and expected ouputs for each test file for the 'main.py' function 'get_gff_borders' (CDS coordinates acquisition function)
     test_dict = {
         "basic" : ["./data/tests/basic_test.gff3", 
-                        {'chr2A_00611930': [1,[100, 130, 150, 210, 240, 300]]}],
+                        {'chr2A_00611930_mrna': [1,[100, 130, 150, 210, 240, 300]]}],
         
         "identical" : ["./data/tests/identical_test.gff3",
-                            {'chr2A_00611930': [1,[100, 130, 150, 210, 240, 300]]}],
+                            {'chr2A_00611930_mrna': [1,[100, 130, 150, 210, 240, 300]]}],
         
         "minus-CDS" : ["./data/tests/minus-CDS_test.gff3",
-                       {'chr2A_00611930': [1,[100, 130, 240, 300]]}],
+                       {'chr2A_00611930_mrna': [1,[100, 130, 240, 300]]}],
         
         "fusion" : ["./data/tests/fusion_test.gff3",
-                    {'chr2A_00611930': [1,[100, 210, 240, 300]]}],
+                    {'chr2A_00611930_mrna': [1,[100, 210, 240, 300]]}],
         
         "shift" : ["./data/tests/shift_test.gff3",
-                   {'chr2A_00611930': [1,[100, 130, 151, 210, 240, 300]]}],
+                   {'chr2A_00611930_mrna': [1,[100, 130, 151, 210, 240, 300]]}],
         
         "reverse" : ["./data/tests/reverse_test.gff3",
-                     {'chr2A_00611930': [0,[300, 240, 210, 150, 130, 100]]}],
+                     {'chr2A_00611930_mrna': [0,[300, 240, 210, 150, 130, 100]]}],
         
         "diff-start-before" : ["./data/tests/diff-start-before_test.gff3",
-                               {'chr2A_00611930': [1,[40, 70, 90, 150, 180, 240]]}],
+                               {'chr2A_00611930_mrna': [1,[40, 70, 90, 150, 180, 240]]}],
         
         "diff-start-after" : ["./data/tests/diff-start-after_test.gff3",
-                              {'chr2A_00611930': [1,[160, 190, 210, 270, 300, 360]]}],
+                              {'chr2A_00611930_mrna': [1,[160, 190, 210, 270, 300, 360]]}],
         
         "basic-2-loci" : ["./data/tests/basic-2-loci_test.gff3",
-                              {'chr2A_00611930': [1,[100, 130, 150, 210, 240, 300]],
-                               'chr2A_00620000': [1,[600, 700, 800, 900]]}],
+                              {'chr2A_00611930_mrna': [1,[100, 130, 150, 210, 240, 300]],
+                               'chr2A_00620000_mrna': [1,[600, 700, 800, 900]]}],
         
         "identical-2-loci" : ["./data/tests/identical-2-loci_test.gff3",
-                              {'chr2A_00611930': [1,[100, 130, 150, 210, 240, 300]],
-                               'chr2A_00620000': [1,[600, 700, 800, 900]]}],
+                              {'chr2A_00611930_mrna': [1,[100, 130, 150, 210, 240, 300]],
+                               'chr2A_00620000_mrna': [1,[600, 700, 800, 900]]}],
         
         "overlapping-loci" : ["./data/tests/overlapping-loci_test.gff3",
-                              {'chr2A_1000' : [1,[50,150]],
-                               'chr2A_2000' : [1,[200, 350]],
-                               'chr2A_3000' : [1,[400, 550]],
-                               'chr2A_4000' : [1,[650, 700]],
-                               'chr2A_5000' : [1,[750, 800]]}],
+                              {'chr2A_1000_mrna' : [1,[50,150]],
+                               'chr2A_2000_mrna' : [1,[200, 350]],
+                               'chr2A_3000_mrna' : [1,[400, 550]],
+                               'chr2A_4000_mrna' : [1,[650, 700]],
+                               'chr2A_5000_mrna' : [1,[750, 800]]}],
         
         "overlapping-loci-alt" : ["./data/tests/overlapping-loci-alt_test.gff3",
-                                  {'chr2A_1000' : [1,[100, 250]],
-                                   'chr2A_2000' : [1,[300, 450]],
-                                   'chr2A_3000' : [1,[500, 600]],
-                                   'chr2A_4000' : [1,[650, 700]],
-                                   'chr2A_5000' : [1,[750, 780]],
-                                   'chr2A_6000' : [1,[790, 850]]}]
+                                  {'chr2A_1000_mrna' : [1,[100, 250]],
+                                   'chr2A_2000_mrna' : [1,[300, 450]],
+                                   'chr2A_3000_mrna' : [1,[500, 600]],
+                                   'chr2A_4000_mrna' : [1,[650, 700]],
+                                   'chr2A_5000_mrna' : [1,[750, 780]],
+                                   'chr2A_6000_mrna' : [1,[790, 850]]}]
         }
     
     print("\n*************Testing the get_gff_borders function*************")
@@ -481,49 +481,49 @@ def test_annotation_comparison():
     test_dict = {
         "basic vs identical" : ["./data/tests/basic_test.gff3", 
                                 "./data/tests/identical_test.gff3",
-                        {'chr2A_00611930': 100.0}],
+                        {'chr2A_00611930_mrna': 100.0}],
         
         "basic vs minus-CDS" : ["./data/tests/basic_test.gff3", 
                                 "./data/tests/minus-CDS_test.gff3",
-                       {'chr2A_00611930': 60.0}],
+                       {'chr2A_00611930_mrna': 60.0}],
         
         "basic vs fusion" : ["./data/tests/basic_test.gff3", 
                              "./data/tests/fusion_test.gff3",
-                    {'chr2A_00611930': 17.6}],
+                    {'chr2A_00611930_mrna': 17.6}],
         
         "basic vs shift" : ["./data/tests/basic_test.gff3", 
                             "./data/tests/shift_test.gff3",
-                   {'chr2A_00611930': 20.0}],
+                   {'chr2A_00611930_mrna': 20.0}],
         
         "basic vs reverse" : ["./data/tests/basic_test.gff3", 
                               "./data/tests/reverse_test.gff3",
-                     {'chr2A_00611930': 0.0}],
+                     {'chr2A_00611930_mrna': 0.0}],
         
         "reverse vs reverse" : ["./data/tests/reverse_test.gff3", 
                               "./data/tests/reverse_test.gff3",
-                     {'chr2A_00611930': 100.0}],
+                     {'chr2A_00611930_mrna': 100.0}],
         
         "basic vs diff-start-before" : ["./data/tests/basic_test.gff3",
                                         "./data/tests/diff-start-before_test.gff3",
-                               {'chr2A_00611930': 12.5}],
+                               {'chr2A_00611930_mrna': 12.5}],
         
         "basic vs diff-start-after" : ["./data/tests/basic_test.gff3", 
                                        "./data/tests/diff-start-after_test.gff3",
-                              {'chr2A_00611930': 12.5}],
+                              {'chr2A_00611930_mrna': 12.5}],
         
         "basic-2-loci vs identical-2-loci" : ["./data/tests/basic-2-loci_test.gff3",
                                               "./data/tests/identical-2-loci_test.gff3",
-                              {'chr2A_00611930': 100.0,
-                               'chr2A_00620000': 100.0}],
+                              {'chr2A_00611930_mrna': 100.0,
+                               'chr2A_00620000_mrna': 100.0}],
         
         "overlapping-loci vs overlapping-loci-alt" : ["./data/tests/overlapping-loci_test.gff3",
                                                       "./data/tests/overlapping-loci-alt_test.gff3",
-                              {'chr2A_1000' : 18.2,
-                               'chr2A_4000' : 100.0,
-                               'chr2A_5000' : 30.0}]
+                              {'chr2A_1000_mrna' : 18.2,
+                               'chr2A_4000_mrna' : 100.0,
+                               'chr2A_5000_mrna' : 30.0}]
         }
     
-    print("\n*************Testing the get_gff_borders function*************")
+    print("\n*************Testing the annotation_comparison function*************")
     
     for test in test_dict:
         

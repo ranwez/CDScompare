@@ -27,20 +27,30 @@ import pprint
 # @returns Returns the id of the structure described by the line
 def get_structure_id(line, debug=False, verbose=False):
     
-    # retrieve the last column
-    last_col = line.split("\t")[8]
+    # try to retrieve the last column, else return an error
+    try: 
+        last_col = line.split("\t")[8]
+    except IndexError:
+        print("\nFile is not in GFF format (no ninth column)")
+        sys.exit(1)
     
     # retrieve the id with the rest of the column text (commentaries)
-    id_and_rest = last_col.split("=")[1]
+    try:
+        id_and_rest = last_col.split("=")[1]
+    except IndexError:
+        print("\nNo ID field found in last column (ninth column)")
     
     structure_id = ""
     i = 0
     
     # for each character from the first, we add it to the locus_id if it is not in a list of special characters. When the first special character is encountered, stop the loop and return the locus_id 
     while id_and_rest[i] not in [",", "?", ";", ":", "/", "!", "*", "$", "%", "+", "@", "#", "~", "&", "\n", "\t"] :
+        
+        if debug:
+            print(f"Reading character {id_and_rest[i]}")
         structure_id += id_and_rest[i]
         i += 1
-        
+         
     if debug:
         print(f"Structure ID = {structure_id}")
         
@@ -74,7 +84,7 @@ def get_gff_borders(path, debug=False, verbose=False):
     for line in file:
 
         # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
-        if str(line.split("\t")[2]) == "gene": 
+        if str(line.split("\t")[2]) == "mRNA": 
             
             if locus_id != "" and borders[locus_id] == [1, []]: # if there was a previous gene, but its borders list is empty, return an error
                 print(f"\nget_gff_borders() function error : no coding sequence (CDS) could be found for the locus '{locus_id}'\n")
@@ -952,7 +962,8 @@ def main():
 if __name__ == "__main__":
     main()
     
-#TODO Is the fact that the loci fused by the 'fuse_superloci' function have the same locus ID guaranted ? NO (see notebook)
+#TODO Is the fact that the loci fused by the 'fuse_superloci' function have the same locus ID guaranted ? NO (see notebook) 
+#   (is that really a problem ? ASK)
 #TODO Multiple mRNAs problem (only use the alternative mRNA with the maximum identity ?)
     
     
