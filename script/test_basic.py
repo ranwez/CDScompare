@@ -16,6 +16,37 @@ import main
 ## This script tests the 'main.py' program on multiple basic 'artificial' test files and checks if their return values match what is expected
 
 
+# test function for the 'main.py' function 'get_structure_id' (structure id acquisition function)
+def test_get_structure_id():
+    test_dict = {
+        "TRITD_HC" : ["chr2A	PGSB_Jan2017	gene	22128	24635	.	-	.	ID=TRITD2Av1G000030;primconf=HC\n",
+                      "TRITD2Av1G000030"],
+        
+        "EXP_chr2A" : ["chr2A	exonerate:protein2genome:local	gene	608664	611579	.	-	.	ID=chr2A_00611930;color=2;comment=modified:yes / Gene-Class:Non-canonical / start_changed_to3f;note=Origin:OSJnip_Chr04_04489784 / pred:prot2genome / prot-%25-ident:51.6 / prot-%25-cov:99.2118 / exo_corr:NA / Origin-Fam:NLR / Origin-Class:Canonical / noStart / Gene-Class:Non-canonical\n",
+                       "chr2A_00611930"],
+        
+        "chr2A" : ["chr2A	exonerate:protein2genome:local	gene	608664	611630	.	-	.	ID=chr2A_00611930;comment=Origin:OSJnip_Chr04_04489784 / pred:prot2genome / prot-%-ident:51.6 / prot-%-cov:99.2118 / exo_corr:NA / Origin-Fam:NLR / Origin-Class:Canonical / noStart / Gene-Class:Non-canonical;color=2\n",
+                   "chr2A_00611930"],
+        
+        "annot_best" : ["contig	exonerate:protein2genome:local	gene	5131	9328	.	+	.	ID=DWSvevo3_contig_0000005131;comment=Origin:DWSvevo1_chr2A_4125497 / pred:prot2genome / prot-%-ident:44.063 / prot-%-cov:68.2268 / score:51.7466 / scoreNC:46.9466 / exo_corr:corrected_intron / exo_corr:modif_stop / exo_corr:fix_overlap / Origin-Fam:Non-canonical / Origin-Class:LRR-RLK Gene-Class:Non-canonical / noStart / pbFrameshift / unexpectedSplicingSite / stopInFrame;color=2\n",
+                        "DWSvevo3_contig_0000005131"],
+        
+        "basic_test" : ["chr2A	exonerate:protein2genome:local	gene	100	300	.	-	.	ID=chr2A_00611930\n",
+                        "chr2A_00611930"]
+        }
+    
+    print("\n*************Testing the get_structure_id function*************")
+    
+    for test in test_dict:
+        
+        print(f"\n{test} test")
+        
+        result = main.get_structure_id(test_dict[test][0], False, False)
+        print(result)
+        print(test_dict[test][1])
+        assert result == test_dict[test][1]
+
+
 # test function for the 'main.py' function 'get_gff_borders' (CDS coordinates acquisition function)
 def test_get_gff_borders():
     
@@ -51,7 +82,22 @@ def test_get_gff_borders():
         
         "identical-2-loci" : ["./data/tests/identical-2-loci_test.gff3",
                               {'chr2A_00611930': [1,[100, 130, 150, 210, 240, 300]],
-                               'chr2A_00620000': [1,[600, 700, 800, 900]]}]
+                               'chr2A_00620000': [1,[600, 700, 800, 900]]}],
+        
+        "overlapping-loci" : ["./data/tests/overlapping-loci_test.gff3",
+                              {'chr2A_1000' : [1,[50,150]],
+                               'chr2A_2000' : [1,[200, 350]],
+                               'chr2A_3000' : [1,[400, 550]],
+                               'chr2A_4000' : [1,[650, 700]],
+                               'chr2A_5000' : [1,[750, 800]]}],
+        
+        "overlapping-loci-alt" : ["./data/tests/overlapping-loci-alt_test.gff3",
+                                  {'chr2A_1000' : [1,[100, 250]],
+                                   'chr2A_2000' : [1,[300, 450]],
+                                   'chr2A_3000' : [1,[500, 600]],
+                                   'chr2A_4000' : [1,[650, 700]],
+                                   'chr2A_5000' : [1,[750, 780]],
+                                   'chr2A_6000' : [1,[790, 850]]}]
         }
     
     print("\n*************Testing the get_gff_borders function*************")
@@ -427,8 +473,81 @@ def test_old_compare_loci():
         assert result == test_dict[test][2]
 
 
+
+# test function for the 'main.py' function 'annotation_comparison' (reference against alternative comparison function)
+def test_annotation_comparison():
+    
+    # dictionary of inputs and expected ouputs for each test file for the 'main.py' function 'annotation_comparison' (reference against alternative comparison function)
+    test_dict = {
+        "basic vs identical" : ["./data/tests/basic_test.gff3", 
+                                "./data/tests/identical_test.gff3",
+                        {'chr2A_00611930': 100.0}],
+        
+        "basic vs minus-CDS" : ["./data/tests/basic_test.gff3", 
+                                "./data/tests/minus-CDS_test.gff3",
+                       {'chr2A_00611930': 60.0}],
+        
+        "basic vs fusion" : ["./data/tests/basic_test.gff3", 
+                             "./data/tests/fusion_test.gff3",
+                    {'chr2A_00611930': 17.6}],
+        
+        "basic vs shift" : ["./data/tests/basic_test.gff3", 
+                            "./data/tests/shift_test.gff3",
+                   {'chr2A_00611930': 20.0}],
+        
+        "basic vs reverse" : ["./data/tests/basic_test.gff3", 
+                              "./data/tests/reverse_test.gff3",
+                     {'chr2A_00611930': 0.0}],
+        
+        "reverse vs reverse" : ["./data/tests/reverse_test.gff3", 
+                              "./data/tests/reverse_test.gff3",
+                     {'chr2A_00611930': 100.0}],
+        
+        "basic vs diff-start-before" : ["./data/tests/basic_test.gff3",
+                                        "./data/tests/diff-start-before_test.gff3",
+                               {'chr2A_00611930': 12.5}],
+        
+        "basic vs diff-start-after" : ["./data/tests/basic_test.gff3", 
+                                       "./data/tests/diff-start-after_test.gff3",
+                              {'chr2A_00611930': 12.5}],
+        
+        "basic-2-loci vs identical-2-loci" : ["./data/tests/basic-2-loci_test.gff3",
+                                              "./data/tests/identical-2-loci_test.gff3",
+                              {'chr2A_00611930': 100.0,
+                               'chr2A_00620000': 100.0}],
+        
+        "overlapping-loci vs overlapping-loci-alt" : ["./data/tests/overlapping-loci_test.gff3",
+                                                      "./data/tests/overlapping-loci-alt_test.gff3",
+                              {'chr2A_1000' : 18.2,
+                               'chr2A_4000' : 100.0,
+                               'chr2A_5000' : 30.0}]
+        }
+    
+    print("\n*************Testing the get_gff_borders function*************")
+    
+    for test in test_dict:
+        
+        print(f"\n{test} file test")
+        
+        result = main.annotation_comparison(test_dict[test][0], test_dict[test][1], False, False)
+        print(result)
+        print(test_dict[test][2])
+        assert result == test_dict[test][2]
+
+
 # FUNCTIONS CALLS
 
+# test function for the 'main.py' function 'get_structure_id' (structure id acquisition function)
+test_get_structure_id()
+
+# test function for the 'main.py' function 'annotation_sort' (locus list creation and sorting function)
+test_annotation_sort()
+
+# test function for the 'main.py' function 'locus_append_delete' (locus fusion in dictionary function)
+test_locus_append_delete()
+
+# test function for the 'main.py' function 'fuse_superloci' (overlapping loci fusion function)
+test_fuse_superloci()
 
 # test function for the 'main.py' function 'get_gff_borders' (CDS coordinates acquisition function)
 test_get_gff_borders()
@@ -447,4 +566,9 @@ test_create_vectors()
     
 # test function for the 'main.py' function 'create_vectors' (structure string creation function)
 test_old_compare_loci()
+
+# test function for the 'main.py' function 'annotation_comparison' (reference against alternative comparison function)
+test_annotation_comparison()
+
+
 

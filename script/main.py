@@ -25,7 +25,7 @@ import pprint
 # @remark This function expects the file to be in GFF format
 #
 # @returns Returns the id of the structure described by the line
-def get_structure_id(line):
+def get_structure_id(line, debug=False, verbose=False):
     
     # retrieve the last column
     last_col = line.split("\t")[8]
@@ -40,6 +40,9 @@ def get_structure_id(line):
     while id_and_rest[i] not in [",", "?", ";", ":", "/", "!", "*", "$", "%", "+", "@", "#", "~", "&", "\n", "\t"] :
         structure_id += id_and_rest[i]
         i += 1
+        
+    if debug:
+        print(f"Structure ID = {structure_id}")
         
     return structure_id
 
@@ -77,7 +80,7 @@ def get_gff_borders(path, debug=False, verbose=False):
                 print(f"\nget_gff_borders() function error : no coding sequence (CDS) could be found for the locus '{locus_id}'\n")
                 sys.exit(1)
             
-            locus_id = get_structure_id(line)
+            locus_id = get_structure_id(line, debug, verbose)
             
             # the locus' list is intialised with a strand number of '1', which is the corrected if necessary
             borders[locus_id] = [1, []]
@@ -837,6 +840,12 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     ref_annotations = get_gff_borders(ref_path, debug, verbose)
     alt_annotations = get_gff_borders(alt_path, debug, verbose)
     
+    # get the order of the loci of both annotations
+    locus_order = annotation_sort(ref_annotations, alt_annotations, debug, verbose)
+    
+    # fuse the overlapping loci together
+    fuse_superloci(ref_annotations, alt_annotations, locus_order, debug, verbose)
+    
     identities = {}
     
     # for each locus of the reference annotation...
@@ -945,7 +954,5 @@ if __name__ == "__main__":
     
 #TODO Is the fact that the loci fused by the 'fuse_superloci' function have the same locus ID guaranted ? NO (see notebook)
 #TODO Multiple mRNAs problem (only use the alternative mRNA with the maximum identity ?)
-#TODO after running the main program, check if there are loci left in the alternative not present in the reference and assign them 0% identity
-#TODO what identity yields comparing overlapping-loci_test with overlapping-loci-alt_test ? (add unit test)
     
     
