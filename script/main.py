@@ -18,6 +18,32 @@ import sys
 import pprint
 
 
+## This function retrieves and returns the id of the structure described from a line read from a GFF file.
+#
+# @param line The line read from the file (string)
+#
+# @remark This function expects the file to be in GFF format
+#
+# @returns Returns the id of the structure described by the line
+def get_structure_id(line):
+    
+    # retrieve the last column
+    last_col = line.split("\t")[8]
+    
+    # retrieve the locus id with the rest of the column text (commentaries)
+    temp_id = last_col.split("=")[1]
+    
+    structure_id = ""
+    i = 0
+    
+    # for each character from the first, we add it to the locus_id if it is not in a list of special characters. When the first special character is encountered, stop the loop and return the locus_id 
+    while temp_id[i] not in [",", "?", ";", ":", "/", "!", "*", "$", "%", "+", "@", "#", "~", "&", "\n", "\t"] :
+        structure_id += temp_id[i]
+        i += 1
+        
+    return structure_id
+
+
 ## This function expects a string corresponding to the file path of the GFF file to read, and returns
 # a dictionary of lists with the keys corresponding to a locus identifier, and the values 
 # corresponding to a list of a number indicating the strand supporting the locus (1 for direct 
@@ -52,7 +78,7 @@ def get_gff_borders(path, debug=False, verbose=False):
                     print(f"\nget_gff_borders() function error : no coding sequence (CDS) could be found for the locus '{locus_id}'\n")
                     sys.exit(1)
             
-            locus_id = l.split("\t")[8].split("\n")[0][3:]
+            locus_id = get_structure_id(l)
             
             # the locus list is intialised with a strand number of '1', which is the corrected if necessary
             borders[locus_id] = [1, []]
