@@ -30,15 +30,15 @@ def get_structure_id(line):
     # retrieve the last column
     last_col = line.split("\t")[8]
     
-    # retrieve the locus id with the rest of the column text (commentaries)
-    temp_id = last_col.split("=")[1]
+    # retrieve the id with the rest of the column text (commentaries)
+    id_and_rest = last_col.split("=")[1]
     
     structure_id = ""
     i = 0
     
     # for each character from the first, we add it to the locus_id if it is not in a list of special characters. When the first special character is encountered, stop the loop and return the locus_id 
-    while temp_id[i] not in [",", "?", ";", ":", "/", "!", "*", "$", "%", "+", "@", "#", "~", "&", "\n", "\t"] :
-        structure_id += temp_id[i]
+    while id_and_rest[i] not in [",", "?", ";", ":", "/", "!", "*", "$", "%", "+", "@", "#", "~", "&", "\n", "\t"] :
+        structure_id += id_and_rest[i]
         i += 1
         
     return structure_id
@@ -68,32 +68,31 @@ def get_gff_borders(path, debug=False, verbose=False):
     borders = {} # this variable takes in the borders of each CDS of each gene
     locus_id = "" # the current gene being analyzed
     
-    for l in file:
+    for line in file:
 
         # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
-        if str(l.split("\t")[2]) == "gene": 
+        if str(line.split("\t")[2]) == "gene": 
             
-            if locus_id != "":
-                if borders[locus_id] == [1, []]:
-                    print(f"\nget_gff_borders() function error : no coding sequence (CDS) could be found for the locus '{locus_id}'\n")
-                    sys.exit(1)
+            if locus_id != "" and borders[locus_id] == [1, []]: # if there was a previous gene, but its borders list is empty, return an error
+                print(f"\nget_gff_borders() function error : no coding sequence (CDS) could be found for the locus '{locus_id}'\n")
+                sys.exit(1)
             
-            locus_id = get_structure_id(l)
+            locus_id = get_structure_id(line)
             
-            # the locus list is intialised with a strand number of '1', which is the corrected if necessary
+            # the locus' list is intialised with a strand number of '1', which is the corrected if necessary
             borders[locus_id] = [1, []]
             
             if verbose :
                 print("\nReading the locus " + locus_id)
 
-        # if we encounter a CDS, we add its start and end positions to corresponding gene key in 'borders'
-        if str(l.split("\t")[2]) == "CDS":
+        # if we encounter a CDS, we add its start and end positions to the corresponding gene key in 'borders'
+        if str(line.split("\t")[2]) == "CDS":
             
-            borders[locus_id][1].append(int(l.split("\t")[3]))
-            borders[locus_id][1].append(int(l.split("\t")[4]))
+            borders[locus_id][1].append(int(line.split("\t")[3]))
+            borders[locus_id][1].append(int(line.split("\t")[4]))
             
             if verbose:
-                print("Adding borders to " + locus_id + " : " + l.split("\t")[3] + ", " + l.split("\t")[4])
+                print("Adding borders to " + locus_id + " : " + line.split("\t")[3] + ", " + line.split("\t")[4])
                 
             # if the retrieved borders indicate the locus is on the reverse strand, we change the strand number to '0'
             if borders[locus_id][0] == 1 and borders[locus_id][1][1] < borders[locus_id][1][0]:
@@ -130,11 +129,11 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
  
     locus_order = []
     
-    # get all reference loci bounds and locus ids
+    # get all reference loci bounds and locus ids as tuples in a list
     for locus_id, borders in dict_ref.items():
         locus_order.append((borders[1][0], borders[1][-1], locus_id, True)) # 'True' indicates the tuple is from the reference
  		
-    # get all alternative loci bounds and locus ids
+    # get all alternative loci bounds and locus ids as tuples in a list
     for locus_id, borders in dict_alt.items():
         locus_order.append((borders[1][0], borders[1][-1], locus_id, False)) # 'False' indicates the tuple is from the alternative
         
@@ -203,7 +202,7 @@ def fuse_superloci(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
     for i in range(len(locus_order)-1):   
         locus_id = locus_order[i][2] # identifier of the current locus
         is_ref = locus_order[i][3] # boolean indicating if current locus is from the reference
-        locus_borders = [locus_order[i][0], locus_order[i][1]] # lower and upper bounds of the current locus
+        locus_borders = [locus_order[i][0], locus_order[i][1]] # lower and upper bounds of the current locus search
         if debug:
             print(f"\nlocus borders = {locus_borders}")
 	 
@@ -224,7 +223,7 @@ def fuse_superloci(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
                     if debug:
                         print("next locus found in current borders")
                     new_upper_border = locus_order[i+j][1]
-                    locus_borders[1] = new_upper_border # upper bound of the current locus is extended to upper bound of the 'j' locus               
+                    locus_borders[1] = new_upper_border # upper bound of the current locus search is extended to upper bound of the 'j' locus               
                     
                     # if the locus pinted by 'j' is in the reference, it is merged with the current one, else we do nothing
                     if next_is_ref:
@@ -245,7 +244,7 @@ def fuse_superloci(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
                         print(f"new locus borders = {locus_borders}")
                     j += 1
                         
-                else: # if no locus is found in the current locus bounds, a 'stop signal' is given to stop the 'j' loop
+                else: # if no locus is found in the current locus search's bounds, a 'stop signal' is given to stop the 'j' loop
                     if debug:
                         print("next locus not found in current borders, continuing")
                     j = -1
@@ -254,11 +253,11 @@ def fuse_superloci(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
                 if debug:
                     print("current is in alt")
                 
-                if next_lower_border <= locus_borders[1]: # if the lower bound of the locus pointed by 'j' is inside the current locus' bounds...
+                if next_lower_border <= locus_borders[1]: # if the lower bound of the locus pointed by 'j' is inside the current locus search's bounds...
                     if debug:
                         print("next locus found in current borders")
                     new_upper_border = locus_order[i+j][1]
-                    locus_borders[1] = new_upper_border # upper bound of the current locus is extended to upper bound of the 'j' locus
+                    locus_borders[1] = new_upper_border # upper bound of the current locus search is extended to upper bound of the 'j' locus
                     
                     # if the locus pinted by 'j' is in the alternative, it is merged with the current one, else we do nothing
                     if not next_is_ref:
@@ -278,7 +277,7 @@ def fuse_superloci(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
                     if debug:
                         print(f"new locus borders = {locus_borders}")
                     j += 1
-                else: # if no locus is found in the current locus bounds, a 'stop signal' is given to stop the 'j' loop
+                else: # if no locus is found in the current locus search's bounds, a 'stop signal' is given to stop the 'j' loop
                     if debug:
                         print("next locus not found in current borders, continuing")
                     j = -1
@@ -331,13 +330,13 @@ def get_area_bounds(ref, alt, debug=False, verbose=False):
         
         for k in range(j, len(alt)):
             
-            bounds.append(alt[j])
+            bounds.append(alt[k])
         
     if j > len(alt)-1:
         
         for k in range(i, len(ref)):
             
-            bounds.append(ref[i])
+            bounds.append(ref[k])
             
     if debug:
         print(f"Final area_bounds = {bounds}")
@@ -366,9 +365,9 @@ def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
     # while we did not yet reach the end of the bounds list or the CDS coordinates list...
     while (i < len(area_bounds)-1 and cds_id < len(cds_bounds)-1):
         
-        current_cds=[cds_bounds[cds_id],cds_bounds[cds_id+1]]
-        lb= area_bounds[i]
-        ub= area_bounds[i+1]
+        current_cds = [cds_bounds[cds_id], cds_bounds[cds_id+1]]
+        lb = area_bounds[i]
+        ub = area_bounds[i+1]
         
         if debug:
             print(f"\ni = {i}")
@@ -378,7 +377,7 @@ def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
             print(f"Upper bound (ub) = {ub}")
 
         # if the current CDS is included in the area bounds, 'True' is used to index it in the return list, else 'False'
-        if(current_cds[0]<=lb and ub<=current_cds[1]):
+        if(current_cds[0] <= lb and ub <= current_cds[1]):
             in_cds.append(True)
         else:
             in_cds.append(False)
@@ -387,10 +386,10 @@ def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
             print(f"in_cds = {in_cds}")
             
         # if the current area reaches the end of the current CDS, we skip to the next CDS
-        if(ub==current_cds[1]):
-            cds_id+=2
+        if(ub == current_cds[1]):
+            cds_id += 2
             
-        i+=1
+        i += 1
         
     # if we reached the end of the CDS coordinates list, we continue until all area bounds are exhausted by appending 'False'
     while(i < len(area_bounds)-1):
@@ -442,8 +441,8 @@ def compare_loci(ref, alt, debug=False, verbose=False):
     codon_position_alt=0
     
     comparison = [0,0] # return list. First value is mismatches, second value is identities
-    bound_id=0
-    prev_bounds=area_bounds[0]
+    bound_id = 0
+    prev_bounds = area_bounds[0]
     
     # for each comparison area delimited by the bounds in the list 'area_bounds'...
     for bound in area_bounds[1:] :
@@ -463,22 +462,22 @@ def compare_loci(ref, alt, debug=False, verbose=False):
                 print("\n")
                 
             # if both annotations are in a CDS and have the same codon position, then all codon positions for the rest of the area will be identical, so we add the length of the area to the second value of the comparison list and update both codon positions
-            if(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt==codon_position_ref):
+            if(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt == codon_position_ref):
                 
                 if debug:
                     print(f"Identical codon positions for the area, adding {bound-prev_bounds} to match values")
                 
-                comparison[1]+=bound-prev_bounds
+                comparison[1] += bound-prev_bounds
                 codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
                 codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3
                 
             # if both annotations are in a CDS but don't have the same codon position, then all codon positions for the rest of the area will be different, so we add the length of the are to the first value of the comparison list and update both codon positions
-            elif(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt!=codon_position_ref):
+            elif(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt != codon_position_ref):
                 
                 if debug:
                     print(f"Different codon positions for the area, adding {bound-prev_bounds} to mismatch values")
                     
-                comparison[0]+=bound-prev_bounds
+                comparison[0] += bound-prev_bounds
                 codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
                 codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
             
@@ -489,7 +488,7 @@ def compare_loci(ref, alt, debug=False, verbose=False):
                 if debug:
                     print(f"Alternative is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
                     
-                comparison[0]+=bound-prev_bounds
+                comparison[0] += bound-prev_bounds
                 codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
                 
             
@@ -498,12 +497,12 @@ def compare_loci(ref, alt, debug=False, verbose=False):
                 if debug:
                     print(f"Reference is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
                     
-                comparison[0]+=bound-prev_bounds
+                comparison[0] += bound-prev_bounds
                 codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
                 
             # the case of both annotations being outside of a CDS is not used in the computation of global loci identity, and is ignored
        
-        prev_bounds=bound
+        prev_bounds = bound
         
         bound_id += 1
         
@@ -526,7 +525,7 @@ def compare_loci(ref, alt, debug=False, verbose=False):
 # @return Returns a list describing the start of the locus and the annotation structure of the locus
 def create_vectors(borders, debug=False, verbose=False):
     
-    vectors = [0, ""] # this variable takes in the strings of gene annotation structure for each gene
+    vector = [0, ""] # this variable takes in the strings of gene annotation structure for each gene
     
     if verbose:
         print("\nConverting the coordinates of the locus into a structure string")
@@ -538,7 +537,7 @@ def create_vectors(borders, debug=False, verbose=False):
             print(f"\nLocus is on direct strand, retrieving start of locus : {borders[0]}")
         
         # we get the start of the locus
-        vectors[0] = borders[0]
+        vector[0] = borders[0]
         
     # if the locus is on the reverse strand
     else:
@@ -547,7 +546,7 @@ def create_vectors(borders, debug=False, verbose=False):
             print(f"\nLocus is on reverse strand, retrieving start of locus from end of coordinates list : {borders[-1]}")
         
         # we get the start (the last CDS value since the locus is reversed) of the locus
-        vectors[0] = borders[-1]
+        vector[0] = borders[-1]
     
     # this variable takes the codon position of the next CDS nucleotide and loops
     # between the values 1, 2, and 3
@@ -575,7 +574,7 @@ def create_vectors(borders, debug=False, verbose=False):
                 for j in range( borders[i+1] - borders[i] ):
                     
                     # we append the codon position to the structure string 
-                    vectors[1] += str(codon_pos)
+                    vector[1] += str(codon_pos)
                     
                     # we increment the codon position with looping
                     if codon_pos == 3:
@@ -585,7 +584,7 @@ def create_vectors(borders, debug=False, verbose=False):
                         
                 if debug:
                     print(f"New codon position = {codon_pos}")
-                    print(f"New structure string : {vectors[1]}")
+                    print(f"New structure string : {vector[1]}")
                 
                 
             # if we are not in a CDS, we append 0
@@ -598,10 +597,10 @@ def create_vectors(borders, debug=False, verbose=False):
                 # for each nucleotide between this coordinate and the next...
                 for j in range( borders[i+1] - borders[i] ):                
                 
-                    vectors[1] += "0"
+                    vector[1] += "0"
                     
                 if debug:
-                    print(f"New structure string : {vectors[1]}")
+                    print(f"New structure string : {vector[1]}")
             
             in_exon += 1    
         
@@ -622,7 +621,7 @@ def create_vectors(borders, debug=False, verbose=False):
                 for j in range( borders[i-1] - borders[i] ):
                     
                     # we append the codon position to the structure string 
-                    vectors[1] += str(codon_pos)
+                    vector[1] += str(codon_pos)
                     
                     # we increment the codon position with looping
                     if codon_pos == 3:
@@ -632,7 +631,7 @@ def create_vectors(borders, debug=False, verbose=False):
                         
                 if debug:
                     print(f"New codon position = {codon_pos}")
-                    print(f"New structure string : {vectors[1]}")
+                    print(f"New structure string : {vector[1]}")
                 
             # if we are not in a CDS, we append 0
             if in_exon % 2 == 0:
@@ -644,17 +643,17 @@ def create_vectors(borders, debug=False, verbose=False):
                 # for each nucleotide between this coordinate and the next...
                 for j in range( borders[i-1] - borders[i] ):
                 
-                    vectors[1] += "0"
+                    vector[1] += "0"
                     
                 if debug:
-                    print(f"New structure string : {vectors[1]}")
+                    print(f"New structure string : {vector[1]}")
             
             in_exon += 1   
     
     if verbose:
-        print("\nStructure string of the locus :\n" + vectors[1] + "\n")
+        print("\nStructure string of the locus :\n" + vector[1] + "\n")
         
-    return vectors
+    return vector
 
 
 ## This function expects two structure strings corresponding to two annotations of the same genome, and compares each position of each string to return a list of mismatches (first value of the return list) and matches (secodn value of the return list)
@@ -877,6 +876,16 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
                     print("\nAlternative locus is predicted on a different strand from the reference. Identity : 0%\n")
                 else:
                     print("\nLocus is not predicted in alternative annotation. Identity: 0%\n")
+                    
+    # for each locus of the alternative annotation...
+    for locus in alt_annotations:
+        
+        # if the locus doesn't exist in the reference, assign 0% identity
+        if locus not in ref_annotations:
+            
+            if verbose:
+                print(f"\nLocus {locus} found in alternative annotation, but not in reference. Identity: 0%\n")
+            identities[locus] = 0.0
                 
     return identities
 
@@ -884,7 +893,7 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
 def usage():
     
     # displayed when '-h' or '--help' is given, or when an invalid script call happens
-    print("Syntax : path/to/main.py [ -h/--help -d/--debug -v/--verbose -c/--create_strings ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ] ")
+    print("Syntax : path/to/main.py [ -h/--help -d/--debug -v/--verbose -o/--old_version ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ] ")
     
 
 def main():
@@ -934,7 +943,7 @@ def main():
 if __name__ == "__main__":
     main()
     
-#TODO Is the fact that the loci fused by the 'fuse_superloci' function have the same locus ID guaranted ?
+#TODO Is the fact that the loci fused by the 'fuse_superloci' function have the same locus ID guaranted ? NO (see notebook)
 #TODO Multiple mRNAs problem (only use the alternative mRNA with the maximum identity ?)
 #TODO after running the main program, check if there are loci left in the alternative not present in the reference and assign them 0% identity
 #TODO what identity yields comparing overlapping-loci_test with overlapping-loci-alt_test ? (add unit test)
