@@ -21,8 +21,8 @@ import pprint
 
 #TODO documentation
 class Clusters:
-    clusters = {}
-
+    def __init__(self):
+        self.clusters = {}
     
 #TODO documentation
 class Locus:
@@ -459,114 +459,126 @@ def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
         
     return in_cds
 
-## This function compares two annotations' loci from their CDS border list returned by the function get_gff_borders() and creates a comparison list detailing the identities and differences between the two annotations's codon position structure
+
+#TODO change documentation
+## This function compares two annotations' loci returned by the function get_gff_borders() and creates for each pair of reference-alternative mRNAs a comparison list detailing the identities and differences between the two annotations's codon position structure. It returns the comparison list giving the highest identity.
 #
 # @see get_gff_borders()
 #
-# @param ref The reference annotation's border list
+# @param ref_locus The reference annotation's locus
 #
-# @param alt The alternative annotation's border list
+# @param alt_locus The alternative annotation's locus
 #
 # @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
 #
 # @param verbose If True, triggers display of more information messages. Default is 'False'
 #
-# @return Returns a list indicating the number of codon position mismatches (first position) and matches (second position) between the two border lists
+# @return Returns a list indicating the number of codon position mismatches (first position) and matches (second position) between the two border lists, giving the maximum indentity between all mRNAs
 #
-def compare_loci(ref, alt, debug=False, verbose=False):
+def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     
-    # we retrieve the bounds of all areas delimited by all the CDS coordinates of both border lists
-    area_bounds = get_area_bounds(ref, alt, debug, verbose)
+    final_identity = 0.0
     
-    # we retrieve the list indicating the areas which include or not a CDS for both annotations
-    
-    if verbose:
-        print("\nEvaluating presence of CDS in the comparison areas")
-
-    ref_in_CDS = is_in_cds(ref, area_bounds, debug, verbose)
-    alt_in_CDS = is_in_cds(alt, area_bounds, debug, verbose)
-    
-    if debug:
-        print("Ref_in_CDS = " + str(ref_in_CDS))
-        print("Alt_in_CDS = " + str(alt_in_CDS))
-    
-    codon_position_ref=0
-    codon_position_alt=0
-    
-    comparison = [0,0] # return list. First value is mismatches, second value is identities
-    bound_id = 0
-    prev_bounds = area_bounds[0]
-    
-    # for each comparison area delimited by the bounds in the list 'area_bounds'...
-    for bound in area_bounds[1:] :
+    for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
         
-        if(prev_bounds>0):
-                
+        for mRNA_alt_id, mRNA_alt in alt_locus.mRNAs.items():
+            
+            # we retrieve the bounds of all areas delimited by all the CDS coordinates of both border lists
+            area_bounds = get_area_bounds(mRNA_ref, mRNA_alt, debug, verbose)
+            
+            # we retrieve the list indicating the areas which include or not a CDS for both annotations
+            
+            if verbose:
+                print("\nEvaluating presence of CDS in the comparison areas")
+        
+            ref_in_CDS = is_in_cds(mRNA_ref, area_bounds, debug, verbose)
+            alt_in_CDS = is_in_cds(mRNA_alt, area_bounds, debug, verbose)
+            
             if debug:
-                
-                print("\n")
-                print("Bound = " + str(bound))
-                print("Prev_bound = " + str(prev_bounds))
-                print("Bound_id = " + str(bound_id))
-                print("Codon_position_ref = " + str(codon_position_ref))
-                print("Codon_position_alt = " + str(codon_position_alt))
-                print("Ref_in_CDS[bound_id] = " + str(ref_in_CDS[bound_id]))
-                print("Alt_in_CDS[bound_id] = " + str(alt_in_CDS[bound_id]))
-                print("\n")
-                
-            # if both annotations are in a CDS and have the same codon position, then all codon positions for the rest of the area will be identical, so we add the length of the area to the second value of the comparison list and update both codon positions
-            if(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt == codon_position_ref):
-                
-                if debug:
-                    print(f"Identical codon positions for the area, adding {bound-prev_bounds} to match values")
-                
-                comparison[1] += bound-prev_bounds
-                codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
-                codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3
-                
-            # if both annotations are in a CDS but don't have the same codon position, then all codon positions for the rest of the area will be different, so we add the length of the are to the first value of the comparison list and update both codon positions
-            elif(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt != codon_position_ref):
-                
-                if debug:
-                    print(f"Different codon positions for the area, adding {bound-prev_bounds} to mismatch values")
-                    
-                comparison[0] += bound-prev_bounds
-                codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
-                codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
+                print("Ref_in_CDS = " + str(ref_in_CDS))
+                print("Alt_in_CDS = " + str(alt_in_CDS))
             
-            # if only one annotation has a CDS in the comparison area, we add to the first value of the comparison list and update only one codon position
+            codon_position_ref=0
+            codon_position_alt=0
             
-            elif(ref_in_CDS[bound_id]):
-                
-                if debug:
-                    print(f"Alternative is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
-                    
-                comparison[0] += bound-prev_bounds
-                codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
-                
+            comparison = [0,0] # return list. First value is mismatches, second value is identities
+            bound_id = 0
+            prev_bounds = area_bounds[0]
             
-            elif(alt_in_CDS[bound_id]):
-                
-                if debug:
-                    print(f"Reference is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
+            # for each comparison area delimited by the bounds in the list 'area_bounds'...
+            for bound in area_bounds[1:] :
                     
-                comparison[0] += bound-prev_bounds
-                codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
+                if debug:
+                    
+                    print("\n")
+                    print("Bound = " + str(bound))
+                    print("Prev_bound = " + str(prev_bounds))
+                    print("Bound_id = " + str(bound_id))
+                    print("Codon_position_ref = " + str(codon_position_ref))
+                    print("Codon_position_alt = " + str(codon_position_alt))
+                    print("Ref_in_CDS[bound_id] = " + str(ref_in_CDS[bound_id]))
+                    print("Alt_in_CDS[bound_id] = " + str(alt_in_CDS[bound_id]))
+                    print("\n")
+                    
+                # if both annotations are in a CDS and have the same codon position, then all codon positions for the rest of the area will be identical, so we add the length of the area to the second value of the comparison list and update both codon positions
+                if(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt == codon_position_ref):
+                    
+                    if debug:
+                        print(f"Identical codon positions for the area, adding {bound-prev_bounds} to match values")
+                    
+                    comparison[1] += bound-prev_bounds
+                    codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
+                    codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3
+                    
+                # if both annotations are in a CDS but don't have the same codon position, then all codon positions for the rest of the area will be different, so we add the length of the are to the first value of the comparison list and update both codon positions
+                elif(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt != codon_position_ref):
+                    
+                    if debug:
+                        print(f"Different codon positions for the area, adding {bound-prev_bounds} to mismatch values")
+                        
+                    comparison[0] += bound-prev_bounds
+                    codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
+                    codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
                 
-            # the case of both annotations being outside of a CDS is not used in the computation of global loci identity, and is ignored
-       
-        prev_bounds = bound
+                # if only one annotation has a CDS in the comparison area, we add to the first value of the comparison list and update only one codon position
+                
+                elif(ref_in_CDS[bound_id]):
+                    
+                    if debug:
+                        print(f"Alternative is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
+                        
+                    comparison[0] += bound-prev_bounds
+                    codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
+                    
+                
+                elif(alt_in_CDS[bound_id]):
+                    
+                    if debug:
+                        print(f"Reference is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
+                        
+                    comparison[0] += bound-prev_bounds
+                    codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
+                        
+                    # the case of both annotations being outside of a CDS is not used in the computation of global loci identity, and is ignored
+               
+                prev_bounds = bound
+                
+                bound_id += 1
+                
+            # when the loci are on the reverse strand, matches and mismatches are counted in the negatives, so we convert them using the absolute value
+            comparison[0] = abs(comparison[0])
+            comparison[1] = abs(comparison[1])    
+            
+            if verbose:
+                print(f"\nResult of the comparison of the locus : {comparison[1]} matches and {comparison[0]} mismatches\n")
+                
+            identity = comparison[1] / (comparison[0] + comparison[1])
         
-        bound_id += 1
-        
-    # when the loci are on the reverse strand, matches and mismatches are counted in the negatives, so we convert them using the absolute value
-    comparison[0] = abs(comparison[0])
-    comparison[1] = abs(comparison[1])    
+            if identity > final_identity:
+                final_identity = identity
     
-    if verbose:
-        print(f"\nResult of the comparison of the locus : {comparison[1]} matches and {comparison[0]} mismatches\n")
-        
-    return comparison
+    final_identity = round(final_identity * 100, 1)
+    return final_identity
 
 
 ## This function expects a list of all CDS coordinates (start and end) of a locus. It returns a list indicating the start of the locus as first value and a string describing the codon position of each nucleotide (1,2,3, or 0 in the case of a non-CDS nucleotide) of the locus/gene as second value
@@ -895,6 +907,62 @@ def write_results(identities, debug=False, verbose=False):
         
     results_file.close()
     
+
+#TODO documentation
+def annotation_match(cluster_ref, cluster_alt, debug, verbose):
+    
+    if verbose:
+        print("\nmatching annotations loci with each other")
+    dyn_prog_matrix = [] # dynamic programmation matrix
+    
+    # initialisation (expand matrix and fill it with zeros)
+    for i in range(len(cluster_ref)):
+        dyn_prog_matrix.append([])
+        
+        for j in range(len(cluster_alt)):
+            dyn_prog_matrix[i].append(0)
+            
+    # compute all internal values of the matrix
+    for i in range(1, len(cluster_ref)):
+        
+        for j in range(1, len(cluster_alt)):
+            comparison = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
+            
+            if debug:
+                print(dyn_prog_matrix[i-1][j],
+                      dyn_prog_matrix[i][j-1],
+                      dyn_prog_matrix[i-1][j-1] + comparison)
+            
+            dyn_prog_matrix[i][j] = max(dyn_prog_matrix[i-1][j],
+                                        dyn_prog_matrix[i][j-1],
+                                        dyn_prog_matrix[i-1][j-1] + comparison)
+    if debug:        
+        print(dyn_prog_matrix)
+        
+    # retrieve best match alignment through backtracking
+    i = len(cluster_ref)-1
+    j = len(cluster_alt)-1
+    
+    while i>0 and j>0:
+        comparison = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
+        
+        if max(dyn_prog_matrix[i-1][j],
+            dyn_prog_matrix[i][j-1],
+            dyn_prog_matrix[i-1][j-1] + comparison) == dyn_prog_matrix[i-1][j]:
+            print(f"{cluster_ref[i-1].name}\t\t_\t\t{compare_loci(cluster_ref[i-1], cluster_alt[j], debug, verbose)}%")
+            i -= 1
+            
+        elif max(dyn_prog_matrix[i-1][j],
+            dyn_prog_matrix[i][j-1],
+            dyn_prog_matrix[i-1][j-1] + comparison) == dyn_prog_matrix[i][j-1]:
+            print(f"_\t\t{cluster_alt[j-1].name}\t\t{compare_loci(cluster_ref[i], cluster_alt[j-1], debug, verbose)}%")
+            j -= 1
+            
+        else:
+            print(f"{cluster_ref[i-1].name}\t\t{cluster_alt[j-1].name}\t\t{compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)}%")
+            i -= 1
+            j -= 1
+
 
 ## Main function of this program. Given a reference and alternative path, gets the corresponding GFF files and compares the two annotations to return their structure's identity level
 #
