@@ -19,6 +19,21 @@ import os
 import pprint
 
 
+#TODO documentation
+class Clusters:
+    clusters = {}
+
+    
+#TODO documentation
+class Locus:
+    def __init__(self):
+        self.name = ""
+        self.mRNAs = {}
+        self.start = -1
+        self.end = -1
+        self.direction = ""
+
+
 ## This function retrieves and returns the id of the structure described from a line read from a GFF file.
 #
 # @param line The line read from the file (string)
@@ -44,7 +59,8 @@ def get_structure_id(line, debug=False, verbose=False):
         id_and_rest = last_col.split("=")[1]
     except IndexError:
         print("\nNo ID field found in last column (ninth column)")
-    
+        sys.exit(1)
+
     structure_id = ""
     i = 0
     
@@ -87,6 +103,7 @@ def get_parent_id(line, debug=False, verbose=False):
         id_and_rest = last_col.split("=")[2]
     except IndexError:
         print("\nNo parent ID field found in last column (ninth column)")
+        sys.exit(1)
     
     structure_id = ""
     i = 0
@@ -105,21 +122,30 @@ def get_parent_id(line, debug=False, verbose=False):
     return structure_id
     
 
-## This function expects a string corresponding to the file path of the GFF file to read, and returns
-# a dictionary of lists with the keys corresponding to a locus identifier, and the values 
-# corresponding to a list of a number indicating the strand supporting the locus (1 for direct 
-# strand, 0 for reverse strand) and a list of the start and end position of each coding 
-# sequence ('CDS') of the locus 
+
+## This function expects a string corresponding to the file path of the GFF 
+# file to read, and returns a dictionary of instances of the class 'Locus', 
+# detailing all the relevant information for the gene and its mRNAs
 #
 # @param path Path of the file to read
 #
-# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
+# @param debug If True, triggers display of many messages intended for 
+# debugging the program. Default is 'False'
 #
-# @param verbose If True, triggers display of more information messages. Default is 'False'
+# @param verbose If True, triggers display of more information messages. 
+# Default is 'False'
 #
-# @remark If the parent ID of a CDS does not match the ID of the previous mRNA (indicating an incorrect file structure), an entry is added to a 'log' file but the function is not interrupted
+# @remark If the parent ID of a CDS does not match the ID of the previous 
+# mRNA (indicating an incorrect file structure), an entry is added to a 'log' 
+# file but the function is not interrupted
 #
-# @return Returns a dictionary of lists containing the number associated with the strand of the locus (1 : direct, 0: reverse) and a list containing the start and end coordinates of all CDS for each locus (identified with the locus ID)
+# @return Returns a dictionary of instances of the class 'Locus', containing 
+# the information of the CDS borders of each mRNA of the gene, the start and
+# end coordinates, the DNA strand on which the gene is predicted, and the
+# locus ID
+#
+# @see Locus()
+#
 def get_gff_borders(path, debug=False, verbose=False):
     
     try:    
@@ -134,57 +160,86 @@ def get_gff_borders(path, debug=False, verbose=False):
         os.mkdir("./results/") # create 'results' subdirectory
         log = open("./results/log.txt", "w") # file in which to write structure errors
         
-    borders = {} # this variable takes in the borders of each CDS of each gene
+    loci = {}
     locus_id = "" # the current gene being analyzed
     line_index = 1 # number of the file line currently read
+    locus = Locus()
     
     for line in file:
+        
+        # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
+        if str(line.split("\t")[2]) == "gene": 
+            
+            if locus_id != "" and locus.mRNAs == {}: # if there was a previous gene, but its borders list is empty, return an error
+                print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the locus '{locus_id}'\n")
+                sys.exit(1)
+            
+            if locus.mRNAs != {}:
+                loci[locus_id] = locus
+            del locus
+            locus = Locus()
+            
+            if locus_id != "" and locus.mRNAs[locus_id] == [1, []]: # if there was a previous gene, but its borders list is empty, return an error
+                print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the locus '{locus_id}'\n")
+                sys.exit(1)
+            
+            locus_id = get_structure_id(line, debug, verbose)
+            locus.name = locus_id
+            
+            start = int(line.split("\t")[3])
+            locus.start = start
+            end = int(line.split("\t")[4])
+            locus.end = end
+            
+            if locus.end < locus.start:
+                locus.direction = "reverse"
+            else:
+                locus.direction = "direct"
+            
+            if verbose :
+                print("\nReading the locus " + locus_id)
 
         # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
         if str(line.split("\t")[2]) == "mRNA": 
             
-            if locus_id != "" and borders[locus_id] == [1, []]: # if there was a previous gene, but its borders list is empty, return an error
-                print(f"\nget_gff_borders() function error : no coding sequence (CDS) could be found for the locus '{locus_id}'\n")
-                sys.exit(1)
+            parent_locus_id = get_structure_id(line, debug, verbose)
             
-            locus_id = get_structure_id(line, debug, verbose)
-            
-            # the locus' list is intialised with a strand number of '1', which is the corrected if necessary
-            borders[locus_id] = [1, []]
+            locus.mRNAs[locus_id] = []
             
             if verbose :
-                print("\nReading the locus " + locus_id)
+                print("\nReading mRNA " + locus_id)
 
         # if we encounter a CDS, we add its start and end positions to the corresponding gene key in 'borders'
         if str(line.split("\t")[2]) == "CDS":
             
             parent_id = get_parent_id(line, debug, verbose)
             
-            if parent_id != locus_id:
+            if parent_id != parent_locus_id:
                 print("\nIncorrect file structure (Parent of CDS is not previous mRNA). See 'log.txt' for more information")
                 log.write("Line " + str(line_index) + " : CDS parent ID (" + parent_id + ") does not match last mRNA ID (" + locus_id +")\n")
+                
+            if locus_id == '':
+                print(f"\nLine {line_index} = get_gff_borders() function error : CDS has been found before any mRNA")
+                sys.exit(1)
             
-            borders[locus_id][1].append(int(line.split("\t")[3]))
-            borders[locus_id][1].append(int(line.split("\t")[4]))
+            locus.mRNAs[locus_id].append(int(line.split("\t")[3]))
+            locus.mRNAs[locus_id].append(int(line.split("\t")[4]))
             
             if verbose:
                 print("Adding borders to " + locus_id + " : " + line.split("\t")[3] + ", " + line.split("\t")[4])
                 
-            # if the retrieved borders indicate the locus is on the reverse strand, we change the strand number to '0'
-            if borders[locus_id][0] == 1 and borders[locus_id][1][1] < borders[locus_id][1][0]:
-                
-                borders[locus_id][0] = 0
         line_index += 1
                 
-    if borders == {}:
+    if locus_id == "":
         print(f"\nget_gff_borders() function error : no locus could be found in file '{path}'\n")
         sys.exit(1)
         
     file.close()
     log.close()
+    loci[locus_id] = locus
     
-    # we return the entire dictionary with all borders
-    return borders
+    # we return the entire dictionary with all loci
+    return loci
 
 
 ## This function creates a list of all the locus coordinates for both annotations and sorts it in ascending order by their lower bound position. 
@@ -208,12 +263,12 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
     locus_order = []
     
     # get all reference loci bounds and locus ids as tuples in a list
-    for locus_id, borders in dict_ref.items():
-        locus_order.append((borders[1][0], borders[1][-1], locus_id, True)) # 'True' indicates the tuple is from the reference
+    for locus_id, locus in dict_ref.items():
+        locus_order.append((locus.start, locus.end, locus.name, True)) # 'True' indicates the tuple is from the reference
  		
     # get all alternative loci bounds and locus ids as tuples in a list
-    for locus_id, borders in dict_alt.items():
-        locus_order.append((borders[1][0], borders[1][-1], locus_id, False)) # 'False' indicates the tuple is from the alternative
+    for locus_id, locus in dict_alt.items():
+        locus_order.append((locus.start, locus.end, locus.name, False)) # 'False' indicates the tuple is from the alternative
         
     if verbose:
         print("\nSorting the locus order list")
@@ -227,138 +282,58 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
     return locus_order
 
 
-## This function merges two loci from an annotation dictionary by appending each element (coordinate) of the second locus to the list of coordinates of the first locus and deleting the locus fro mthe annotation
-#
-# @param annotation_dict The dictionary of the annotation to modifiy, as returned by the function 'get_gff_borders'
-#
-# @param loc_a_id Locus id of the locus into which the other is merged
-#
-# @param loc_b_id Locus id of the locus to merge into the other and delete
-#
-# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
-#
-# @param verbose If True, triggers display of more information messages. Default is 'False'
-#
-# @see get_gff_borders()
-#
-# @remark This function returns nothing and is expected to be used without affectation. This function modifies the original dictionary passed and deletes information from it.
-#
-# @return Returns nothing
-def locus_append_delete(annotation_dict, loc_a_id, loc_b_id, debug=False, verbose=False):
-    
-    if verbose:
-        print(f"\nFusing the locus {loc_b_id} into the locus {loc_a_id}")
-    
-    # append all coordinates of 'locus_b' to the list of 'locus a'
-    for i in range(len(annotation_dict[loc_b_id][1])):
-        
-        annotation_dict[loc_a_id][1].append(annotation_dict[loc_b_id][1][i])
-        
-    # delete 'locus b' from the dictionary
-    del annotation_dict[loc_b_id]
-
-
-## This function fuses all overlapping loci of both annotation dictionaries by appending their coordinates.
-#
-# @param dict_ref Dictionary of the reference annotation, as returned by the function 'get_gff_borders'
-#
-# @param dict_alt Dictionary of the alternative annotation, as returned by the function 'get_gff_borders'
-#
-# @param locus_order List of tuples of lower and upper bounds, locus id, and boolean of reference origin for each locus of both annotations, as returned by the function 'annotation_sort'
-#
-# @see get_gff_borders()
-# @see annotation_sort()
-#
-# @remark This function returns nothing and is expected to be used without affectation. This function modifies the original dictionaries passed and deletes information from them.
-def fuse_superloci(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
+#TODO documentation
+def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
 
     # initialisation of the dictionary keeping track of what loci have already been fused
     already_fused = {'ref': {},
                      'alt': {}}
-
+    
+    clusters = Clusters()
+    
     # for each locus in the loci list...
     for i in range(len(locus_order)-1):   
         locus_id = locus_order[i][2] # identifier of the current locus
-        is_ref = locus_order[i][3] # boolean indicating if current locus is from the reference
         locus_borders = [locus_order[i][0], locus_order[i][1]] # lower and upper bounds of the current locus search
+        locus_is_ref = locus_order[i][3]
+        cluster_name = "cluster " + str(i) # name of the constructed cluster to add to the 'Clusters' class
         if debug:
             print(f"\nlocus borders = {locus_borders}")
+            
+        clusters.clusters[cluster_name] = {"ref" : [],
+                                           "alt" : []} # initialize cluster in 'Clusters' class
+        
+        if locus_is_ref:
+            clusters.clusters[cluster_name]["ref"].append(dict_ref[locus_id])
+        else:
+            clusters.clusters[cluster_name]["alt"].append(dict_alt[locus_id])
 	 
         # while we did not reach the end of the list and a 'stop signal' (j=-1) is not given, for each locus after the current one...
         j = 1
         while j != -1 and j <= len(locus_order)-i-1:
+            next_locus_id = locus_order[i+j][2] # identifier of the current locus
             next_lower_border = locus_order[i+j][0] # lower bound of the locus pointed to by 'j'
             next_is_ref = locus_order[i+j][3] # boolean indicating if locus pointed by 'j' is from the reference
             if debug:
                 print(f"\nj = {j}")
                 print(f"next lower border = {next_lower_border}")
-            
-            if is_ref:
+                
+            if next_lower_border <= locus_borders[1]: # if the lower bound of the locus pointed by 'j' is inside the current locus' bounds...
                 if debug:
-                    print("current is in ref")
+                    print("next locus found in current borders")
+                new_upper_border = locus_order[i+j][1]
+                locus_borders[1] = new_upper_border # upper bound of the current locus search is extended to upper bound of the 'j' locus               
                 
-                if next_lower_border <= locus_borders[1]: # if the lower bound of the locus pointed by 'j' is inside the current locus' bounds...
-                    if debug:
-                        print("next locus found in current borders")
-                    new_upper_border = locus_order[i+j][1]
-                    locus_borders[1] = new_upper_border # upper bound of the current locus search is extended to upper bound of the 'j' locus               
+                if next_is_ref:
+                    clusters.clusters[cluster_name]["ref"].append(dict_ref[next_locus_id])
+                else:
+                    clusters.clusters[cluster_name]["alt"].append(dict_alt[next_locus_id])
+                j += 1
                     
-                    # if the locus pinted by 'j' is in the reference, it is merged with the current one, else we do nothing
-                    if next_is_ref:
-                        next_locus_id = locus_order[i+j][2]
-                        
-                        if next_locus_id not in already_fused['ref']:
-                            if debug:
-                                print("next is in ref, fusing with current locus")
-                            locus_append_delete(dict_ref, locus_id, next_locus_id, debug, verbose)
-                            already_fused['ref'][next_locus_id] = True
-                        else:
-                            if debug:
-                                print("next was already fused, continuing...")
-                    else:
-                        if debug:
-                            print("next is not in ref")
-                    if debug:
-                        print(f"new locus borders = {locus_borders}")
-                    j += 1
-                        
-                else: # if no locus is found in the current locus search's bounds, a 'stop signal' is given to stop the 'j' loop
-                    if debug:
-                        print("next locus not found in current borders, continuing")
-                    j = -1
-                
-            else:
+            else: # if no locus is found in the current locus search's bounds, a 'stop signal' is given to stop the 'j' loop
                 if debug:
-                    print("current is in alt")
-                
-                if next_lower_border <= locus_borders[1]: # if the lower bound of the locus pointed by 'j' is inside the current locus search's bounds...
-                    if debug:
-                        print("next locus found in current borders")
-                    new_upper_border = locus_order[i+j][1]
-                    locus_borders[1] = new_upper_border # upper bound of the current locus search is extended to upper bound of the 'j' locus
-                    
-                    # if the locus pinted by 'j' is in the alternative, it is merged with the current one, else we do nothing
-                    if not next_is_ref:
-                        next_locus_id = locus_order[i+j][2]
-                        
-                        if next_locus_id not in already_fused['alt']:
-                            if debug:
-                                print("next is in alt, fusing with current locus")
-                            locus_append_delete(dict_alt, locus_id, next_locus_id, debug, verbose)
-                            already_fused['alt'][next_locus_id] = True
-                        else:
-                            if debug:
-                                print("next was already fused, continuing...")
-                    else:
-                        if debug:
-                            print("next is not in alt")
-                    if debug:
-                        print(f"new locus borders = {locus_borders}")
-                    j += 1
-                else: # if no locus is found in the current locus search's bounds, a 'stop signal' is given to stop the 'j' loop
-                    if debug:
-                        print("next locus not found in current borders, continuing")
-                    j = -1
+                    print("next locus not found in current borders, continuing")
+                j = -1
                      
         if debug:
             print(dict_ref)
@@ -945,15 +920,15 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     locus_order = annotation_sort(ref_annotations, alt_annotations, debug, verbose)
     
     # fuse the overlapping loci together
-    fuse_superloci(ref_annotations, alt_annotations, locus_order, debug, verbose)
+    construct_clusters(ref_annotations, alt_annotations, locus_order, debug, verbose)
     
     identities = {}
     
     # for each locus of the reference annotation...
-    for locus in ref_annotations:
+    for locus_id, locus in ref_annotations.items():
     
         # if the locus exists in the alternative annotation and if the two loci are on the same strand (same strand number)...
-        if locus in alt_annotations and ref_annotations[locus][0] == alt_annotations[locus][0]:
+        if locus_id in alt_annotations and ref_annotations[locus_id].direction == alt_annotations[locus_id].direction:
         
             # construct the comparison matrix for the reference and alternative locus annotation...
               
@@ -1055,8 +1030,6 @@ def main():
 if __name__ == "__main__":
     main()
     
-#TODO Is the fact that the loci fused by the 'fuse_superloci' function have the same locus ID guaranted ? NO (see notebook) 
-#   (is that really a problem ? ASK)
-#TODO Multiple mRNAs problem (only use the alternative mRNA with the maximum identity ?)
+
     
     
