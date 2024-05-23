@@ -26,12 +26,29 @@ class Clusters:
     
 #TODO documentation
 class Locus:
-    def __init__(self):
-        self.name = ""
-        self.mRNAs = {}
-        self.start = -1
-        self.end = -1
-        self.direction = ""
+    def __init__(self, name="", mRNAs=None, start=-1, end=-1, direction=""):
+        if not mRNAs:
+            mRNAs = {}
+        
+        self.name = name
+        self.mRNAs = mRNAs.copy()
+        self.start = start
+        self.end = end
+        self.direction = direction
+        
+    def mRNAs(self):
+        return self.mRNAs
+    
+    def contain_mrnas(self, **mrnas):
+        for mrna_name, positions_list in mrnas.items():
+            if mrna_name not in self.mRNAs:
+                return False
+            return self.mRNAs[mrna_name] == positions_list
+
+    def show_init(self):
+        return f"Locus(name='{self.name}', mRNAs={self.mRNAs}, start={self.start}, end={self.end}, direction='{self.direction}'"
+        
+# tonMAchin.contain_mrnas(**{nom: listèposition})
 
 
 ## This function retrieves and returns the id of the structure described from a line read from a GFF file.
@@ -162,6 +179,7 @@ def get_gff_borders(path, debug=False, verbose=False):
         
     loci = {}
     locus_id = "" # the current gene being analyzed
+    mRNA_id = "" # the current mRNA being analyzed
     line_index = 1 # number of the file line currently read
     locus = Locus()
     
@@ -178,10 +196,6 @@ def get_gff_borders(path, debug=False, verbose=False):
                 loci[locus_id] = locus
             del locus
             locus = Locus()
-            
-            if locus_id != "" and locus.mRNAs[locus_id] == [1, []]: # if there was a previous gene, but its borders list is empty, return an error
-                print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the locus '{locus_id}'\n")
-                sys.exit(1)
             
             locus_id = get_structure_id(line, debug, verbose)
             locus.name = locus_id
@@ -202,9 +216,9 @@ def get_gff_borders(path, debug=False, verbose=False):
         # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
         if str(line.split("\t")[2]) == "mRNA": 
             
-            parent_locus_id = get_structure_id(line, debug, verbose)
+            mRNA_id = get_structure_id(line, debug, verbose)
             
-            locus.mRNAs[locus_id] = []
+            locus.mRNAs[mRNA_id] = []
             
             if verbose :
                 print("\nReading mRNA " + locus_id)
@@ -214,7 +228,7 @@ def get_gff_borders(path, debug=False, verbose=False):
             
             parent_id = get_parent_id(line, debug, verbose)
             
-            if parent_id != parent_locus_id:
+            if parent_id != mRNA_id:
                 print("\nIncorrect file structure (Parent of CDS is not previous mRNA). See 'log.txt' for more information")
                 log.write("Line " + str(line_index) + " : CDS parent ID (" + parent_id + ") does not match last mRNA ID (" + locus_id +")\n")
                 
@@ -222,8 +236,8 @@ def get_gff_borders(path, debug=False, verbose=False):
                 print(f"\nLine {line_index} = get_gff_borders() function error : CDS has been found before any mRNA")
                 sys.exit(1)
             
-            locus.mRNAs[locus_id].append(int(line.split("\t")[3]))
-            locus.mRNAs[locus_id].append(int(line.split("\t")[4]))
+            locus.mRNAs[mRNA_id].append(int(line.split("\t")[3]))
+            locus.mRNAs[mRNA_id].append(int(line.split("\t")[4]))
             
             if verbose:
                 print("Adding borders to " + locus_id + " : " + line.split("\t")[3] + ", " + line.split("\t")[4])
@@ -339,6 +353,8 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
             print(dict_ref)
             print(dict_alt)
     print("\n")
+    
+    return clusters
 
 
 ## This function retrieves all the CDS coordinates from the given lists of coordinates of the reference (@param ref) and of the alternative (@param alt) and includes them in a unique list of coordinates. The coordinates are sorted in ascending order.
@@ -909,6 +925,7 @@ def write_results(identities, debug=False, verbose=False):
     
 
 #TODO documentation
+#TODO add parameter to select old or new version of compare_loci()
 def annotation_match(cluster_ref, cluster_alt, debug, verbose):
     
     if verbose:
@@ -916,32 +933,41 @@ def annotation_match(cluster_ref, cluster_alt, debug, verbose):
     dyn_prog_matrix = [] # dynamic programmation matrix
     
     # initialisation (expand matrix and fill it with zeros)
-    for i in range(len(cluster_ref)):
+    for i in range(len(cluster_ref)+1):
         dyn_prog_matrix.append([])
         
-        for j in range(len(cluster_alt)):
+        for j in range(len(cluster_alt)+1):
             dyn_prog_matrix[i].append(0)
             
     # compute all internal values of the matrix
-    for i in range(1, len(cluster_ref)):
+    for i in range(1, len(cluster_ref)+1):
         
-        for j in range(1, len(cluster_alt)):
+        print(i)
+        
+        for j in range(1, len(cluster_alt)+1):
+            
+            print(j)
+            
             comparison = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
             
+            print("comparison identity score = " + str(comparison))
+            
             if debug:
-                print(dyn_prog_matrix[i-1][j],
-                      dyn_prog_matrix[i][j-1],
-                      dyn_prog_matrix[i-1][j-1] + comparison)
+                print(f"top value = {dyn_prog_matrix[i-1][j]}; left value = {dyn_prog_matrix[i][j-1]}; diagonal value (comparison) = {dyn_prog_matrix[i-1][j-1] + comparison}")
             
             dyn_prog_matrix[i][j] = max(dyn_prog_matrix[i-1][j],
                                         dyn_prog_matrix[i][j-1],
                                         dyn_prog_matrix[i-1][j-1] + comparison)
     if debug:        
-        print(dyn_prog_matrix)
+        print("complete dynamic programmation matrix :")
+        for line in dyn_prog_matrix:
+            print(str(line))
         
     # retrieve best match alignment through backtracking
-    i = len(cluster_ref)-1
-    j = len(cluster_alt)-1
+    i = len(cluster_ref)
+    j = len(cluster_alt)
+    
+    print("Reference_Locus\t\tAlternative_Locus\t\tIdentity_Score")
     
     while i>0 and j>0:
         comparison = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
@@ -963,6 +989,7 @@ def annotation_match(cluster_ref, cluster_alt, debug, verbose):
             i -= 1
             j -= 1
 
+    return 0
 
 ## Main function of this program. Given a reference and alternative path, gets the corresponding GFF files and compares the two annotations to return their structure's identity level
 #
@@ -987,62 +1014,65 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     # get the order of the loci of both annotations
     locus_order = annotation_sort(ref_annotations, alt_annotations, debug, verbose)
     
-    # fuse the overlapping loci together
-    construct_clusters(ref_annotations, alt_annotations, locus_order, debug, verbose)
+    # construct clusters of overlapping loci
+    clusters = construct_clusters(ref_annotations, alt_annotations, locus_order, debug, verbose)
     
-    identities = {}
+    for loc_id, loc in clusters.clusters.items():
+        annotation_match(loc["ref"], loc["alt"], debug, verbose)
     
-    # for each locus of the reference annotation...
-    for locus_id, locus in ref_annotations.items():
+    # identities = {}
     
-        # if the locus exists in the alternative annotation and if the two loci are on the same strand (same strand number)...
-        if locus_id in alt_annotations and ref_annotations[locus_id].direction == alt_annotations[locus_id].direction:
+    # # for each locus of the reference annotation...
+    # for locus_id, locus in ref_annotations.items():
+    
+    #     # if the locus exists in the alternative annotation and if the two loci are on the same strand (same strand number)...
+    #     if locus_id in alt_annotations and ref_annotations[locus_id].direction == alt_annotations[locus_id].direction:
         
-            # construct the comparison matrix for the reference and alternative locus annotation...
+    #         # construct the comparison matrix for the reference and alternative locus annotation...
               
-            # using the new version
-            if create_strings == False:
-                if verbose:
-                    print("\nStarting the comparison of the locus " + locus + " using the new program version\n")
-                comp_res = compare_loci(ref_annotations[locus][1], alt_annotations[locus][1], debug, verbose)
+    #         # using the new version
+    #         if create_strings == False:
+    #             if verbose:
+    #                 print("\nStarting the comparison of the locus " + locus + " using the new program version\n")
+    #             comp_res = compare_loci(ref_annotations[locus][1], alt_annotations[locus][1], debug, verbose)
                 
-            # using the old version
-            else:
-                if verbose:
-                    print("\nStarting the comparison of the locus " + locus + " using the old program version (structure strings creation)\n")
-                comp_res = old_compare_loci(ref_annotations[locus][1], alt_annotations[locus][1], debug, verbose)
+    #         # using the old version
+    #         else:
+    #             if verbose:
+    #                 print("\nStarting the comparison of the locus " + locus + " using the old program version (structure strings creation)\n")
+    #             comp_res = old_compare_loci(ref_annotations[locus][1], alt_annotations[locus][1], debug, verbose)
             
-            # compute identity from the matrix and index it in the identities dictionary
-            identities[locus] = round( float(comp_res[1]) / (float(comp_res[1]) + float(comp_res[0]) ) * 100 , 1 )
+    #         # compute identity from the matrix and index it in the identities dictionary
+    #         identities[locus] = round( float(comp_res[1]) / (float(comp_res[1]) + float(comp_res[0]) ) * 100 , 1 )
             
-            if verbose:
-                print("Finished computing the identity of the annotations of locus " + locus + "\n")
+    #         if verbose:
+    #             print("Finished computing the identity of the annotations of locus " + locus + "\n")
              
-        # if the two loci are on different strands or if the locus doesn't exist in the alternative annotation, we assign 0% identity to the locus
-        else:
+    #     # if the two loci are on different strands or if the locus doesn't exist in the alternative annotation, we assign 0% identity to the locus
+    #     else:
         
-            identities[locus] = 0.0
+    #         identities[locus] = 0.0
             
-            if verbose:
+    #         if verbose:
                 
-                if locus in alt_annotations:
-                    print("\nAlternative locus is predicted on a different strand from the reference. Identity : 0%\n")
-                else:
-                    print("\nLocus is not predicted in alternative annotation. Identity: 0%\n")
+    #             if locus in alt_annotations:
+    #                 print("\nAlternative locus is predicted on a different strand from the reference. Identity : 0%\n")
+    #             else:
+    #                 print("\nLocus is not predicted in alternative annotation. Identity: 0%\n")
                     
-    # for each locus of the alternative annotation...
-    for locus in alt_annotations:
+    # # for each locus of the alternative annotation...
+    # for locus in alt_annotations:
         
-        # if the locus doesn't exist in the reference, assign 0% identity
-        if locus not in ref_annotations:
+    #     # if the locus doesn't exist in the reference, assign 0% identity
+    #     if locus not in ref_annotations:
             
-            if verbose:
-                print(f"\nLocus {locus} found in alternative annotation, but not in reference. Identity: 0%\n")
-            identities[locus] = 0.0
+    #         if verbose:
+    #             print(f"\nLocus {locus} found in alternative annotation, but not in reference. Identity: 0%\n")
+    #         identities[locus] = 0.0
                 
-    write_results(identities, debug, verbose)        
+    # write_results(identities, debug, verbose)        
     
-    return identities
+    # return identities
 
 
 def usage():
@@ -1089,11 +1119,11 @@ def main():
             assert False, "unhandled option"
             
     # call of the annotation_comparison function
-    comparison = annotation_comparison(ref_path, alt_path, debug, verbose, create_strings)
+    annotation_comparison(ref_path, alt_path, debug, verbose, create_strings)
     
-    print("\nResult of the comparison of all loci of both annotations :\n")
-    pprint.pprint(comparison)
-    print("\n\n")
+    # print("\nResult of the comparison of all loci of both annotations :\n")
+    # pprint.pprint(comparison)
+    # print("\n\n")
     
 if __name__ == "__main__":
     main()
