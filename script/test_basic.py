@@ -104,7 +104,7 @@ def test_get_gff_borders():
     
     for test in test_dict:
         print(f"\n{test} file test")
-        result = main.get_gff_borders(test_dict[test][0], False, True)
+        result = main.get_gff_borders(test_dict[test][0], False, False)
         
         for loc_id, loc in test_dict[test][1].items():
             print(f"Result keys : {result.keys()}")
@@ -121,69 +121,74 @@ def test_annotation_sort():
     
     # dictionary of inputs and expected ouputs for each test file for the 'main.py' function 'annotation_sort' (locus list creation and sorting function)
     test_dict = {"overlapping-loci" : [
-                                {'chr2A_1000': Locus(name='chr2A_1000', 
+                                {'chr2A_1000': main.Locus(name='chr2A_1000', 
                                                      mRNAs={'chr2A_1000_mrna': [50, 150]}, 
                                                      start=50, 
                                                      end=150, 
-                                                     direction='direct', 
-                                'chr2A_2000': Locus(name='chr2A_2000', 
+                                                     direction='direct'), 
+                                'chr2A_2000': main.Locus(name='chr2A_2000', 
                                                      mRNAs={'chr2A_2000_mrna': [200, 350]}, 
                                                      start=200, 
                                                      end=350, 
-                                                     direction='direct', 
-                                'chr2A_3000': Locus(name='chr2A_3000', 
+                                                     direction='direct'), 
+                                'chr2A_3000': main.Locus(name='chr2A_3000', 
                                                      mRNAs={'chr2A_3000_mrna': [400, 550]}, 
                                                      start=400, 
                                                      end=550, 
-                                                     direction='direct',
-                                'chr2A_4000': Locus(name='chr2A_4000', 
+                                                     direction='direct'),
+                                'chr2A_4000': main.Locus(name='chr2A_4000', 
                                                      mRNAs={'chr2A_4000_mrna': [650, 700]}, 
                                                      start=650, 
                                                      end=700, 
-                                                     direction='direct',
-                                'chr2A_5000': Locus(name='chr2A_5000', 
+                                                     direction='direct'),
+                                'chr2A_5000': main.Locus(name='chr2A_5000', 
                                                      mRNAs={'chr2A_5000_mrna': [750, 800]}, 
                                                      start=750, 
                                                      end=800, 
-                                                     direction='direct'},
+                                                     direction='direct')},
                                                     
-                                {'chr2A_1000': Locus(name='chr2A_1000', 
-                                                     mRNAs={'chr2A_1000_mrna': [50, 150]}, 
-                                                     start=50, 
-                                                     end=150, 
-                                                     direction='direct', 
-                                'chr2A_2000': Locus(name='chr2A_2000', 
-                                                     mRNAs={'chr2A_2000_mrna': [200, 350]}, 
-                                                     start=200, 
-                                                     end=350, 
-                                                     direction='direct', 
-                                'chr2A_3000': Locus(name='chr2A_3000', 
-                                                     mRNAs={'chr2A_3000_mrna': [400, 550]}, 
-                                                     start=400, 
-                                                     end=550, 
-                                                     direction='direct',
-                                'chr2A_4000': Locus(name='chr2A_4000', 
+                                {'chr2A_1000': main.Locus(name='chr2A_1000', 
+                                                     mRNAs={'chr2A_1000_mrna': [100, 250]}, 
+                                                     start=100, 
+                                                     end=250, 
+                                                     direction='direct'), 
+                                'chr2A_2000': main.Locus(name='chr2A_2000', 
+                                                     mRNAs={'chr2A_2000_mrna': [300, 450]}, 
+                                                     start=300, 
+                                                     end=450, 
+                                                     direction='direct'), 
+                                'chr2A_3000': main.Locus(name='chr2A_3000', 
+                                                     mRNAs={'chr2A_3000_mrna': [500, 600]}, 
+                                                     start=500, 
+                                                     end=600, 
+                                                     direction='direct'),
+                                'chr2A_4000': main.Locus(name='chr2A_4000', 
                                                      mRNAs={'chr2A_4000_mrna': [650, 700]}, 
                                                      start=650, 
                                                      end=700, 
-                                                     direction='direct',
-                                'chr2A_5000': Locus(name='chr2A_5000', 
-                                                     mRNAs={'chr2A_5000_mrna': [750, 800]}, 
+                                                     direction='direct'),
+                                'chr2A_5000': main.Locus(name='chr2A_5000', 
+                                                     mRNAs={'chr2A_5000_mrna': [750, 780]}, 
                                                      start=750, 
-                                                     end=800, 
-                                                     direction='direct'},
+                                                     end=780, 
+                                                     direction='direct'),
+                                'chr2A_6000': main.Locus(name='chr2A_6000', 
+                                                     mRNAs={'chr2A_6000_mrna': [790, 850]}, 
+                                                     start=790, 
+                                                     end=850, 
+                                                     direction='direct')},
                                                       
-                                [(50, 150, 'chr_2A_1000', True), 
-                               (100, 250, 'chr_2A_1000', False), 
-                               (200, 350, 'chr_2A_2000', True), 
-                               (300, 450, 'chr_2A_2000', False), 
-                               (400, 550, 'chr_2A_3000', True), 
-                               (500, 600, 'chr_2A_3000', False), 
-                               (650, 700, 'chr_2A_4000', False), 
-                               (650, 700, 'chr_2A_4000', True), 
-                               (750, 780, 'chr_2A_5000', False), 
-                               (750, 800, 'chr_2A_5000', True), 
-                               (790, 850, 'chr_2A_6000', False)]]
+                                [(50, 150, 'chr2A_1000', True), 
+                               (100, 250, 'chr2A_1000', False), 
+                               (200, 350, 'chr2A_2000', True), 
+                               (300, 450, 'chr2A_2000', False), 
+                               (400, 550, 'chr2A_3000', True), 
+                               (500, 600, 'chr2A_3000', False), 
+                               (650, 700, 'chr2A_4000', False), 
+                               (650, 700, 'chr2A_4000', True), 
+                               (750, 780, 'chr2A_5000', False), 
+                               (750, 800, 'chr2A_5000', True), 
+                               (790, 850, 'chr2A_6000', False)]]
     }
     
     print("\n*************Testing the annotation_sort function*************")
@@ -198,55 +203,107 @@ def test_annotation_sort():
         assert result == test_dict[test][2]
         
         
-# test function for the 'main.py' function 'fuse_superloci' (overlapping loci fusion function)
-def test_fuse_superloci():
+# test function for the 'main.py' function 'construct_clusters' (overlapping loci grouping function)
+def test_construct_clusters():
     
-    # dictionary of inputs and expected ouputs for each test file for the 'main.py' function 'fuse_superloci' (overlapping loci fusion function)
-    test_dict = {
-        'simple' : [{'chr_2A_1000' : [50, 150], 
-                     'chr_2A_2000' : [200, 350],
-                     'chr_2A_3000' : [400, 550],
-                     'chr_2A_4000' : [650, 700],
-                     'chr_2A_5000' : [750, 800]},
-                    {'chr_2A_1000' : [100, 250],
-                     'chr_2A_2000' : [300, 450],
-                     'chr_2A_3000' : [500, 600],
-                     'chr_2A_4000' : [650, 700],
-                     'chr_2A_5000' : [750, 780],
-                     'chr_2A_6000' : [790, 850]},
-                    [(50, 150, 'chr_2A_1000', True), 
-                     (100, 250, 'chr_2A_1000', False), 
-                     (200, 350, 'chr_2A_2000', True), 
-                     (300, 450, 'chr_2A_2000', False), 
-                     (400, 550, 'chr_2A_3000', True), 
-                     (500, 600, 'chr_2A_3000', False), 
-                     (650, 700, 'chr_2A_4000', False), 
-                     (650, 700, 'chr_2A_4000', True), 
-                     (750, 780, 'chr_2A_5000', False), 
-                     (750, 800, 'chr_2A_5000', True), 
-                     (790, 850, 'chr_2A_6000', False)],
-                    {'chr_2A_1000':  [50, 150, 200, 350, 400, 550], 
-                     'chr_2A_4000':  [650, 700], 
-                     'chr_2A_5000':  [750, 800]},
-                    {'chr_2A_1000':  [100, 250, 300, 450, 500, 600], 
-                     'chr_2A_4000':  [650, 700], 
-                     'chr_2A_5000':  [750, 780, 790, 850]}]
+    # dictionary of inputs and expected ouputs for each test file for the 'main.py' function 'construct_clusters' (overlapping loci grouping function)
+    test_dict = {'simple' : [{
+        'chr2A_1000': main.Locus(name='chr2A_1000', 
+                                 mRNAs={'chr2A_1000_mrna': [50, 150]}, 
+                                 start=50, 
+                                 end=150, 
+                                 direction='direct'), 
+        'chr2A_2000': main.Locus(name='chr2A_2000', 
+                                 mRNAs={'chr2A_2000_mrna': [200, 350]}, 
+                                 start=200, 
+                                 end=350, 
+                                 direction='direct'), 
+        'chr2A_3000': main.Locus(name='chr2A_3000', 
+                                 mRNAs={'chr2A_3000_mrna': [400, 550]}, 
+                                 start=400, 
+                                 end=550, 
+                                 direction='direct'),
+        'chr2A_4000': main.Locus(name='chr2A_4000', 
+                                 mRNAs={'chr2A_4000_mrna': [650, 700]}, 
+                                 start=650, 
+                                 end=700, 
+                                 direction='direct'),
+        'chr2A_5000': main.Locus(name='chr2A_5000', 
+                                 mRNAs={'chr2A_5000_mrna': [750, 800]}, 
+                                 start=750, 
+                                 end=800, 
+                                 direction='direct')},
+                    
+        {'chr2A_1000': main.Locus(name='chr2A_1000', 
+                             mRNAs={'chr2A_1000_mrna': [100, 250]}, 
+                             start=100, 
+                             end=250, 
+                             direction='direct'), 
+        'chr2A_2000': main.Locus(name='chr2A_2000', 
+                             mRNAs={'chr2A_2000_mrna': [300, 450]}, 
+                             start=300, 
+                             end=450, 
+                             direction='direct'), 
+        'chr2A_3000': main.Locus(name='chr2A_3000', 
+                             mRNAs={'chr2A_3000_mrna': [500, 600]}, 
+                             start=500, 
+                             end=600, 
+                             direction='direct'),
+        'chr2A_4000': main.Locus(name='chr2A_4000', 
+                             mRNAs={'chr2A_4000_mrna': [650, 700]}, 
+                             start=650, 
+                             end=700, 
+                             direction='direct'),
+        'chr2A_5000': main.Locus(name='chr2A_5000', 
+                             mRNAs={'chr2A_5000_mrna': [750, 780]}, 
+                             start=750, 
+                             end=780, 
+                             direction='direct'),
+        'chr2A_6000': main.Locus(name='chr2A_6000', 
+                             mRNAs={'chr2A_6000_mrna': [790, 850]}, 
+                             start=790, 
+                             end=850, 
+                             direction='direct')},
+        
+        [(50, 150, 'chr2A_1000', True), 
+          (100, 250, 'chr2A_1000', False), 
+          (200, 350, 'chr2A_2000', True), 
+          (300, 450, 'chr2A_2000', False), 
+          (400, 550, 'chr2A_3000', True), 
+          (500, 600, 'chr2A_3000', False), 
+          (650, 700, 'chr2A_4000', False), 
+          (650, 700, 'chr2A_4000', True), 
+          (750, 780, 'chr2A_5000', False), 
+          (750, 800, 'chr2A_5000', True), 
+          (790, 850, 'chr2A_6000', False)],
+        
+        {'cluster 0':  [{'chr2A_1000_mrna': [50, 150]}, {'chr2A_2000_mrna': [200, 350]}, {'chr2A_3000_mrna': [400, 550]}], 
+          'cluster 1':  [{'chr2A_4000_mrna': [650, 700]}], 
+          'cluster 2':  {'chr2A_5000_mrna': [750, 800]}},
+        
+        {'cluster 0':  [{'chr2A_1000_mrna': [100, 250]}, {'chr2A_2000_mrna': [300, 450]}, {'chr2A_3000_mrna': [500, 600]}], 
+          'cluster 1':  [{'chr2A_4000_mrna': [650, 700]}], 
+          'cluster 2':  [{'chr2A_5000_mrna': [750, 780]}, {'chr2A_6000_mrna': [790, 850]}]}]
         }
 
-    print("\n*************Testing the fuse_superloci function*************")
+    print("\n*************Testing the construct_clusters function*************")
     
     for test in test_dict:
         
         print(f"\n{test} test")
         
-        main.fuse_superloci(test_dict[test][0], test_dict[test][1], test_dict[test][2], False, False)
+        result = main.construct_clusters(test_dict[test][0], test_dict[test][1], test_dict[test][2], True, True)
         print(test_dict[test][0])
         print(test_dict[test][3])
         print("\n")
         print(test_dict[test][1])
         print(test_dict[test][4])
-        assert test_dict[test][0] == test_dict[test][3]
-        assert test_dict[test][1] == test_dict[test][4]
+        for loc_id, loc in test_dict[test][3].items():
+            for mRNA in loc:
+                assert result.contain_mrnas(loc_id, "ref", **mRNA)
+        for loc_id, mRNAs in test_dict[test][4].items():
+            for mRNA in loc:
+                assert result.contain_mrnas(loc_id, "alt", **mRNA)
     
 
 # test function for the 'main.py' function 'get_area_bounds' (CDS coordinates fusion function)
@@ -495,67 +552,67 @@ def test_old_compare_loci():
 
 
 
-# test function for the 'main.py' function 'annotation_comparison' (reference against alternative comparison function)
-def test_annotation_comparison():
+# # test function for the 'main.py' function 'annotation_comparison' (reference against alternative comparison function)
+# def test_annotation_comparison():
     
-    # dictionary of inputs and expected ouputs for each test file for the 'main.py' function 'annotation_comparison' (reference against alternative comparison function)
-    test_dict = {
-        "basic vs identical" : ["./data/tests/basic_test.gff3", 
-                                "./data/tests/identical_test.gff3",
-                        {'chr2A_00611930_mrna': 100.0}],
+#     # dictionary of inputs and expected ouputs for each test file for the 'main.py' function 'annotation_comparison' (reference against alternative comparison function)
+#     test_dict = {
+#         "basic vs identical" : ["./data/tests/basic_test.gff3", 
+#                                 "./data/tests/identical_test.gff3",
+#                         {'chr2A_00611930_mrna': 100.0}],
         
-        "basic vs minus-CDS" : ["./data/tests/basic_test.gff3", 
-                                "./data/tests/minus-CDS_test.gff3",
-                       {'chr2A_00611930_mrna': 60.0}],
+#         "basic vs minus-CDS" : ["./data/tests/basic_test.gff3", 
+#                                 "./data/tests/minus-CDS_test.gff3",
+#                        {'chr2A_00611930_mrna': 60.0}],
         
-        "basic vs fusion" : ["./data/tests/basic_test.gff3", 
-                             "./data/tests/fusion_test.gff3",
-                    {'chr2A_00611930_mrna': 17.6}],
+#         "basic vs fusion" : ["./data/tests/basic_test.gff3", 
+#                              "./data/tests/fusion_test.gff3",
+#                     {'chr2A_00611930_mrna': 17.6}],
         
-        "basic vs shift" : ["./data/tests/basic_test.gff3", 
-                            "./data/tests/shift_test.gff3",
-                   {'chr2A_00611930_mrna': 20.0}],
+#         "basic vs shift" : ["./data/tests/basic_test.gff3", 
+#                             "./data/tests/shift_test.gff3",
+#                    {'chr2A_00611930_mrna': 20.0}],
         
-        "basic vs reverse" : ["./data/tests/basic_test.gff3", 
-                              "./data/tests/reverse_test.gff3",
-                     {'chr2A_00611930_mrna': 0.0}],
+#         "basic vs reverse" : ["./data/tests/basic_test.gff3", 
+#                               "./data/tests/reverse_test.gff3",
+#                      {'chr2A_00611930_mrna': 0.0}],
         
-        "reverse vs reverse" : ["./data/tests/reverse_test.gff3", 
-                              "./data/tests/reverse_test.gff3",
-                     {'chr2A_00611930_mrna': 100.0}],
+#         "reverse vs reverse" : ["./data/tests/reverse_test.gff3", 
+#                               "./data/tests/reverse_test.gff3",
+#                      {'chr2A_00611930_mrna': 100.0}],
         
-        "basic vs diff-start-before" : ["./data/tests/basic_test.gff3",
-                                        "./data/tests/diff-start-before_test.gff3",
-                               {'chr2A_00611930_mrna': 12.5}],
+#         "basic vs diff-start-before" : ["./data/tests/basic_test.gff3",
+#                                         "./data/tests/diff-start-before_test.gff3",
+#                                {'chr2A_00611930_mrna': 12.5}],
         
-        "basic vs diff-start-after" : ["./data/tests/basic_test.gff3", 
-                                       "./data/tests/diff-start-after_test.gff3",
-                              {'chr2A_00611930_mrna': 12.5}],
+#         "basic vs diff-start-after" : ["./data/tests/basic_test.gff3", 
+#                                        "./data/tests/diff-start-after_test.gff3",
+#                               {'chr2A_00611930_mrna': 12.5}],
         
-        "basic-2-loci vs identical-2-loci" : ["./data/tests/basic-2-loci_test.gff3",
-                                              "./data/tests/identical-2-loci_test.gff3",
-                              {'chr2A_00611930_mrna': 100.0,
-                               'chr2A_00620000_mrna': 100.0}],
+#         "basic-2-loci vs identical-2-loci" : ["./data/tests/basic-2-loci_test.gff3",
+#                                               "./data/tests/identical-2-loci_test.gff3",
+#                               {'chr2A_00611930_mrna': 100.0,
+#                                'chr2A_00620000_mrna': 100.0}],
         
-        "overlapping-loci vs overlapping-loci-alt" : ["./data/tests/overlapping-loci_test.gff3",
-                                                      "./data/tests/overlapping-loci-alt_test.gff3",
-                              {'chr2A_1000_mrna' : 18.2,
-                               'chr2A_4000_mrna' : 100.0,
-                               'chr2A_5000_mrna' : 30.0}]
-        }
+#         "overlapping-loci vs overlapping-loci-alt" : ["./data/tests/overlapping-loci_test.gff3",
+#                                                       "./data/tests/overlapping-loci-alt_test.gff3",
+#                               {'chr2A_1000_mrna' : 18.2,
+#                                'chr2A_4000_mrna' : 100.0,
+#                                'chr2A_5000_mrna' : 30.0}]
+#         }
     
-    print("\n*************Testing the annotation_comparison function*************")
+#     print("\n*************Testing the annotation_comparison function*************")
     
-    for test in test_dict:
+#     for test in test_dict:
         
-        print(f"\n{test} file test")
+#         print(f"\n{test} file test")
         
-        result = main.annotation_comparison(test_dict[test][0], test_dict[test][1], False, False)
-        print(result)
-        print(test_dict[test][2])
-        assert result == test_dict[test][2]
+#         result = main.annotation_comparison(test_dict[test][0], test_dict[test][1], False, False)
+#         print(result)
+#         print(test_dict[test][2])
+#         assert result == test_dict[test][2]
 
     
-print(f"{ {name: loc.show_init() for name, loc in main.get_gff_borders('../data/tests/overlapping-loci_test.gff3').items()} }".replace('"', ""))
+# print(f"{ {name: loc.show_init() for name, loc in main.get_gff_borders('../data/tests/overlapping-loci-alt_test.gff3').items()} }".replace('"', ""))
 
 

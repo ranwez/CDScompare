@@ -23,6 +23,20 @@ import pprint
 class Clusters:
     def __init__(self):
         self.clusters = {}
+        
+    def clusters(self):
+        return self.clusters
+    
+    def contain_mrnas(self, loc_id, ref, **mrnas):
+        for mrna_name, positions_list in mrnas.items():
+            list_mRNAs = []
+            print("********************")
+            print(self.clusters)
+            for loc in self.clusters[loc_id][ref]:
+                list_mRNAs.append(loc.mRNAs)
+                if mrna_name not in list_mRNAs:
+                    return False
+                return self.clusters[loc_id][ref][mrna_name] == positions_list
     
 #TODO documentation
 class Locus:
@@ -47,8 +61,6 @@ class Locus:
 
     def show_init(self):
         return f"Locus(name='{self.name}', mRNAs={self.mRNAs}, start={self.start}, end={self.end}, direction='{self.direction}'"
-        
-# tonMAchin.contain_mrnas(**{nom: listèposition})
 
 
 ## This function retrieves and returns the id of the structure described from a line read from a GFF file.
@@ -300,8 +312,7 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
 def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
 
     # initialisation of the dictionary keeping track of what loci have already been fused
-    already_fused = {'ref': {},
-                     'alt': {}}
+    already_grouped = []
     
     clusters = Clusters()
     
@@ -310,9 +321,15 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
         locus_id = locus_order[i][2] # identifier of the current locus
         locus_borders = [locus_order[i][0], locus_order[i][1]] # lower and upper bounds of the current locus search
         locus_is_ref = locus_order[i][3]
-        cluster_name = "cluster " + str(i) # name of the constructed cluster to add to the 'Clusters' class
         if debug:
             print(f"\nlocus borders = {locus_borders}")
+            
+        if locus_is_ref:
+            if locus_id + "_ref" not in already_grouped:
+                cluster_name = "cluster " + str(i) # name of the constructed cluster to add to the 'Clusters' class
+        else:
+            if locus_id + "_alt" not in already_grouped:
+                cluster_name = "cluster " + str(i) # name of the constructed cluster to add to the 'Clusters' class
             
         clusters.clusters[cluster_name] = {"ref" : [],
                                            "alt" : []} # initialize cluster in 'Clusters' class
@@ -328,30 +345,48 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
             next_locus_id = locus_order[i+j][2] # identifier of the current locus
             next_lower_border = locus_order[i+j][0] # lower bound of the locus pointed to by 'j'
             next_is_ref = locus_order[i+j][3] # boolean indicating if locus pointed by 'j' is from the reference
+            if next_is_ref:
+                is_ref_marker = "_ref"
+            else:
+                is_ref_marker = "_alt"
+            
             if debug:
                 print(f"\nj = {j}")
                 print(f"next lower border = {next_lower_border}")
-                
-            if next_lower_border <= locus_borders[1]: # if the lower bound of the locus pointed by 'j' is inside the current locus' bounds...
+                print(f"already grouped : {already_grouped}")
+            if next_locus_id + is_ref_marker not in already_grouped:
+                if next_lower_border <= locus_borders[1]: # if the lower bound of the locus pointed by 'j' is inside the current locus' bounds and hasn't yet been included in a cluster...
+                    if debug:
+                        print("next locus found in current borders")
+                    new_upper_border = locus_order[i+j][1]
+                    locus_borders[1] = new_upper_border # upper bound of the current locus search is extended to upper bound of the 'j' locus               
+                    if debug:
+                        print(f"new locus borders = {locus_borders}")
+                    
+                    if next_is_ref:
+                        clusters.clusters[cluster_name]["ref"].append(dict_ref[next_locus_id])
+                        already_grouped.append(next_locus_id + is_ref_marker)
+                    else:
+                        clusters.clusters[cluster_name]["alt"].append(dict_alt[next_locus_id])
+                        already_grouped.append(next_locus_id + is_ref_marker)
+                    j += 1
+                        
+                else: # if no locus is found in the current locus search's bounds, a 'stop signal' is given to stop the 'j' loop
+                    if debug:
+                        print("next locus not found in current borders, continuing")
+                    j = -1
+            else:
                 if debug:
-                    print("next locus found in current borders")
+                    print(f"{next_locus_id} already grouped, skipping")
                 new_upper_border = locus_order[i+j][1]
                 locus_borders[1] = new_upper_border # upper bound of the current locus search is extended to upper bound of the 'j' locus               
-                
-                if next_is_ref:
-                    clusters.clusters[cluster_name]["ref"].append(dict_ref[next_locus_id])
-                else:
-                    clusters.clusters[cluster_name]["alt"].append(dict_alt[next_locus_id])
-                j += 1
-                    
-            else: # if no locus is found in the current locus search's bounds, a 'stop signal' is given to stop the 'j' loop
                 if debug:
-                    print("next locus not found in current borders, continuing")
-                j = -1
-                     
+                    print(f"new locus borders = {locus_borders}")               
+                j += 1
+                         
         if debug:
-            print(dict_ref)
-            print(dict_alt)
+            print(clusters.clusters[cluster_name]["ref"])
+            print(clusters.clusters[cluster_name]["alt"])
     print("\n")
     
     return clusters
