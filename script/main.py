@@ -509,19 +509,19 @@ def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
 
 
 #TODO change documentation
-## This function compares two annotations' loci returned by the function get_gff_borders() and creates for each pair of reference-alternative mRNAs a comparison list detailing the identities and differences between the two annotations's codon position structure. It returns the comparison list giving the highest identity.
+## This function compares two annotations' loci returned by the function get_gff_borders() and creates for each pair of reference-alternative mRNAs a comparison list detailing the identities and differences between the two annotations's codon position structure. It returns a tuple containing the comparison list giving the highest identity and the computed identity level.
 #
 # @see get_gff_borders()
 #
-# @param ref_locus The reference annotation's locus
+# @param ref_locus The reference annotation's locus (Locus class instance)
 #
-# @param alt_locus The alternative annotation's locus
+# @param alt_locus The alternative annotation's locus (Locus class instance)
 #
 # @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
 #
 # @param verbose If True, triggers display of more information messages. Default is 'False'
 #
-# @return Returns a list indicating the number of codon position mismatches (first position) and matches (second position) between the two border lists, giving the maximum indentity between all mRNAs
+# @return Returns a tuple containign a list indicating the number of codon position mismatches (first position) and matches (second position) between the two border lists giving the maximum indentity between all mRNAs, and the identity level computed from this list
 #
 def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     
@@ -623,10 +623,11 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
             identity = comparison[1] / (comparison[0] + comparison[1])
         
             if identity > final_identity:
+                final_comparison = comparison
                 final_identity = identity
     
     final_identity = round(final_identity * 100, 1)
-    return final_identity
+    return (final_comparison, final_identity)
 
 
 ## This function expects a list of all CDS coordinates (start and end) of a locus. It returns a list indicating the start of the locus as first value and a string describing the codon position of each nucleotide (1,2,3, or 0 in the case of a non-CDS nucleotide) of the locus/gene as second value
@@ -980,16 +981,16 @@ def annotation_match(cluster_ref, cluster_alt, debug, verbose):
             
             print(j)
             
-            comparison = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
+            comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
             
-            print("comparison identity score = " + str(comparison))
+            print("comparison identity score = " + str(identity))
             
             if debug:
-                print(f"top value = {dyn_prog_matrix[i-1][j]}; left value = {dyn_prog_matrix[i][j-1]}; diagonal value (comparison) = {dyn_prog_matrix[i-1][j-1] + comparison}")
+                print(f"top value = {dyn_prog_matrix[i-1][j]}; left value = {dyn_prog_matrix[i][j-1]}; diagonal value (identity) = {dyn_prog_matrix[i-1][j-1] + identity}")
             
             dyn_prog_matrix[i][j] = max(dyn_prog_matrix[i-1][j],
                                         dyn_prog_matrix[i][j-1],
-                                        dyn_prog_matrix[i-1][j-1] + comparison)
+                                        dyn_prog_matrix[i-1][j-1] + identity)
     if debug:        
         print("complete dynamic programmation matrix :")
         for line in dyn_prog_matrix:
@@ -1002,17 +1003,17 @@ def annotation_match(cluster_ref, cluster_alt, debug, verbose):
     print("Reference_Locus\t\tAlternative_Locus\t\tIdentity_Score")
     
     while i>0 and j>0:
-        comparison = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
+        comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
         
         if max(dyn_prog_matrix[i-1][j],
             dyn_prog_matrix[i][j-1],
-            dyn_prog_matrix[i-1][j-1] + comparison) == dyn_prog_matrix[i-1][j]:
+            dyn_prog_matrix[i-1][j-1] + identity) == dyn_prog_matrix[i-1][j]:
             print(f"{cluster_ref[i-1].name}\t\t_\t\t{compare_loci(cluster_ref[i-1], cluster_alt[j], debug, verbose)}%")
             i -= 1
             
         elif max(dyn_prog_matrix[i-1][j],
             dyn_prog_matrix[i][j-1],
-            dyn_prog_matrix[i-1][j-1] + comparison) == dyn_prog_matrix[i][j-1]:
+            dyn_prog_matrix[i-1][j-1] + identity) == dyn_prog_matrix[i][j-1]:
             print(f"_\t\t{cluster_alt[j-1].name}\t\t{compare_loci(cluster_ref[i], cluster_alt[j-1], debug, verbose)}%")
             j -= 1
             

@@ -292,7 +292,7 @@ def test_construct_clusters():
         
         print(f"\n{test} test")
         
-        result = main.construct_clusters(test_dict[test][0], test_dict[test][1], test_dict[test][2], True, True)
+        result = main.construct_clusters(test_dict[test][0], test_dict[test][1], test_dict[test][2], False, False)
         for cluster_id, cluster in test_dict[test][3].items():
             for mRNA in cluster:
                 result_mRNAs = result.get_mRNAs(cluster_id, "ref")
@@ -412,37 +412,101 @@ def test_compare_loci():
     
     # dictionary of inputs and expected ouputs for each test file for the 'main.py' function 'compare_loci' (new locus comparison function)
     test_dict = {
-        "identical" : [[100, 130, 150, 210, 240, 300], 
-                       [100, 130, 150, 210, 240, 300],
-                       [0, 150]],
+        "identical" : [main.Locus(name='chr2A_00611930', 
+                                 mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
+                                 start=100, 
+                                 end=300, 
+                                 direction='direct'), 
+                       main.Locus(name='chr2A_00611930', 
+                                    mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
+                                    start=100, 
+                                    end=300, 
+                                    direction='direct'),
+                       ([0, 150], 100.0)],
         
-        "minus-CDS" : [[100, 130, 150, 210, 240, 300],
-                       [100, 130, 240, 300],
-                       [60, 90]],
+        "minus-CDS" : [main.Locus(name='chr2A_00611930', 
+                                 mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
+                                 start=100, 
+                                 end=300, 
+                                 direction='direct'),
+                       main.Locus(name='chr2A_00611930', 
+                                    mRNAs={'chr2A_00611930_mrna': [100, 130, 240, 300]}, 
+                                    start=100, 
+                                    end=300, 
+                                    direction='direct'),
+                       ([60, 90], 60.0)],
         
-        "fusion" : [[100, 130, 150, 210, 240, 300],
-                    [100, 210, 240, 300],
-                    [140, 30]],
+        "fusion" : [main.Locus(name='chr2A_00611930', 
+                                 mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
+                                 start=100, 
+                                 end=300, 
+                                 direction='direct'),
+                    main.Locus(name='chr2A_00611930', 
+                                mRNAs={'chr2A_00611930_mrna': [100, 210, 240, 300]}, 
+                                start=100, 
+                                end=300, 
+                                direction='direct'),
+                    ([140, 30], 17.6)],
         
-        "shift" : [[100, 130, 150, 210, 240, 300],
-                   [100, 130, 151, 210, 240, 300],
-                   [120, 30]],
+        "shift" : [main.Locus(name='chr2A_00611930', 
+                                 mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
+                                 start=100, 
+                                 end=300, 
+                                 direction='direct'),
+                   main.Locus(name='chr2A_00611930', 
+                                mRNAs={'chr2A_00611930_mrna': [100, 130, 151, 210, 240, 300]}, 
+                                start=100, 
+                                end=300, 
+                                direction='direct'),
+                   ([120, 30], 20.0)],
         
-        "reverse" : [[300, 240, 210, 150, 130, 100],
-                     [300, 240, 210, 150, 130, 100],
-                     [0, 150]],
+        "reverse-reverse" : [main.Locus(name='chr2A_00611930', 
+                                 mRNAs={'chr2A_00611930_mrna': [300, 240, 210, 150, 130, 100]}, 
+                                 start=300, 
+                                 end=100, 
+                                 direction='reverse'),
+                     main.Locus(name='chr2A_00611930', 
+                                mRNAs={'chr2A_00611930_mrna': [300, 240, 210, 150, 130, 100]}, 
+                                start=300, 
+                                end=100, 
+                                direction='reverse'),
+                     ([0, 150], 100.0)],
         
-        "diff-start-before" : [[100, 130, 150, 210, 240, 300],
-                               [40, 70, 90, 150, 180, 240],
-                               [210, 30]],
+        "diff-start-before" : [main.Locus(name='chr2A_00611930', 
+                                            mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
+                                            start=100, 
+                                            end=300, 
+                                            direction='direct'),
+                               main.Locus(name='chr2A_00611930', 
+                                            mRNAs={'chr2A_00611930_mrna': [40, 70, 90, 150, 180, 240]}, 
+                                            start=40, 
+                                            end=240, 
+                                            direction='direct'),
+                               ([210, 30], 12.5)],
         
-        "diff-start-after" : [[100, 130, 150, 210, 240, 300],
-                              [160, 190, 210, 270, 300, 360],
-                              [210, 30]],
+        "diff-start-after" : [main.Locus(name='chr2A_00611930', 
+                                            mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
+                                            start=100, 
+                                            end=300, 
+                                            direction='direct'),
+                              main.Locus(name='chr2A_00611930', 
+                                            mRNAs={'chr2A_00611930_mrna': [160, 190, 210, 270, 300, 360]}, 
+                                            start=160, 
+                                            end=360, 
+                                            direction='direct'),
+                              ([210, 30], 12.5)],
         
-        "basic-2-loci (second locus)" : [[600, 700, 800, 900],
-                                         [600, 700, 800, 900],
-                                         [0, 200]]
+        "basic-2-loci (second locus)" : [main.Locus(name='chr2A_00611930', 
+                                            mRNAs={'chr2A_00611930_mrna': [600, 700, 800, 900]}, 
+                                            start=600, 
+                                            end=900, 
+                                            direction='direct'),
+                                         main.Locus(name='chr2A_00611930', 
+                                                    mRNAs={'chr2A_00611930_mrna': [600, 700, 800, 900]}, 
+                                                    start=600, 
+                                                    end=900, 
+                                                    direction='direct'),
+                                         ([0, 200], 100.0)]
         }
     
     print("\n*************Testing the compare_loci function*************")
@@ -452,8 +516,8 @@ def test_compare_loci():
         print(f"\n{test} file test")
         
         result = main.compare_loci(test_dict[test][0], test_dict[test][1], False, False)
-        print(result)
-        print(test_dict[test][2])
+        print(f"Expected result = {test_dict[test][2]}")
+        print(f"Result = {result}")
         assert result == test_dict[test][2]
 
     
