@@ -27,16 +27,11 @@ class Clusters:
     def clusters(self):
         return self.clusters
     
-    def contain_mrnas(self, loc_id, ref, **mrnas):
-        for mrna_name, positions_list in mrnas.items():
-            list_mRNAs = []
-            print("********************")
-            print(self.clusters)
-            for loc in self.clusters[loc_id][ref]:
-                list_mRNAs.append(loc.mRNAs)
-                if mrna_name not in list_mRNAs:
-                    return False
-                return self.clusters[loc_id][ref][mrna_name] == positions_list
+    def get_mRNAs(self, loc_id, ref):
+        list_mRNAs = []
+        for loc in self.clusters[loc_id][ref]:
+            list_mRNAs.append(loc.mRNAs)
+        return list_mRNAs
     
 #TODO documentation
 class Locus:
@@ -327,18 +322,20 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
         if locus_is_ref:
             if locus_id + "_ref" not in already_grouped:
                 cluster_name = "cluster " + str(i) # name of the constructed cluster to add to the 'Clusters' class
+                
+                if cluster_name not in clusters.clusters:
+                    clusters.clusters[cluster_name] = {"ref" : [],
+                                                   "alt" : []} # initialize cluster in 'Clusters' class
+                clusters.clusters[cluster_name]["ref"].append(dict_ref[locus_id])
         else:
             if locus_id + "_alt" not in already_grouped:
                 cluster_name = "cluster " + str(i) # name of the constructed cluster to add to the 'Clusters' class
+                
+                if cluster_name not in clusters.clusters:
+                    clusters.clusters[cluster_name] = {"ref" : [],
+                                                   "alt" : []} # initialize cluster in 'Clusters' class
+                clusters.clusters[cluster_name]["alt"].append(dict_alt[locus_id])
             
-        clusters.clusters[cluster_name] = {"ref" : [],
-                                           "alt" : []} # initialize cluster in 'Clusters' class
-        
-        if locus_is_ref:
-            clusters.clusters[cluster_name]["ref"].append(dict_ref[locus_id])
-        else:
-            clusters.clusters[cluster_name]["alt"].append(dict_alt[locus_id])
-	 
         # while we did not reach the end of the list and a 'stop signal' (j=-1) is not given, for each locus after the current one...
         j = 1
         while j != -1 and j <= len(locus_order)-i-1:

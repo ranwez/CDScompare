@@ -278,12 +278,12 @@ def test_construct_clusters():
           (790, 850, 'chr2A_6000', False)],
         
         {'cluster 0':  [{'chr2A_1000_mrna': [50, 150]}, {'chr2A_2000_mrna': [200, 350]}, {'chr2A_3000_mrna': [400, 550]}], 
-          'cluster 1':  [{'chr2A_4000_mrna': [650, 700]}], 
-          'cluster 2':  {'chr2A_5000_mrna': [750, 800]}},
+          'cluster 6':  [{'chr2A_4000_mrna': [650, 700]}], 
+          'cluster 8':  [{'chr2A_5000_mrna': [750, 800]}]},
         
         {'cluster 0':  [{'chr2A_1000_mrna': [100, 250]}, {'chr2A_2000_mrna': [300, 450]}, {'chr2A_3000_mrna': [500, 600]}], 
-          'cluster 1':  [{'chr2A_4000_mrna': [650, 700]}], 
-          'cluster 2':  [{'chr2A_5000_mrna': [750, 780]}, {'chr2A_6000_mrna': [790, 850]}]}]
+          'cluster 6':  [{'chr2A_4000_mrna': [650, 700]}], 
+          'cluster 8':  [{'chr2A_5000_mrna': [750, 780]}, {'chr2A_6000_mrna': [790, 850]}]}]
         }
 
     print("\n*************Testing the construct_clusters function*************")
@@ -293,17 +293,18 @@ def test_construct_clusters():
         print(f"\n{test} test")
         
         result = main.construct_clusters(test_dict[test][0], test_dict[test][1], test_dict[test][2], True, True)
-        print(test_dict[test][0])
-        print(test_dict[test][3])
-        print("\n")
-        print(test_dict[test][1])
-        print(test_dict[test][4])
-        for loc_id, loc in test_dict[test][3].items():
-            for mRNA in loc:
-                assert result.contain_mrnas(loc_id, "ref", **mRNA)
-        for loc_id, mRNAs in test_dict[test][4].items():
-            for mRNA in loc:
-                assert result.contain_mrnas(loc_id, "alt", **mRNA)
+        for cluster_id, cluster in test_dict[test][3].items():
+            for mRNA in cluster:
+                result_mRNAs = result.get_mRNAs(cluster_id, "ref")
+                print(f"Expected mRNA = {mRNA}")
+                print(f"Result mRNAs = {result_mRNAs}")
+                assert mRNA in result_mRNAs
+        for cluster_id, cluster in test_dict[test][4].items():
+            for mRNA in cluster:
+                result_mRNAs = result.get_mRNAs(cluster_id, "alt")
+                print(f"Expected mRNA = {mRNA}")
+                print(f"Result mRNAs = {result_mRNAs}")
+                assert mRNA in result_mRNAs
     
 
 # test function for the 'main.py' function 'get_area_bounds' (CDS coordinates fusion function)
