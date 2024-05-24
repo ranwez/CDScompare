@@ -91,8 +91,6 @@ def get_structure_id(line, debug=False, verbose=False):
     # for each character from the first, we add it to the locus_id if it is not in a list of special characters. When the first special character is encountered, stop the loop and return the locus_id 
     while id_and_rest[i] not in [",", "?", ";", ":", "/", "!", "*", "$", "%", "+", "@", "#", "~", "&", "\n", "\t"] :
         
-        if debug:
-            print(f"Reading character {id_and_rest[i]}")
         structure_id += id_and_rest[i]
         i += 1
          
@@ -525,6 +523,7 @@ def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
 #
 def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     
+    final_comparison = []
     final_identity = 0.0
     
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
@@ -972,20 +971,20 @@ def annotation_match(cluster_ref, cluster_alt, debug, verbose):
         for j in range(len(cluster_alt)+1):
             dyn_prog_matrix[i].append(0)
             
+    if debug:        
+        print("Initialized dynamic programmation matrix :")
+        for line in dyn_prog_matrix:
+            print(str(line))
+            
     # compute all internal values of the matrix
     for i in range(1, len(cluster_ref)+1):
         
-        print(i)
-        
         for j in range(1, len(cluster_alt)+1):
-            
-            print(j)
             
             comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
             
-            print("comparison identity score = " + str(identity))
-            
             if debug:
+                print("comparison identity score = " + str(identity))
                 print(f"top value = {dyn_prog_matrix[i-1][j]}; left value = {dyn_prog_matrix[i][j-1]}; diagonal value (identity) = {dyn_prog_matrix[i-1][j-1] + identity}")
             
             dyn_prog_matrix[i][j] = max(dyn_prog_matrix[i-1][j],
@@ -997,32 +996,73 @@ def annotation_match(cluster_ref, cluster_alt, debug, verbose):
             print(str(line))
         
     # retrieve best match alignment through backtracking
-    i = len(cluster_ref)
-    j = len(cluster_alt)
     
-    print("Reference_Locus\t\tAlternative_Locus\t\tIdentity_Score")
+    i = len(cluster_ref)-1
+    j = len(cluster_alt)-1
+    results = []
     
-    while i>0 and j>0:
-        comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
+    print("\nReference_Locus\t\tAlternative_Locus\t\tComparison[mismatch, match]\t\tIdentity_Score\n")
+    
+    while i>=0 and j>=0:
+        comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
         
-        if max(dyn_prog_matrix[i-1][j],
-            dyn_prog_matrix[i][j-1],
-            dyn_prog_matrix[i-1][j-1] + identity) == dyn_prog_matrix[i-1][j]:
-            print(f"{cluster_ref[i-1].name}\t\t_\t\t{compare_loci(cluster_ref[i-1], cluster_alt[j], debug, verbose)}%")
+        if debug:
+            print(f"top value : {dyn_prog_matrix[i][j+1]}, \nleft value : {dyn_prog_matrix[i+1][j]}, \ndiagonal value : {dyn_prog_matrix[i][j] + identity}")
+            print(f"max value : {max(dyn_prog_matrix[i][j+1], dyn_prog_matrix[i+1][j], dyn_prog_matrix[i][j] + identity)}")
+        
+        if max(dyn_prog_matrix[i][j+1],
+            dyn_prog_matrix[i+1][j],
+            dyn_prog_matrix[i][j] + identity) == dyn_prog_matrix[i][j]+identity:
+            comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
+            results.append({"reference" : cluster_ref[i-1].name,
+                            "alternative" : cluster_alt[j-1].name,
+                            "mismatch/match" : comparison,
+                            "identity" : identity})
+            print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             i -= 1
-            
-        elif max(dyn_prog_matrix[i-1][j],
-            dyn_prog_matrix[i][j-1],
-            dyn_prog_matrix[i-1][j-1] + identity) == dyn_prog_matrix[i][j-1]:
-            print(f"_\t\t{cluster_alt[j-1].name}\t\t{compare_loci(cluster_ref[i], cluster_alt[j-1], debug, verbose)}%")
             j -= 1
+        
+        elif max(dyn_prog_matrix[i][j+1],
+            dyn_prog_matrix[i+1][j],
+            dyn_prog_matrix[i][j] + identity) == dyn_prog_matrix[i][j+1]:
+            comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)
+            results.append({"reference" : cluster_ref[i-1].name,
+                            "alternative" : "_",
+                            "mismatch/match" : comparison,
+                            "identity" : identity})
+            print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
+            i -= 1
             
         else:
-            print(f"{cluster_ref[i-1].name}\t\t{cluster_alt[j-1].name}\t\t{compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)}%")
-            i -= 1
+            comparison, identity = compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)
+            results.append({"reference" : "_",
+                            "alternative" : cluster_alt[j-1].name,
+                            "mismatch/match" : comparison,
+                            "identity" : identity})
+            print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             j -= 1
-
-    return 0
+            
+        while i==-1 and j!=-1:
+            print(f"j = {j}")
+            comparison, identity = compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)
+            results.append({"reference" : "_",
+                            "alternative" : cluster_alt[j-1].name,
+                            "mismatch/match" : comparison,
+                            "identity" : identity})
+            print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
+            j -= 1
+            
+        while i!=-1 and j==-1:
+            print(f"i = {i}")
+            comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)
+            results.append({"reference" : cluster_ref[i-1].name,
+                            "alternative" : "_",
+                            "mismatch/match" : comparison,
+                            "identity" : identity})
+            print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
+            i -= 1    
+            
+    return results
 
 ## Main function of this program. Given a reference and alternative path, gets the corresponding GFF files and compares the two annotations to return their structure's identity level
 #
