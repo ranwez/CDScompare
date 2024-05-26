@@ -193,8 +193,8 @@ def get_gff_borders(path, debug=False, verbose=False):
         # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
         if str(line.split("\t")[2]) == "gene": 
             
-            if locus_id != "" and locus.mRNAs == {}: # if there was a previous gene, but its borders list is empty, return an error
-                print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the locus '{locus_id}'\n")
+            if locus_id != "" and locus.mRNAs[mRNA_id] == []: # if there was a previous gene, but its borders list is empty, return an error
+                print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the previous mRNA '{mRNA_id}'\n")
                 sys.exit(1)
             
             if locus.mRNAs != {}:
@@ -222,15 +222,12 @@ def get_gff_borders(path, debug=False, verbose=False):
         if str(line.split("\t")[2]) == "mRNA": 
             
             mRNA_id = get_structure_id(line, debug, verbose)
-            
             locus.mRNAs[mRNA_id] = []
-            
             if verbose :
                 print("\nReading mRNA " + locus_id)
 
         # if we encounter a CDS, we add its start and end positions to the corresponding gene key in 'borders'
         if str(line.split("\t")[2]) == "CDS":
-            
             parent_id = get_parent_id(line, debug, verbose)
             
             if parent_id != mRNA_id:
@@ -243,7 +240,6 @@ def get_gff_borders(path, debug=False, verbose=False):
             
             locus.mRNAs[mRNA_id].append(int(line.split("\t")[3]))
             locus.mRNAs[mRNA_id].append(int(line.split("\t")[4]))
-            
             if verbose:
                 print("Adding borders to " + locus_id + " : " + line.split("\t")[3] + ", " + line.split("\t")[4])
                 
@@ -522,7 +518,6 @@ def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
 # @return Returns a tuple containign a list indicating the number of codon position mismatches (first position) and matches (second position) between the two border lists giving the maximum indentity between all mRNAs, and the identity level computed from this list
 #
 def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
-    
     final_comparison = []
     final_identity = 0.0
     
@@ -530,8 +525,15 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
         
         for mRNA_alt_id, mRNA_alt in alt_locus.mRNAs.items():
             
+            print(f"mRNA_ref name = {mRNA_ref_id}")
+            print(f"mRNA_alt_ name = {mRNA_alt_id}")
+            print(f"mRNA_ref = {mRNA_ref}")
+            print(f"mRNA_alt = {mRNA_alt}")
+            
+            debug=True
             # we retrieve the bounds of all areas delimited by all the CDS coordinates of both border lists
             area_bounds = get_area_bounds(mRNA_ref, mRNA_alt, debug, verbose)
+            debug=False
             
             # we retrieve the list indicating the areas which include or not a CDS for both annotations
             
@@ -540,23 +542,19 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
         
             ref_in_CDS = is_in_cds(mRNA_ref, area_bounds, debug, verbose)
             alt_in_CDS = is_in_cds(mRNA_alt, area_bounds, debug, verbose)
-            
             if debug:
                 print("Ref_in_CDS = " + str(ref_in_CDS))
                 print("Alt_in_CDS = " + str(alt_in_CDS))
             
             codon_position_ref=0
             codon_position_alt=0
-            
             comparison = [0,0] # return list. First value is mismatches, second value is identities
             bound_id = 0
             prev_bounds = area_bounds[0]
             
             # for each comparison area delimited by the bounds in the list 'area_bounds'...
             for bound in area_bounds[1:] :
-                    
                 if debug:
-                    
                     print("\n")
                     print("Bound = " + str(bound))
                     print("Prev_bound = " + str(prev_bounds))
