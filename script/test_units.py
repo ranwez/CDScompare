@@ -422,7 +422,7 @@ def test_compare_loci():
                                     start=100, 
                                     end=300, 
                                     direction='direct'),
-                       ([0, 150], 100.0)],
+                       ([0, 150], 100.0, [])],
         
         "minus-CDS" : [main.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
@@ -434,7 +434,7 @@ def test_compare_loci():
                                     start=100, 
                                     end=300, 
                                     direction='direct'),
-                       ([60, 90], 60.0)],
+                       ([60, 90], 60.0, ['150-210'])],
         
         "fusion" : [main.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
@@ -446,7 +446,7 @@ def test_compare_loci():
                                 start=100, 
                                 end=300, 
                                 direction='direct'),
-                    ([140, 30], 17.6)],
+                    ([140, 30], 17.6, ['130-150', '150-210', '240-300'])],
         
         "shift" : [main.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
@@ -458,7 +458,7 @@ def test_compare_loci():
                                 start=100, 
                                 end=300, 
                                 direction='direct'),
-                   ([120, 30], 20.0)],
+                   ([120, 30], 20.0, ['150-151', '151-210', '240-300'])],
         
         "reverse-reverse" : [main.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [300, 240, 210, 150, 130, 100]}, 
@@ -470,7 +470,7 @@ def test_compare_loci():
                                 start=300, 
                                 end=100, 
                                 direction='reverse'),
-                     ([0, 150], 100.0)],
+                     ([0, 150], 100.0, [])],
         
         "diff-start-before" : [main.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
@@ -482,7 +482,7 @@ def test_compare_loci():
                                             start=40, 
                                             end=240, 
                                             direction='direct'),
-                               ([210, 30], 12.5)],
+                               ([210, 30], 12.5, ['40-70', '90-100', '100-130', '130-150', '150-180', '210-240', '240-300'])],
         
         "diff-start-after" : [main.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
@@ -494,7 +494,7 @@ def test_compare_loci():
                                             start=160, 
                                             end=360, 
                                             direction='direct'),
-                              ([210, 30], 12.5)],
+                              ([210, 30], 12.5, ['100-130', '150-160', '160-190', '190-210', '210-240', '270-300', '300-360'])],
         
         "basic-2-loci (second locus)" : [main.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [600, 700, 800, 900]}, 
@@ -506,7 +506,7 @@ def test_compare_loci():
                                                     start=600, 
                                                     end=900, 
                                                     direction='direct'),
-                                         ([0, 200], 100.0)]
+                                         ([0, 200], 100.0, [])]
         }
     
     print("\n*************Testing the compare_loci function*************")
