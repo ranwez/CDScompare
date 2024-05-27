@@ -520,6 +520,7 @@ def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
 def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     final_comparison = []
     final_identity = 0.0
+    final_mismatch_zones = []
     
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
         
@@ -547,6 +548,7 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
             codon_position_ref=0
             codon_position_alt=0
             comparison = [0,0] # return list. First value is mismatches, second value is identities
+            mismatch_zones = []
             bound_id = 0
             prev_bounds = area_bounds[0]
             
@@ -565,7 +567,6 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                     
                 # if both annotations are in a CDS and have the same codon position, then all codon positions for the rest of the area will be identical, so we add the length of the area to the second value of the comparison list and update both codon positions
                 if(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt == codon_position_ref):
-                    
                     if debug:
                         print(f"Identical codon positions for the area, adding {bound-prev_bounds} to match values")
                     
@@ -575,34 +576,38 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                     
                 # if both annotations are in a CDS but don't have the same codon position, then all codon positions for the rest of the area will be different, so we add the length of the are to the first value of the comparison list and update both codon positions
                 elif(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt != codon_position_ref):
-                    
                     if debug:
                         print(f"Different codon positions for the area, adding {bound-prev_bounds} to mismatch values")
                         
                     comparison[0] += bound-prev_bounds
                     codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
                     codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
+                    mismatch_zones.append(f"{prev_bounds}-{bound}")
                 
                 # if only one annotation has a CDS in the comparison area, we add to the first value of the comparison list and update only one codon position
                 
                 elif(ref_in_CDS[bound_id]):
-                    
                     if debug:
                         print(f"Alternative is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
                         
                     comparison[0] += bound-prev_bounds
                     codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
+                    mismatch_zones.append(f"{prev_bounds}-{bound}")
                     
                 
                 elif(alt_in_CDS[bound_id]):
-                    
                     if debug:
                         print(f"Reference is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
                         
                     comparison[0] += bound-prev_bounds
                     codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
+                    mismatch_zones.append(f"{prev_bounds}-{bound}")
                         
-                    # the case of both annotations being outside of a CDS is not used in the computation of global loci identity, and is ignored
+                # the case of both annotations being outside of a CDS is not used in the computation of global loci identity, and is ignored (but mismatch zone borders are still collected)
+                else:
+                    if debug:
+                        print(f"Reference and alternative are not in CDS for the area, ignoring {bound-prev_bounds} area")
+                    
                
                 prev_bounds = bound
                 
@@ -620,9 +625,10 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
             if identity > final_identity:
                 final_comparison = comparison
                 final_identity = identity
+                final_mismatch_zones = mismatch_zones
     
     final_identity = round(final_identity * 100, 1)
-    return (final_comparison, final_identity)
+    return (final_comparison, final_identity, final_mismatch_zones)
 
 
 ## This function expects a list of all CDS coordinates (start and end) of a locus. It returns a list indicating the start of the locus as first value and a string describing the codon position of each nucleotide (1,2,3, or 0 in the case of a non-CDS nucleotide) of the locus/gene as second value
@@ -953,7 +959,7 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             if create_strings:
                 comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
             else:
-                comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
+                comparison, identity, mismatch_zones = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
             
             if debug:
                 print("comparison identity score = " + str(identity))
@@ -980,7 +986,7 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
         if create_strings:
             comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)    
         else:
-            comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
+            comparison, identity, mismatch_zones = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
         
         if debug:
             print(f"top value : {dyn_prog_matrix[i][j+1]}, \nleft value : {dyn_prog_matrix[i+1][j]}, \ndiagonal value : {dyn_prog_matrix[i][j] + identity}")
@@ -992,7 +998,7 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             if create_strings:
                 comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)                
             else:
-                comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
+                comparison, identity, mismatch_zones = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
             results.append({"reference" : cluster_ref[i-1].name,
                             "reference start" : cluster_ref[i-1].start,
                             "reference end" : cluster_ref[i-1].end,
@@ -1000,7 +1006,8 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
                             "alternative start" : cluster_alt[j-1].start,
                             "alternative end" : cluster_alt[j-1].end,
                             "mismatch/match" : comparison,
-                            "identity" : identity})
+                            "identity" : identity,
+                            "mismatch zones" : mismatch_zones})
             print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             i -= 1
             j -= 1
@@ -1011,7 +1018,7 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             if create_strings:
                 comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)                
             else:
-                comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)
+                comparison, identity, mismatch_zones = compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)
             results.append({"reference" : cluster_ref[i-1].name,
                             "reference start" : cluster_ref[i-1].start,
                             "reference end" : cluster_ref[i-1].end,
@@ -1019,7 +1026,8 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
                             "alternative start" : "_",
                             "alternative end" : "_",
                             "mismatch/match" : comparison,
-                            "identity" : identity})
+                            "identity" : identity,
+                            "mismatch zones" : mismatch_zones})
             print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             i -= 1
             
@@ -1027,7 +1035,7 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             if create_strings:
                 comparison, identity = old_compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)                
             else:
-                comparison, identity = compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)
+                comparison, identity, mismatch_zones = compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)
             results.append({"reference" : "_",
                             "reference start" : "_",
                             "reference end" : "_",
@@ -1035,7 +1043,8 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
                             "alternative start" : cluster_alt[j-1].start,
                             "alternative end" : cluster_alt[j-1].end,
                             "mismatch/match" : comparison,
-                            "identity" : identity})
+                            "identity" : identity,
+                            "mismatch zones" : mismatch_zones})
             print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             j -= 1
             
@@ -1043,7 +1052,7 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             if create_strings:
                 comparison, identity = old_compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)                
             else:
-                comparison, identity = compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)
+                comparison, identity, mismatch_zones = compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)
             results.append({"reference" : "_",
                             "reference start" : "_",
                             "reference end" : "_",
@@ -1051,7 +1060,8 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
                             "alternative start" : cluster_alt[j-1].start,
                             "alternative end" : cluster_alt[j-1].end,
                             "mismatch/match" : comparison,
-                            "identity" : identity})
+                            "identity" : identity,
+                            "mismatch zones" : mismatch_zones})
             print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             j -= 1
             
@@ -1059,7 +1069,7 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             if create_strings:
                 comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)                
             else:
-                comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)
+                comparison, identity, mismatch_zones = compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)
             results.append({"reference" : cluster_ref[i-1].name,
                             "reference start" : cluster_ref[i-1].start,
                             "reference end" : cluster_ref[i-1].end,
@@ -1067,7 +1077,8 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
                             "alternative start" : "_",
                             "alternative end" : "_",
                             "mismatch/match" : comparison,
-                            "identity" : identity})
+                            "identity" : identity,
+                            "mismatch zones" : mismatch_zones})
             print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             i -= 1    
             
@@ -1092,11 +1103,23 @@ def write_results(results, debug=False, verbose=False):
         os.mkdir("./results/") # create 'results' subdirectory
         results_file = open("./results/results.csv", "w") # file in which to write results
     
-    results_file.write("Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start,Reference end, Alternative start, Alternative end\n")
+    results_file.write("Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start,Reference end, Alternative start, Alternative end, non-correspondance zones\n")
         
     for cluster in results:
         for loc in cluster:
-            results_file.write(f"{loc['reference']},{loc['alternative']},{loc['mismatch/match'][1]},{loc['mismatch/match'][0]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}\n")
+            # converting the mismatch zones so that commas don't modifiy 
+            # the csv structure
+            mismatch_zones = ""
+            for zone in loc['mismatch zones']:
+                zone += " // "
+                mismatch_zones += zone
+            mismatch_zones = mismatch_zones[:-4]
+            
+            
+            if loc['mismatch/match'] == []:
+                results_file.write(f"{loc['reference']},{loc['alternative']},_,_,{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, _\n")                                
+            else:
+                results_file.write(f"{loc['reference']},{loc['alternative']},{loc['mismatch/match'][1]},{loc['mismatch/match'][0]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {mismatch_zones}\n")
         
     results_file.close()
     
