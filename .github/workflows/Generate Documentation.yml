@@ -1,7 +1,7 @@
 name: Generate Documentation
 
 env:
-  DOC_FOLDER: doc/
+  DOC_FOLDER: documentation/
   DOXYFILE_NAME: Doxyfile
   
 on:
@@ -80,17 +80,17 @@ jobs:
     - name: Build LaTeX PDF
       run: | 
         
-        make -C "$(pwd)/doc/latex"
+        make -C "$(pwd)/$DOC_FOLDER/latex"
         
     - name: Move PDF to doc directory
       run: |
         tree
-        echo "$(pwd)/doc/latex/refman.pdf --> $(pwd)/doc/documentation.pdf"  
-        mv "$(pwd)/doc/latex/refman.pdf" "$(pwd)/doc/documentation.pdf"  
+        echo "$(pwd)/$DOC_FOLDER/latex/refman.pdf --> $(pwd)/$DOC_FOLDER/documentation.pdf"  
+        mv "$(pwd)/$DOC_FOLDER/latex/refman.pdf" "$(pwd)/$DOC_FOLDER/documentation.pdf"  
         tree
         
     - name: Stage changes
-      run: git add "$(pwd)/doc/documentation.pdf"
+      run: git add "$(pwd)/$DOC_FOLDER/documentation.pdf"
 
     - name: Amend last commit
       run: | 
