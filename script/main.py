@@ -191,7 +191,7 @@ def get_gff_borders(path, debug=False, verbose=False):
     for line in file:
         
         # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
-        if str(line.split("\t")[2]) == "gene": 
+        if str(line.split("\t")[2]) == "gene" and line.split("\t")[0] != "contig": 
             
             if locus_id != "" and locus.mRNAs[mRNA_id] == []: # if there was a previous gene, but its borders list is empty, return an error
                 print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the previous mRNA '{mRNA_id}'\n")
@@ -219,7 +219,7 @@ def get_gff_borders(path, debug=False, verbose=False):
                 print("\nReading the locus " + locus_id)
 
         # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
-        if str(line.split("\t")[2]) == "mRNA": 
+        if str(line.split("\t")[2]) == "mRNA" and line.split("\t")[0] != "contig": 
             
             mRNA_id = get_structure_id(line, debug, verbose)
             locus.mRNAs[mRNA_id] = []
@@ -227,7 +227,7 @@ def get_gff_borders(path, debug=False, verbose=False):
                 print("\nReading mRNA " + locus_id)
 
         # if we encounter a CDS, we add its start and end positions to the corresponding gene key in 'borders'
-        if str(line.split("\t")[2]) == "CDS":
+        if str(line.split("\t")[2]) == "CDS" and line.split("\t")[0] != "contig":
             parent_id = get_parent_id(line, debug, verbose)
             
             if parent_id != mRNA_id:
