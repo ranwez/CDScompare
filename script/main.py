@@ -524,16 +524,14 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
         
         for mRNA_alt_id, mRNA_alt in alt_locus.mRNAs.items():
+            if debug:
+                print(f"mRNA_ref name = {mRNA_ref_id}")
+                print(f"mRNA_alt_ name = {mRNA_alt_id}")
+                print(f"mRNA_ref = {mRNA_ref}")
+                print(f"mRNA_alt = {mRNA_alt}")
             
-            print(f"mRNA_ref name = {mRNA_ref_id}")
-            print(f"mRNA_alt_ name = {mRNA_alt_id}")
-            print(f"mRNA_ref = {mRNA_ref}")
-            print(f"mRNA_alt = {mRNA_alt}")
-            
-            debug=True
             # we retrieve the bounds of all areas delimited by all the CDS coordinates of both border lists
             area_bounds = get_area_bounds(mRNA_ref, mRNA_alt, debug, verbose)
-            debug=False
             
             # we retrieve the list indicating the areas which include or not a CDS for both annotations
             
@@ -925,31 +923,6 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
         print(f"\nResult of the comparison of the locus : {comp_list[1]} matches and {comp_list[0]} mismatches" )
     
     return (final_comparison, final_identity)
-
-## This function writes the results of the annotation comparison retrieved from the identities dictionary to a new 'results.csv' file
-#
-# @param identities The dictionary containing the locus names and computed identities, as returned by annotation_comparison
-#
-# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
-#
-# @param verbose If True, triggers display of more information messages. Default is 'False'
-#
-# @see annotation_comparison()
-#
-def write_results(identities, debug=False, verbose=False):
-    
-    try:
-        results_file = open("./results/results.csv", "w") # file in which to write structure errors
-    except FileNotFoundError:
-        os.mkdir("./results/") # create 'results' subdirectory
-        results_file = open("./results/results.csv", "w") # file in which to write structure errors
-    
-    results_file.write("Locus\tIdentity\n")
-    
-    for locus in identities:
-        results_file.write(str(locus) + "\t" + str(identities[locus]) + "\n")
-        
-    results_file.close()
     
 
 #TODO documentation
@@ -1021,7 +994,11 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             else:
                 comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
             results.append({"reference" : cluster_ref[i-1].name,
+                            "reference start" : cluster_ref[i-1].start,
+                            "reference end" : cluster_ref[i-1].end,
                             "alternative" : cluster_alt[j-1].name,
+                            "alternative start" : cluster_alt[j-1].start,
+                            "alternative end" : cluster_alt[j-1].end,
                             "mismatch/match" : comparison,
                             "identity" : identity})
             print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
@@ -1036,7 +1013,11 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             else:
                 comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)
             results.append({"reference" : cluster_ref[i-1].name,
+                            "reference start" : cluster_ref[i-1].start,
+                            "reference end" : cluster_ref[i-1].end,
                             "alternative" : "_",
+                            "alternative start" : "_",
+                            "alternative end" : "_",
                             "mismatch/match" : comparison,
                             "identity" : identity})
             print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
@@ -1048,7 +1029,11 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             else:
                 comparison, identity = compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)
             results.append({"reference" : "_",
+                            "reference start" : "_",
+                            "reference end" : "_",
                             "alternative" : cluster_alt[j-1].name,
+                            "alternative start" : cluster_alt[j-1].start,
+                            "alternative end" : cluster_alt[j-1].end,
                             "mismatch/match" : comparison,
                             "identity" : identity})
             print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
@@ -1060,7 +1045,11 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             else:
                 comparison, identity = compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)
             results.append({"reference" : "_",
+                            "reference start" : "_",
+                            "reference end" : "_",
                             "alternative" : cluster_alt[j-1].name,
+                            "alternative start" : cluster_alt[j-1].start,
+                            "alternative end" : cluster_alt[j-1].end,
                             "mismatch/match" : comparison,
                             "identity" : identity})
             print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
@@ -1072,7 +1061,11 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             else:
                 comparison, identity = compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)
             results.append({"reference" : cluster_ref[i-1].name,
+                            "reference start" : cluster_ref[i-1].start,
+                            "reference end" : cluster_ref[i-1].end,
                             "alternative" : "_",
+                            "alternative start" : "_",
+                            "alternative end" : "_",
                             "mismatch/match" : comparison,
                             "identity" : identity})
             print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
@@ -1080,6 +1073,34 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             
     return results
 
+
+## This function writes the results of the annotation comparison retrieved from the identities dictionary to a new 'results.csv' file
+#
+# @param results A list of list of dictionaries containing results of the annotation comparison, as returned by annotation_match
+#
+# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
+#
+# @param verbose If True, triggers display of more information messages. Default is 'False'
+#
+# @see annotation_match()
+#
+def write_results(results, debug=False, verbose=False):
+    
+    try:
+        results_file = open("./results/results.csv", "w") # file in which to write results
+    except FileNotFoundError:
+        os.mkdir("./results/") # create 'results' subdirectory
+        results_file = open("./results/results.csv", "w") # file in which to write results
+    
+    results_file.write("Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start,Reference end, Alternative start, Alternative end\n")
+        
+    for cluster in results:
+        for loc in cluster:
+            results_file.write(f"{loc['reference']},{loc['alternative']},{loc['mismatch/match'][1]},{loc['mismatch/match'][0]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}\n")
+        
+    results_file.close()
+    
+    
 ## Main function of this program. Given a reference and alternative path, gets the corresponding GFF files and compares the two annotations to return their structure's identity level
 #
 # @param ref_path Path of the GFF file describing the reference annotation
@@ -1106,8 +1127,11 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     # construct clusters of overlapping loci
     clusters = construct_clusters(ref_annotations, alt_annotations, locus_order, debug, verbose)
     
-    for loc_id, loc in clusters.clusters.items():
-        annotation_match(loc["ref"], loc["alt"], create_strings, debug, verbose)
+    results = []
+    for cluster_id, cluster in clusters.clusters.items():
+        results.append(annotation_match(cluster["ref"], cluster["alt"], create_strings, debug, verbose))
+        
+    write_results(results, debug, verbose)
     
     # identities = {}
     
