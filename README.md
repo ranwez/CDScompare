@@ -27,7 +27,7 @@ options:
 
 ## Testing the program
 
-An automatic unit testing script is included (data/tests/test_basic.py) and can be used to check if an update didn't change the expected results of the program. Simply run :
+An automatic unit testing script is included (data/tests/test_units.py) and can be used to check if an update didn't change the expected results of the program. Simply run :
 
 ```
 pytest
