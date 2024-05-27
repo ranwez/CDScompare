@@ -7,34 +7,82 @@ Created on Thu May  2 11:57:29 2024
 """
 
 ##@package main
-# This script is used to compute the distance between two structural annotations of a same genome, one reference and one alternative annotation. 
+# This script is used to compute the distance between two structural 
+# annotations of a same genome, one reference and one alternative annotation. 
 # It expects as input the paths to the annotation files (in GFF format), 
-# displays the computed distances between all annotation pairs, and returns a dictionary of lists of
-# lists detailing the matchs/mismatchs between the two annotations' structure string
+# displays the computed distances between all annotation pairs, and returns a 
+# dictionary of lists of lists detailing the matchs/mismatchs between the 
+# two annotations' structure string
 
 
 import getopt
 import sys
 import os
-import pprint
 
 
-#TODO documentation
+## This class represents clusters of overlapping loci computed by the 
+# function construct_clusters. It posesses only one attribute, 'clusters',
+# which is a dictionary of dictionaries of instances of the class 'Locus'
+# indicating the loci attributed to each cluster.
+#
+# @see construct_clusters()
+#
+# @see Locus
 class Clusters:
+    
+    ## This method initialises the class with an empty dictionary
     def __init__(self):
         self.clusters = {}
         
+    ## This method is used to retrieve the 'clusters' attribute of an instance
+    #
+    # @returns Returns the 'clusters' attribute of the class instance
     def clusters(self):
         return self.clusters
     
+    ## This method is used to retrieve the complete list of mRNAs of the locus
+    # of the cluster specified with its locus ID and a boolean indicating
+    # if the locus is to be searched for in the reference or alternative list
+    #
+    # @param loc_id Identifier of the locus from which to retrieve mRNAs
+    #
+    # @param ref Boolean indicating from which of the reference (True) or 
+    # alternative (False) locus to retrieve the mRNAs
+    #
+    # @returns Returns the list of all mRNAs of the specified locus
+    #
+    # @remark This method is intended to be used in unit tests to verify
+    # the clusters contains the intended loci
     def get_mRNAs(self, loc_id, ref):
         list_mRNAs = []
         for loc in self.clusters[loc_id][ref]:
             list_mRNAs.append(loc.mRNAs)
         return list_mRNAs
     
-#TODO documentation
+
+## This class represents an annotation's locus identified from reading the
+# associated GFF file with the get_gff_borders function. It posesses multiple 
+# attributes describing the locus
+#
+# @see get_gff_borders()
 class Locus:
+    
+    ## This method initialises the class with default values for each attribute
+    #
+    # @param name ID of the locus
+    #
+    # @param mRNAs Dictionary listing all mRNAs of the locus. Each key 
+    # corresponds to the ID of the mRNA and eahc value to the list of all CDS
+    # coordinates as retrieved by the get_gff_borders function
+    #
+    # @param start Start coordinate of the locus
+    #
+    # @param end End coordinate of the locus
+    #
+    # @param dicrection String indicating if the locus is on the 'direct' or 
+    # 'reverse' strand
+    #
+    # @see get_gff_borders()
     def __init__(self, name="", mRNAs=None, start=-1, end=-1, direction=""):
         if not mRNAs:
             mRNAs = {}
@@ -45,26 +93,48 @@ class Locus:
         self.end = end
         self.direction = direction
         
+    ## This method is used to retrieve the 'mRNAs' attribute of an instance
+    #
+    # @returns Returns the 'mRNAs' attribute of the class instance
     def mRNAs(self):
         return self.mRNAs
     
+    ## This method is used to verify if all mRNAs of a dictionary are present 
+    # in the class instance's 'mRNAs' attribute
+    #
+    # @param **mRNAs Dictionary with mRNA names as keys and CDS coordinates
+    # list as values
+    #
+    # @returns Returns a boolean indicating if all given mRNAs were found in
+    # the class instance's 'mRNAs' attribute
+    #
+    # @remark This method is intended to be used in unit tests to verify
+    # the locus contains the intended mRNAs
     def contain_mrnas(self, **mrnas):
         for mrna_name, positions_list in mrnas.items():
             if mrna_name not in self.mRNAs:
                 return False
             return self.mRNAs[mrna_name] == positions_list
 
+    ## This function was added for convenience as a way to easily retrieve the
+    # attribute values of the class instance as a formatted string
+    #
+    # @returns Returns a string describing the values of each attribute of the
+    # class instance
     def show_init(self):
         return f"Locus(name='{self.name}', mRNAs={self.mRNAs}, start={self.start}, end={self.end}, direction='{self.direction}'"
 
 
-## This function retrieves and returns the id of the structure described from a line read from a GFF file.
+## This function retrieves and returns the id of the structure described from 
+# a line read from a GFF file.
 #
 # @param line The line read from the file (string)
 #
-# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
+# @param debug If True, triggers display of many messages intended for 
+# debugging the program. Default is 'False'
 #
-# @param verbose If True, triggers display of more information messages. Default is 'False'
+# @param verbose If True, triggers display of more information messages. 
+# Default is 'False'
 #
 # @remark This function expects the file to be in GFF format
 #
@@ -88,27 +158,31 @@ def get_structure_id(line, debug=False, verbose=False):
     structure_id = ""
     i = 0
     
-    # for each character from the first, we add it to the locus_id if it is not in a list of special characters. When the first special character is encountered, stop the loop and return the locus_id 
+    # for each character from the first, we add it to the locus_id if it is 
+    # not in a list of special characters. When the first special character is 
+    # encountered, stop the loop and return the locus_id 
     while id_and_rest[i] not in [",", "?", ";", ":", "/", "!", "*", "$", "%", "+", "@", "#", "~", "&", "\n", "\t"] :
-        
         structure_id += id_and_rest[i]
         i += 1
-         
     if debug:
         print(f"Structure ID = {structure_id}")
         
     return structure_id
 
 
-## This function retrieves and returns the parent id of the structure described from a line read from a GFF file.
+## This function retrieves and returns the parent id of the structure 
+# described from a line read from a GFF file.
 #
 # @param line The line read from the file (string)
 #
-# @param debug If True, triggers display of many messages intended for debugging the program. Default is 'False'
+# @param debug If True, triggers display of many messages intended for 
+# debugging the program. Default is 'False'
 #
-# @param verbose If True, triggers display of more information messages. Default is 'False'
+# @param verbose If True, triggers display of more information messages. 
+# Default is 'False'
 #
-# @remark This function expects the file to be in GFF format, and the parent id field to come after the id field
+# @remark This function expects the file to be in GFF format, and the 
+# parent id field to come after the id field
 #
 # @returns Returns the id of the parent of the structure described by the line
 def get_parent_id(line, debug=False, verbose=False):
@@ -130,14 +204,14 @@ def get_parent_id(line, debug=False, verbose=False):
     structure_id = ""
     i = 0
     
-    # for each character from the first, we add it to the locus_id if it is not in a list of special characters. When the first special character is encountered, stop the loop and return the locus_id 
+    # for each character from the first, we add it to the locus_id if it is 
+    # not in a list of special characters. When the first special character is
+    # encountered, stop the loop and return the locus_id 
     while id_and_rest[i] not in [",", "?", ";", ":", "/", "!", "*", "$", "%", "+", "@", "#", "~", "&", "\n", "\t"] :
-        
         if debug:
             print(f"Reading character {id_and_rest[i]}")
         structure_id += id_and_rest[i]
         i += 1
-         
     if debug:
         print(f"Structure parent ID = {structure_id}")
         
@@ -176,40 +250,49 @@ def get_gff_borders(path, debug=False, verbose=False):
         print(f"\nget_gff_borders() function error : file '{path}' does not exist or cannot be read from\n")
         sys.exit(2)
     
+    # try to open the structure errors log file
     try:
-        log = open("./results/log.txt", "w") # file in which to write structure errors
+        log = open("./results/log.txt", "w") 
     except FileNotFoundError:
         os.mkdir("./results/") # create 'results' subdirectory
-        log = open("./results/log.txt", "w") # file in which to write structure errors
+        log = open("./results/log.txt", "w")
         
-    loci = {}
+    loci = {} # return dictionary
     locus_id = "" # the current gene being analyzed
     mRNA_id = "" # the current mRNA being analyzed
     line_index = 1 # number of the file line currently read
-    locus = Locus()
+    locus = Locus() # Initialisation of the Locus class instance to construct
     
     for line in file:
         
-        # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
+        # if we encounter a new gene which is not from a contig, 
+        # we get its information and create an instance in 'loci'
         if str(line.split("\t")[2]) == "gene" and line.split("\t")[0] != "contig": 
             
-            if locus_id != "" and locus.mRNAs[mRNA_id] == []: # if there was a previous gene, but its borders list is empty, return an error
+            # if there was a previous gene, but its borders list is empty, 
+            # return an error
+            if locus_id != "" and locus.mRNAs[mRNA_id] == []:
                 print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the previous mRNA '{mRNA_id}'\n")
                 sys.exit(1)
             
+            # if there was a previous gene, add it to return dictionary and
+            # delete it. Then we create a new Locus instance
             if locus.mRNAs != {}:
                 loci[locus_id] = locus
             del locus
             locus = Locus()
             
+            # we retrieve the id of the locus
             locus_id = get_structure_id(line, debug, verbose)
             locus.name = locus_id
             
+            # we retrieve the start and end coordinates of the locus
             start = int(line.split("\t")[3])
             locus.start = start
             end = int(line.split("\t")[4])
             locus.end = end
             
+            # we deduce from the coordinates the direction of the locus
             if locus.end < locus.start:
                 locus.direction = "reverse"
             else:
@@ -218,7 +301,8 @@ def get_gff_borders(path, debug=False, verbose=False):
             if verbose :
                 print("\nReading the locus " + locus_id)
 
-        # if we encounter a new gene, we get its ID and create a key in 'borders' with a basic list
+        # if we encounter a new mRNA, we get its ID and create a key 
+        # in the instance's mRNAs attribute with an empty list
         if str(line.split("\t")[2]) == "mRNA" and line.split("\t")[0] != "contig": 
             
             mRNA_id = get_structure_id(line, debug, verbose)
@@ -226,7 +310,8 @@ def get_gff_borders(path, debug=False, verbose=False):
             if verbose :
                 print("\nReading mRNA " + locus_id)
 
-        # if we encounter a CDS, we add its start and end positions to the corresponding gene key in 'borders'
+        # if we encounter a CDS, we add its start and end positions to the 
+        # corresponding mRNA key in the locus' mRNAs attribute
         if str(line.split("\t")[2]) == "CDS" and line.split("\t")[0] != "contig":
             parent_id = get_parent_id(line, debug, verbose)
             
@@ -243,15 +328,15 @@ def get_gff_borders(path, debug=False, verbose=False):
             if verbose:
                 print("Adding borders to " + locus_id + " : " + line.split("\t")[3] + ", " + line.split("\t")[4])
                 
-        line_index += 1
+        line_index += 1 # increment the line indicator (for debug purposes)
                 
-    if locus_id == "":
+    if locus_id == "": # if the locus_id still has defautl value, return error
         print(f"\nget_gff_borders() function error : no locus could be found in file '{path}'\n")
         sys.exit(1)
         
     file.close()
     log.close()
-    loci[locus_id] = locus
+    loci[locus_id] = locus # add the last locus to the return dictionary
     
     # we return the entire dictionary with all loci
     return loci
