@@ -1,0 +1,112 @@
+name: Generate Documentation
+
+env:
+  DOC_FOLDER: doc/
+  DOXYFILE_NAME: Doxyfile
+  
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  generate-docs:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+        
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    
+    steps:
+    - name: Set up Doxygen
+      run: sudo apt-get install doxygen
+  
+    - name: Install LaTeX
+      run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texlive \
+            texlive-latex-base \
+            texlive-fonts-recommended \
+            texlive-fonts-extra \
+            texlive-latex-extra \
+            texlive-font-utils \
+            ghostscript \
+            texlive-extra-utils \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-latex-recommended \
+            texlive-fonts-recommended \
+            texlive-font-utils \
+            texlive-pictures \
+            texlive-science \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-latex-recommended \
+            texlive-pictures \
+            texlive-fonts-recommended \
+            texlive-fonts-extra \
+            texlive-font-utils \
+            texlive-latex-recommended \
+            texlive-pictures \
+            texlive-science \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-font-utils \
+            texlive-pictures \
+            texlive-latex-recommended \
+            texlive-pictures \
+            texlive-science \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-font-utils \
+            texlive-pictures
+    
+    - name: Checkout repository
+      uses: actions/checkout@v2
+        
+    - name: Generate Doxygen documentation
+      run: | 
+        INITIAL_FOLDER=$(pwd)
+        cd "$INITIAL_FOLDER/$DOC_FOLDER"
+        doxygen "$DOXYFILE_NAME"
+        cd "$INITIAL_FOLDER"
+
+    - name: Build LaTeX PDF
+      run: | 
+        
+        make -C "$(pwd)/doc/latex"
+        
+    - name: Move PDF to doc directory
+      run: |
+        tree
+        echo "$(pwd)/doc/latex/refman.pdf --> $(pwd)/doc/documentation.pdf"  
+        mv "$(pwd)/doc/latex/refman.pdf" "$(pwd)/doc/documentation.pdf"  
+        tree
+        
+    - name: Stage changes
+      run: git add "$(pwd)/doc/documentation.pdf"
+
+    - name: Amend last commit
+      run: | 
+        git config user.name 'github-actions[bot]'
+        git config user.email 'github-actions[bot]@users.noreply.github.com'
+        message="Auto-document files added after build 
+        -- [skip ci] --
+        Previous log :
+        $(git log)"
+        
+        git commit -m "$message"
+        
+    - name: Commit and Push Changes
+      uses: ad-m/github-push-action@v0.6.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: main
+        force: true
+
