@@ -429,7 +429,7 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
     clusters = Clusters()
     
     # for each locus in the loci list...
-    for i in range(len(locus_order)-1):   
+    for i in range(len(locus_order)):   
         # we get the identifier of the current locus, the lower and upper 
         # bounds of the current locus search, and to which annotation it 
         # belongs
@@ -437,7 +437,14 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
         locus_borders = [locus_order[i][0], locus_order[i][1]] 
         locus_is_ref = locus_order[i][3]
         if debug:
-            print(f"\nlocus borders = {locus_borders}")
+            print(f"\ni = {i}")
+            print(f"locus id = {locus_id}")
+            print(f"locus borders = {locus_borders}")
+            
+        if locus_is_ref:
+            is_ref_marker = "_ref"
+        else:
+            is_ref_marker = "_alt"
             
         # if the current locus has not yet been grouped, create a new cluster,
         # initialize it with empty lists, and add the current locus to it
@@ -449,6 +456,7 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                     clusters.clusters[cluster_name] = {"ref" : [],
                                                    "alt" : []}
                 clusters.clusters[cluster_name]["ref"].append(dict_ref[locus_id])
+                already_grouped.append(locus_id + is_ref_marker)
         else:
             if locus_id + "_alt" not in already_grouped:
                 cluster_name = "cluster " + str(i)
@@ -457,6 +465,7 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                     clusters.clusters[cluster_name] = {"ref" : [],
                                                    "alt" : []}
                 clusters.clusters[cluster_name]["alt"].append(dict_alt[locus_id])
+                already_grouped.append(locus_id + is_ref_marker)
             
         # while we did not reach the end of the list and a 'stop signal' (j=-1)
         # is not given, for each locus after the current one...
@@ -468,16 +477,16 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
             next_lower_border = locus_order[i+j][0]
             next_is_ref = locus_order[i+j][3]
             if next_is_ref:
-                is_ref_marker = "_ref"
+                next_is_ref_marker = "_ref"
             else:
-                is_ref_marker = "_alt"
+                next_is_ref_marker = "_alt"
             if debug:
                 print(f"\nj = {j}")
                 print(f"next lower border = {next_lower_border}")
                 print(f"already grouped : {already_grouped}")
                 
             # if the locus pointed by 'j' has not already been grouped...
-            if next_locus_id + is_ref_marker not in already_grouped:
+            if next_locus_id + next_is_ref_marker not in already_grouped:
                 # if the lower bound of the locus pointed by 'j' is inside the
                 # current locus' bounds and hasn't yet been included in 
                 # a cluster, we add it to the current cluster and to the 
@@ -494,17 +503,17 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                     
                     if next_is_ref:
                         clusters.clusters[cluster_name]["ref"].append(dict_ref[next_locus_id])
-                        already_grouped.append(next_locus_id + is_ref_marker)
+                        already_grouped.append(next_locus_id + next_is_ref_marker)
                     else:
                         clusters.clusters[cluster_name]["alt"].append(dict_alt[next_locus_id])
-                        already_grouped.append(next_locus_id + is_ref_marker)
+                        already_grouped.append(next_locus_id + next_is_ref_marker)
                     j += 1
                       
                 # if no locus is found in the current locus search's bounds, 
                 # a 'stop signal' is given to stop the 'j' loop
                 else: 
                     if debug:
-                        print("next locus not found in current borders, continuing")
+                        print("next locus not found in current borders, stopping search")
                     j = -1
             # if the locus pointed by 'j' has already been grouped, the upper 
             # bound of the current locus search is extended to upper bound of
@@ -519,6 +528,7 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                 j += 1
                          
         if debug:
+            print(f"cluster name = {cluster_name}")
             print(clusters.clusters[cluster_name]["ref"])
             print(clusters.clusters[cluster_name]["alt"])
     print("\n")
@@ -1242,12 +1252,15 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
     i = len(cluster_ref)-1
     j = len(cluster_alt)-1
     results = []
+    if debug:
+        print(f"i = {i}, j = {j}")
     
-    print("\nReference_Locus\t\tAlternative_Locus\t\tComparison[mismatch, match]\t\tIdentity_Score\n")
     
     # while we did not yet reach the first column or line...
     while i>=0 and j>=0:
-
+        if debug:
+            print(f"i = {i}, j = {j}")
+        
         if create_strings:
             comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)    
         else:
@@ -1320,43 +1333,35 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             j -= 1
             
-        # if we reached the first line but did not reach the first column,
-        # we add the rest of the alternative loci to the results
-        while i==-1 and j!=-1:
-            if create_strings:
-                comparison, identity = old_compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)                
-            else:
-                comparison, identity, mismatch_zones = compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)
-            results.append({"reference" : "_",
-                            "reference start" : "_",
-                            "reference end" : "_",
-                            "alternative" : cluster_alt[j-1].name,
-                            "alternative start" : cluster_alt[j-1].start,
-                            "alternative end" : cluster_alt[j-1].end,
-                            "mismatch/match" : comparison,
-                            "identity" : identity,
-                            "mismatch zones" : mismatch_zones})
-            print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
-            j -= 1
+    # if we reached the first line but did not reach the first column,
+    # we add the rest of the alternative loci to the results
+    while i==-1 and j!=-1:
+        results.append({"reference" : "_",
+                        "reference start" : "_",
+                        "reference end" : "_",
+                        "alternative" : cluster_alt[j-1].name,
+                        "alternative start" : cluster_alt[j-1].start,
+                        "alternative end" : cluster_alt[j-1].end,
+                        "mismatch/match" : [],
+                        "identity" : 0.0,
+                        "mismatch zones" : "_"})
+        print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
+        j -= 1
         
-        # if we reached the first column but did not reach the first line,
-        # we add the rest of the reference loci to the results
-        while i!=-1 and j==-1:
-            if create_strings:
-                comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)                
-            else:
-                comparison, identity, mismatch_zones = compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)
-            results.append({"reference" : cluster_ref[i-1].name,
-                            "reference start" : cluster_ref[i-1].start,
-                            "reference end" : cluster_ref[i-1].end,
-                            "alternative" : "_",
-                            "alternative start" : "_",
-                            "alternative end" : "_",
-                            "mismatch/match" : comparison,
-                            "identity" : identity,
-                            "mismatch zones" : mismatch_zones})
-            print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
-            i -= 1    
+    # if we reached the first column but did not reach the first line,
+    # we add the rest of the reference loci to the results
+    while i!=-1 and j==-1:
+        results.append({"reference" : cluster_ref[i-1].name,
+                        "reference start" : cluster_ref[i-1].start,
+                        "reference end" : cluster_ref[i-1].end,
+                        "alternative" : "_",
+                        "alternative start" : "_",
+                        "alternative end" : "_",
+                        "mismatch/match" : [],
+                        "identity" : 0.0,
+                        "mismatch zones" : "_"})
+        print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
+        i -= 1    
             
     return results
 
@@ -1440,6 +1445,7 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     clusters = construct_clusters(ref_annotations, alt_annotations, locus_order, debug, verbose)
     
     results = []
+    print("\nReference_Locus\t\tAlternative_Locus\t\tComparison[mismatch, match]\t\tIdentity_Score\n")
     for cluster_id, cluster in clusters.clusters.items():
         results.append(annotation_match(cluster["ref"], cluster["alt"], create_strings, debug, verbose))
         
