@@ -1393,6 +1393,10 @@ def write_results(results, debug=False, verbose=False):
     
     results_file.write("Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start,Reference end, Alternative start, Alternative end, non-correspondance zones\n")
         
+    # annotation origin of each locus in the results
+    # (first value : both,  second value : reference,  third value : alternative)
+    locus_initial_annot = [0,0,0]
+    
     for cluster in results:
         for loc in cluster:
             # convert the mismatch zones so that commas don't modify 
@@ -1406,10 +1410,16 @@ def write_results(results, debug=False, verbose=False):
             # if no comparison was done for the loci, write '_' instead of 
             # the comparison values
             if loc['mismatch/match'] == []:
-                results_file.write(f"{loc['reference']},{loc['alternative']},_,_,{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, _\n")                                
+                results_file.write(f"{loc['reference']},{loc['alternative']},_,_,{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, _\n")       
+                if loc['reference'] == '_':
+                    locus_initial_annot[2] += 1
+                else:                       
+                    locus_initial_annot[1] += 1
             else:
                 results_file.write(f"{loc['reference']},{loc['alternative']},{loc['mismatch/match'][1]},{loc['mismatch/match'][0]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {mismatch_zones}\n")
-        
+                locus_initial_annot[0] += 1
+                
+    print(f"\nNumber of loci:\n- found in both annotations : {locus_initial_annot[0]}\n- found only in the reference : {locus_initial_annot[1]}\n- found only in the alternative : {locus_initial_annot[2]}\n")
     results_file.close()
     
     
