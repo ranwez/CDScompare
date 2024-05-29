@@ -370,12 +370,12 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
     # get all reference loci bounds and locus ids as tuples in a list
     # 'True' indicates the tuple is from the reference
     for locus_id, locus in dict_ref.items():
-        locus_order.append((locus.start, locus.end, locus.name, True)) 
+        locus_order.append((locus.start, locus.end, locus.name, True, locus.direction)) 
  		
     # get all alternative loci bounds and locus ids as tuples in a list
     # 'False' indicates the tuple is from the alternative
     for locus_id, locus in dict_alt.items():
-        locus_order.append((locus.start, locus.end, locus.name, False)) 
+        locus_order.append((locus.start, locus.end, locus.name, False, locus.direction)) 
         
     if verbose:
         print("\nSorting the locus order list")
@@ -417,6 +417,9 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
 # @remark The clusters names will not necessarily follow each other. 'Cluster6'
 # might follow 'Cluster2'
 #
+# @remark Loci on different strands ('direct' or 'reverse') will be put in
+# different clusters
+#
 # @returns an instance of the Clusters class describing the cluster structure
 # of the two annotations loci
 def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
@@ -428,6 +431,8 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
     # initialising a new instance of 'Clusters' class
     clusters = Clusters()
     
+    print(locus_order)
+    
     # for each locus in the loci list...
     for i in range(len(locus_order)):   
         # we get the identifier of the current locus, the lower and upper 
@@ -436,6 +441,7 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
         locus_id = locus_order[i][2] 
         locus_borders = [locus_order[i][0], locus_order[i][1]] 
         locus_is_ref = locus_order[i][3]
+        locus_strand = locus_order[i][4]
         if debug:
             print(f"\ni = {i}")
             print(f"locus id = {locus_id}")
@@ -476,6 +482,7 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
             next_locus_id = locus_order[i+j][2]
             next_lower_border = locus_order[i+j][0]
             next_is_ref = locus_order[i+j][3]
+            next_strand = locus_order[i+j][4]
             if next_is_ref:
                 next_is_ref_marker = "_ref"
             else:
@@ -485,8 +492,9 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                 print(f"next lower border = {next_lower_border}")
                 print(f"already grouped : {already_grouped}")
                 
-            # if the locus pointed by 'j' has not already been grouped...
-            if next_locus_id + next_is_ref_marker not in already_grouped:
+            # if the locus pointed by 'j' has not already been grouped and 
+            # is not on a different strand...
+            if next_locus_id + next_is_ref_marker not in already_grouped and locus_strand == next_strand:
                 # if the lower bound of the locus pointed by 'j' is inside the
                 # current locus' bounds and hasn't yet been included in 
                 # a cluster, we add it to the current cluster and to the 
@@ -515,16 +523,24 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                     if debug:
                         print("next locus not found in current borders, stopping search")
                     j = -1
+                    
             # if the locus pointed by 'j' has already been grouped, the upper 
             # bound of the current locus search is extended to upper bound of
             # the 'j' locus 
-            else:
+            elif next_locus_id + next_is_ref_marker in already_grouped:
                 if debug:
-                    print(f"{next_locus_id} already grouped, skipping")
+                    print(f"{next_locus_id} already grouped, skipping and extending search")
                 new_upper_border = locus_order[i+j][1]
                 locus_borders[1] = new_upper_border               
                 if debug:
                     print(f"new locus borders = {locus_borders}")               
+                j += 1
+                
+            # if the locus pointed by 'j' is on a different strand from the 
+            # current locus, it is ignored
+            elif locus_strand != next_strand:
+                if debug:
+                    print(f"{next_locus_id} on different strand, skipping")        
                 j += 1
                          
         if debug:
@@ -688,6 +704,10 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     final_comparison = [0,0]
     final_identity = 0.0
     final_mismatch_zones = []
+    
+    # if the loci are on different strands, return 'null' values
+    if ref_locus.direction != alt_locus.direction:
+        return ('_', 0.0, '_')
     
     # for each mRNA in the reference locus...
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
@@ -998,6 +1018,10 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     final_comparison = [0,0]
     final_identity = 0.0
     
+    # if the loci are on different strands, return 'null' values
+    if ref_locus.direction != alt_locus.direction:
+        return ('_', 0.0)
+    
     # for each reference locus mRNA...
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
         # for each alternative locus mRNA...
@@ -1202,7 +1226,10 @@ def annotation_match(cluster_ref, cluster_alt, create_strings=False, debug=False
             dyn_prog_matrix[i][j] + identity) == dyn_prog_matrix[i][j]+identity:
             if create_strings:
                 comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)    
-                mismatch_zones = '?'            
+                if comparison == '_':
+                    mismatch_zones = '_'
+                else:
+                    mismatch_zones = '?'            
             else:
                 comparison, identity, mismatch_zones = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
             results.append({"reference" : cluster_ref[i-1].name,

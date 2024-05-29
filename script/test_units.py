@@ -42,7 +42,7 @@ def test_get_structure_id():
         print(f"\n{test} test")
         
         result = annot_CSC.get_structure_id(test_dict[test][0], False, False)
-        print(result)
+        print(f"result : {result}\n")
         print(test_dict[test][1])
         assert result == test_dict[test][1]
 
@@ -178,17 +178,17 @@ def test_annotation_sort():
                                                      end=850, 
                                                      direction='direct')},
                                                       
-                                [(50, 150, 'chr2A_1000', True), 
-                               (100, 250, 'chr2A_1000', False), 
-                               (200, 350, 'chr2A_2000', True), 
-                               (300, 450, 'chr2A_2000', False), 
-                               (400, 550, 'chr2A_3000', True), 
-                               (500, 600, 'chr2A_3000', False), 
-                               (650, 700, 'chr2A_4000', False), 
-                               (650, 700, 'chr2A_4000', True), 
-                               (750, 780, 'chr2A_5000', False), 
-                               (750, 800, 'chr2A_5000', True), 
-                               (790, 850, 'chr2A_6000', False)]]
+                                [(50, 150, 'chr2A_1000', True,'direct'), 
+                               (100, 250, 'chr2A_1000', False,'direct'), 
+                               (200, 350, 'chr2A_2000', True,'direct'), 
+                               (300, 450, 'chr2A_2000', False,'direct'), 
+                               (400, 550, 'chr2A_3000', True,'direct'), 
+                               (500, 600, 'chr2A_3000', False,'direct'), 
+                               (650, 700, 'chr2A_4000', False,'direct'), 
+                               (650, 700, 'chr2A_4000', True,'direct'), 
+                               (750, 780, 'chr2A_5000', False,'direct'), 
+                               (750, 800, 'chr2A_5000', True,'direct'), 
+                               (790, 850, 'chr2A_6000', False,'direct')]]
     }
     
     print("\n*************Testing the annotation_sort function*************")
@@ -198,8 +198,8 @@ def test_annotation_sort():
         print(f"\n{test} file test")
         
         result = annot_CSC.annotation_sort(test_dict[test][0], test_dict[test][1], False, False)
-        print(result)
-        print(test_dict[test][2])
+        print(f"result : {result}\n")
+        print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
         
         
@@ -265,17 +265,17 @@ def test_construct_clusters():
                              end=850, 
                              direction='direct')},
         
-        [(50, 150, 'chr2A_1000', True), 
-          (100, 250, 'chr2A_1000', False), 
-          (200, 350, 'chr2A_2000', True), 
-          (300, 450, 'chr2A_2000', False), 
-          (400, 550, 'chr2A_3000', True), 
-          (500, 600, 'chr2A_3000', False), 
-          (650, 700, 'chr2A_4000', False), 
-          (650, 700, 'chr2A_4000', True), 
-          (750, 780, 'chr2A_5000', False), 
-          (750, 800, 'chr2A_5000', True), 
-          (790, 850, 'chr2A_6000', False)],
+        [(50, 150, 'chr2A_1000', True,'direct'), 
+       (100, 250, 'chr2A_1000', False,'direct'), 
+       (200, 350, 'chr2A_2000', True,'direct'), 
+       (300, 450, 'chr2A_2000', False,'direct'), 
+       (400, 550, 'chr2A_3000', True,'direct'), 
+       (500, 600, 'chr2A_3000', False,'direct'), 
+       (650, 700, 'chr2A_4000', False,'direct'), 
+       (650, 700, 'chr2A_4000', True,'direct'), 
+       (750, 780, 'chr2A_5000', False,'direct'), 
+       (750, 800, 'chr2A_5000', True,'direct'), 
+       (790, 850, 'chr2A_6000', False,'direct')],
         
         {'cluster 0':  [{'chr2A_1000_mrna': [50, 150]}, {'chr2A_2000_mrna': [200, 350]}, {'chr2A_3000_mrna': [400, 550]}], 
           'cluster 6':  [{'chr2A_4000_mrna': [650, 700]}], 
@@ -283,8 +283,28 @@ def test_construct_clusters():
         
         {'cluster 0':  [{'chr2A_1000_mrna': [100, 250]}, {'chr2A_2000_mrna': [300, 450]}, {'chr2A_3000_mrna': [500, 600]}], 
           'cluster 6':  [{'chr2A_4000_mrna': [650, 700]}], 
-          'cluster 8':  [{'chr2A_5000_mrna': [750, 780]}, {'chr2A_6000_mrna': [790, 850]}]}]
-        }
+          'cluster 8':  [{'chr2A_5000_mrna': [750, 780]}, {'chr2A_6000_mrna': [790, 850]}]}],
+        
+                "reverse-basic" : [{"chr2A_00611930" : annot_CSC.Locus(name='chr2A_00611930', 
+                                     mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
+                                     start=100, 
+                                     end=300, 
+                                     direction='direct')},
+            
+                                   {"chr2A_00611930" : annot_CSC.Locus(name='chr2A_00611930', 
+                                     mRNAs={'chr2A_00611930_mrna': [300, 240, 210, 150, 130, 100]}, 
+                                     start=300, 
+                                     end=100, 
+                                     direction='reverse')},
+                                   
+                                   [(100, 300, 'chr2A_00611930', True,'direct'), 
+                                  (300, 100, 'chr2A_00611930', False,'reverse')], 
+            
+                                   {'cluster 0':  [{'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}]},
+                                   
+                                   {'cluster 1':  [{'chr2A_00611930_mrna': [300, 240, 210, 150, 130, 100]}]}]
+        
+    }
 
     print("\n*************Testing the construct_clusters function*************")
     
@@ -352,8 +372,8 @@ def test_get_area_bounds():
         print(f"\n{test} file test")
         
         result = annot_CSC.get_area_bounds(test_dict[test][0], test_dict[test][1], False, False)
-        print(result)
-        print(test_dict[test][2])
+        print(f"result : {result}\n")
+        print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
     
 
@@ -402,8 +422,8 @@ def test_is_in_cds():
         print(f"\n{test} file test")
         
         result = annot_CSC.is_in_cds(test_dict[test][0], test_dict[test][1], False, False)
-        print(result)
-        print(test_dict[test][2])
+        print(f"result : {result}\n")
+        print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
 
 
@@ -470,7 +490,7 @@ def test_compare_loci():
                                 start=300, 
                                 end=100, 
                                 direction='reverse'),
-                     ([], 0.0, [])],
+                     ('_', 0.0, '_')],
         
         "reverse-reverse" : [annot_CSC.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [300, 240, 210, 150, 130, 100]}, 
@@ -573,7 +593,7 @@ def test_create_vectors():
         print(f"\n{test} file test")
         
         result = annot_CSC.create_vectors(test_dict[test][0], False, False)
-        print(result)
+        print(f"result : {result}\n")
         print(test_dict[test][1])
         assert result == test_dict[test][1]
      
@@ -641,7 +661,7 @@ def test_old_compare_loci():
                                 start=300, 
                                 end=100, 
                                 direction='reverse'),
-                     ([], 0.0)],
+                     ('_', 0.0)],
         
         "reverse-reverse" : [annot_CSC.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [300, 240, 210, 150, 130, 100]}, 
@@ -723,8 +743,8 @@ def test_old_compare_loci():
         print(f"\n{test} file test")
         
         result = annot_CSC.old_compare_loci(test_dict[test][0], test_dict[test][1], False, False)
-        print(result)
-        print(test_dict[test][2])
+        print(f"result : {result}\n")
+        print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
 
         
@@ -859,8 +879,8 @@ def test_new_annotation_match():
         print(f"\n{test} test")
         
         result = annot_CSC.annotation_match(test_dict[test][0], test_dict[test][1], False, False, False)
-        print(result)
-        print(test_dict[test][2])
+        print(f"result : {result}\n")
+        print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
         
         
@@ -995,8 +1015,8 @@ def test_old_annotation_match():
         print(f"\n{test} test")
         
         result = annot_CSC.annotation_match(test_dict[test][0], test_dict[test][1], True, False, False)
-        print(result)
-        print(test_dict[test][2])
+        print(f"result : {result}\n")
+        print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
 
 
@@ -1007,7 +1027,7 @@ def test_new_annotation_comparison():
     test_dict = test_dict = {
         "basic" : ["./data/tests/basic_test.gff3", 
                    "./data/tests/identical_test.gff3",
-                        [{"reference" : 'chr2A_00611930',
+                        [[{"reference" : 'chr2A_00611930',
                            "reference start" : 100,
                            "reference end" : 300,
                            "alternative" : 'chr2A_00611930',
@@ -1015,11 +1035,11 @@ def test_new_annotation_comparison():
                            "alternative end" : 300,
                            "mismatch/match" : [0, 150],
                            "identity" : 100.0,
-                           "mismatch zones" : []}]],
+                           "mismatch zones" : []}]]],
         
         "minus-CDS" : ["./data/tests/basic_test.gff3", 
                        "./data/tests/minus-CDS_test.gff3",
-                       [{"reference" : 'chr2A_00611930',
+                       [[{"reference" : 'chr2A_00611930',
                           "reference start" : 100,
                           "reference end" : 300,
                           "alternative" : 'chr2A_00611930',
@@ -1027,11 +1047,11 @@ def test_new_annotation_comparison():
                           "alternative end" : 300,
                           "mismatch/match" : [60, 90],
                           "identity" : 60.0,
-                          "mismatch zones" : ['150-210']}]],
+                          "mismatch zones" : ['150-210']}]]],
         
         "fusion" : ["./data/tests/basic_test.gff3", 
                     "./data/tests/fusion_test.gff3",
-                    [{"reference" : 'chr2A_00611930',
+                    [[{"reference" : 'chr2A_00611930',
                        "reference start" : 100,
                        "reference end" : 300,
                        "alternative" : 'chr2A_00611930',
@@ -1039,11 +1059,11 @@ def test_new_annotation_comparison():
                        "alternative end" : 300,
                        "mismatch/match" : [140, 30],
                        "identity" : 17.6,
-                       "mismatch zones" : ['130-150', '150-210', '240-300']}]],
+                       "mismatch zones" : ['130-150', '150-210', '240-300']}]]],
         
         "shift" : ["./data/tests/basic_test.gff3", 
                    "./data/tests/shift_test.gff3",
-                   [{"reference" : 'chr2A_00611930',
+                   [[{"reference" : 'chr2A_00611930',
                       "reference start" : 100,
                       "reference end" : 300,
                       "alternative" : 'chr2A_00611930',
@@ -1051,23 +1071,32 @@ def test_new_annotation_comparison():
                       "alternative end" : 300,
                       "mismatch/match" : [120, 30],
                       "identity" : 20.0,
-                      "mismatch zones" : ['150-151', '151-210', '240-300']}]],
+                      "mismatch zones" : ['150-151', '151-210', '240-300']}]]],
         
         "reverse-basic" : ["./data/tests/basic_test.gff3", 
                      "./data/tests/reverse_test.gff3",
-                     [{"reference" : 'chr2A_00611930',
+                     [[{"reference" : 'chr2A_00611930',
                         "reference start" : 100,
                         "reference end" : 300,
-                        "alternative" : 'chr2A_00611930',
-                        "alternative start" : 100,
-                        "alternative end" : 300,
-                        "mismatch/match" : '_',
+                        "alternative" : '_',
+                        "alternative start" : '_',
+                        "alternative end" : '_',
+                        "mismatch/match" : [],
                         "identity" : 0.0,
-                        "mismatch zones" : '_'}]],
+                        "mismatch zones" : '_'}],
+                       [{"reference" : '_',
+                          "reference start" : '_',
+                          "reference end" : '_',
+                          "alternative" : 'chr2A_00611930',
+                          "alternative start" : 300,
+                          "alternative end" : 100,
+                          "mismatch/match" : [],
+                          "identity" : 0.0,
+                          "mismatch zones" : '_'}]]],
         
         "reverse-reverse" : ["./data/tests/reverse_test.gff3", 
                      "./data/tests/reverse_test.gff3",
-                     [{"reference" : 'chr2A_00611930',
+                     [[{"reference" : 'chr2A_00611930',
                         "reference start" : 100,
                         "reference end" : 300,
                         "alternative" : 'chr2A_00611930',
@@ -1075,11 +1104,11 @@ def test_new_annotation_comparison():
                         "alternative end" : 300,
                         "mismatch/match" : [0,150],
                         "identity" : 100.0,
-                        "mismatch zones" : []}]],        
+                        "mismatch zones" : []}]]],        
         
         "diff-start-before" : ["./data/tests/basic_test.gff3",
                                "./data/tests/diff-start-before_test.gff3",
-                               [{"reference" : 'chr2A_00611930',
+                               [[{"reference" : 'chr2A_00611930',
                                   "reference start" : 100,
                                   "reference end" : 300,
                                   "alternative" : 'chr2A_00611930',
@@ -1087,11 +1116,11 @@ def test_new_annotation_comparison():
                                   "alternative end" : 300,
                                   "mismatch/match" : [210, 30],
                                   "identity" : 12.5,
-                                  "mismatch zones" : ['40-70', '90-100', '100-130', '130-150', '150-180', '210-240', '240-300']}]],
+                                  "mismatch zones" : ['40-70', '90-100', '100-130', '130-150', '150-180', '210-240', '240-300']}]]],
         
         "diff-start-after" : ["./data/tests/basic_test.gff3",
                               "./data/tests/diff-start-after_test.gff3",
-                              [{"reference" : 'chr2A_00611930',
+                              [[{"reference" : 'chr2A_00611930',
                                  "reference start" : 100,
                                  "reference end" : 300,
                                  "alternative" : 'chr2A_00611930',
@@ -1099,11 +1128,11 @@ def test_new_annotation_comparison():
                                  "alternative end" : 300,
                                  "mismatch/match" : [210, 30],
                                  "identity" : 12.5,
-                                 "mismatch zones" : ['100-130', '150-160', '160-190', '190-210', '210-240', '270-300', '300-360']}]],
+                                 "mismatch zones" : ['100-130', '150-160', '160-190', '190-210', '210-240', '270-300', '300-360']}]]],
         
         "basic-2-loci" : ["./data/tests/basic-2-loci_test.gff3",
                           "./data/tests/identical-2-loci_test.gff3",
-                              [{"reference" : 'chr2A_00611930',
+                              [[{"reference" : 'chr2A_00611930',
                                  "reference start" : 100,
                                  "reference end" : 300,
                                  "alternative" : 'chr2A_00611930',
@@ -1120,11 +1149,11 @@ def test_new_annotation_comparison():
                                   "alternative end" : 900,
                                   "mismatch/match" : [0, 200],
                                   "identity" : 100.0,
-                                  "mismatch zones" : []}]],
+                                  "mismatch zones" : []}]]],
         
         "minus-loci" : ["./data/tests/basic_test.gff3",
                           "./data/tests/identical-2-loci_test.gff3",
-                              [{"reference" : 'chr2A_00611930',
+                              [[{"reference" : 'chr2A_00611930',
                                  "reference start" : 100,
                                  "reference end" : 300,
                                  "alternative" : 'chr2A_00611930',
@@ -1141,11 +1170,11 @@ def test_new_annotation_comparison():
                                   "alternative end" : 900,
                                   "mismatch/match" : '_',
                                   "identity" : 0.0,
-                                  "mismatch zones" : '_'}]],
+                                  "mismatch zones" : '_'}]]],
         
         "overlapping-loci" : ["./data/tests/overlapping-loci_test.gff3",
                               "./data/tests/overlapping-loci-alt_test.gff3",
-                              [[{'reference': 'chr2A_2000',
+                              [[[{'reference': 'chr2A_2000',
                                  'reference start': 200,
                                  'reference end': 350,
                                  'alternative': 'chr2A_2000',
@@ -1198,7 +1227,7 @@ def test_new_annotation_comparison():
                                  'alternative end': 850, 
                                  'mismatch/match': [], 
                                  'identity': 0.0, 
-                                 'mismatch zones': '_'}]]]
+                                 'mismatch zones': '_'}]]]]
         }
 
     print("\n*************Testing the 'new' annotation_comparison function*************")
@@ -1208,8 +1237,8 @@ def test_new_annotation_comparison():
         print(f"\n{test} test")
         
         result = annot_CSC.annotation_comparison(test_dict[test][0], test_dict[test][1], False, False, False)
-        print(result)
-        print(test_dict[test][2])
+        print(f"result : {result}\n")
+        print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
         
         
@@ -1220,7 +1249,7 @@ def test_old_annotation_comparison():
     test_dict = test_dict = {
         "basic" : ["./data/tests/basic_test.gff3", 
                    "./data/tests/identical_test.gff3",
-                        [{"reference" : 'chr2A_00611930',
+                        [[{"reference" : 'chr2A_00611930',
                            "reference start" : 100,
                            "reference end" : 300,
                            "alternative" : 'chr2A_00611930',
@@ -1228,11 +1257,11 @@ def test_old_annotation_comparison():
                            "alternative end" : 300,
                            "mismatch/match" : [0, 150],
                            "identity" : 100.0,
-                           "mismatch zones" : '?'}]],
+                           "mismatch zones" : '?'}]]],
         
         "minus-CDS" : ["./data/tests/basic_test.gff3", 
                        "./data/tests/minus-CDS_test.gff3",
-                       [{"reference" : 'chr2A_00611930',
+                       [[{"reference" : 'chr2A_00611930',
                           "reference start" : 100,
                           "reference end" : 300,
                           "alternative" : 'chr2A_00611930',
@@ -1240,11 +1269,11 @@ def test_old_annotation_comparison():
                           "alternative end" : 300,
                           "mismatch/match" : [60, 90],
                           "identity" : 60.0,
-                          "mismatch zones" : '?'}]],
+                          "mismatch zones" : '?'}]]],
         
         "fusion" : ["./data/tests/basic_test.gff3", 
                     "./data/tests/fusion_test.gff3",
-                    [{"reference" : 'chr2A_00611930',
+                    [[{"reference" : 'chr2A_00611930',
                        "reference start" : 100,
                        "reference end" : 300,
                        "alternative" : 'chr2A_00611930',
@@ -1252,11 +1281,11 @@ def test_old_annotation_comparison():
                        "alternative end" : 300,
                        "mismatch/match" : [140, 30],
                        "identity" : 17.6,
-                       "mismatch zones" : '?'}]],
+                       "mismatch zones" : '?'}]]],
         
         "shift" : ["./data/tests/basic_test.gff3", 
                    "./data/tests/shift_test.gff3",
-                   [{"reference" : 'chr2A_00611930',
+                   [[{"reference" : 'chr2A_00611930',
                       "reference start" : 100,
                       "reference end" : 300,
                       "alternative" : 'chr2A_00611930',
@@ -1264,23 +1293,32 @@ def test_old_annotation_comparison():
                       "alternative end" : 300,
                       "mismatch/match" : [120, 30],
                       "identity" : 20.0,
-                      "mismatch zones" : '?'}]],
+                      "mismatch zones" : '?'}]]],
         
         "reverse-basic" : ["./data/tests/basic_test.gff3", 
                      "./data/tests/reverse_test.gff3",
-                     [{"reference" : 'chr2A_00611930',
+                     [[{"reference" : 'chr2A_00611930',
                         "reference start" : 100,
                         "reference end" : 300,
-                        "alternative" : 'chr2A_00611930',
-                        "alternative start" : 100,
-                        "alternative end" : 300,
-                        "mismatch/match" : '_',
+                        "alternative" : '-',
+                        "alternative start" : '_',
+                        "alternative end" : '_',
+                        "mismatch/match" : [],
                         "identity" : 0.0,
-                        "mismatch zones" : '_'}]],
+                        "mismatch zones" : '_'}],
+                       [{"reference" : '_',
+                          "reference start" : '_',
+                          "reference end" : '_',
+                          "alternative" : 'chr2A_00611930',
+                          "alternative start" : 300,
+                          "alternative end" : 100,
+                          "mismatch/match" : [],
+                          "identity" : 0.0,
+                          "mismatch zones" : '_'}]]],
         
         "reverse-reverse" : ["./data/tests/reverse_test.gff3", 
                      "./data/tests/reverse_test.gff3",
-                     [{"reference" : 'chr2A_00611930',
+                     [[{"reference" : 'chr2A_00611930',
                         "reference start" : 100,
                         "reference end" : 300,
                         "alternative" : 'chr2A_00611930',
@@ -1288,11 +1326,11 @@ def test_old_annotation_comparison():
                         "alternative end" : 300,
                         "mismatch/match" : [0,150],
                         "identity" : 100.0,
-                        "mismatch zones" : '?'}]],        
+                        "mismatch zones" : '?'}]]],        
         
         "diff-start-before" : ["./data/tests/basic_test.gff3",
                                "./data/tests/diff-start-before_test.gff3",
-                               [{"reference" : 'chr2A_00611930',
+                               [[{"reference" : 'chr2A_00611930',
                                   "reference start" : 100,
                                   "reference end" : 300,
                                   "alternative" : 'chr2A_00611930',
@@ -1300,11 +1338,11 @@ def test_old_annotation_comparison():
                                   "alternative end" : 300,
                                   "mismatch/match" : [210, 30],
                                   "identity" : 12.5,
-                                  "mismatch zones" : '?'}]],
+                                  "mismatch zones" : '?'}]]],
         
         "diff-start-after" : ["./data/tests/basic_test.gff3",
                               "./data/tests/diff-start-after_test.gff3",
-                              [{"reference" : 'chr2A_00611930',
+                              [[{"reference" : 'chr2A_00611930',
                                  "reference start" : 100,
                                  "reference end" : 300,
                                  "alternative" : 'chr2A_00611930',
@@ -1312,11 +1350,11 @@ def test_old_annotation_comparison():
                                  "alternative end" : 300,
                                  "mismatch/match" : [210, 30],
                                  "identity" : 12.5,
-                                 "mismatch zones" : '?'}]],
+                                 "mismatch zones" : '?'}]]],
         
         "basic-2-loci" : ["./data/tests/basic-2-loci_test.gff3",
                           "./data/tests/identical-2-loci_test.gff3",
-                              [{"reference" : 'chr2A_00611930',
+                              [[{"reference" : 'chr2A_00611930',
                                  "reference start" : 100,
                                  "reference end" : 300,
                                  "alternative" : 'chr2A_00611930',
@@ -1333,11 +1371,11 @@ def test_old_annotation_comparison():
                                   "alternative end" : 900,
                                   "mismatch/match" : [0, 200],
                                   "identity" : 100.0,
-                                  "mismatch zones" : '?'}]],
+                                  "mismatch zones" : '?'}]]],
         
         "minus-loci" : ["./data/tests/basic_test.gff3",
                           "./data/tests/identical-2-loci_test.gff3",
-                              [{"reference" : 'chr2A_00611930',
+                              [[{"reference" : 'chr2A_00611930',
                                  "reference start" : 100,
                                  "reference end" : 300,
                                  "alternative" : 'chr2A_00611930',
@@ -1354,11 +1392,11 @@ def test_old_annotation_comparison():
                                   "alternative end" : 900,
                                   "mismatch/match" : '_',
                                   "identity" : 0.0,
-                                  "mismatch zones" : '_'}]],
+                                  "mismatch zones" : '_'}]]],
         
         "overlapping-loci" : ["./data/tests/overlapping-loci_test.gff3",
                               "./data/tests/overlapping-loci-alt_test.gff3",
-                              [[{'reference': 'chr2A_2000',
+                              [[[{'reference': 'chr2A_2000',
                                  'reference start': 200,
                                  'reference end': 350,
                                  'alternative': 'chr2A_2000',
@@ -1411,7 +1449,7 @@ def test_old_annotation_comparison():
                                  'alternative end': 850, 
                                  'mismatch/match': [], 
                                  'identity': 0.0, 
-                                 'mismatch zones': '_'}]]]
+                                 'mismatch zones': '_'}]]]]
         }
 
     print("\n*************Testing the 'new' annotation_comparison function*************")
@@ -1421,8 +1459,8 @@ def test_old_annotation_comparison():
         print(f"\n{test} test")
         
         result = annot_CSC.annotation_comparison(test_dict[test][0], test_dict[test][1], False, False, True)
-        print(result)
-        print(test_dict[test][2])
+        print(f"result : {result}\n")
+        print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
 
 
