@@ -997,7 +997,7 @@ def create_vectors(borders, debug=False, verbose=False):
 # @remark This function doesn't expect any annotation to be a 'reference'
 def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False): 
     # initialisation of the final return values
-    final_comparison = []
+    final_comparison = [0,0]
     final_identity = 0.0
     
     # for each reference locus mRNA...
@@ -1026,16 +1026,16 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 if debug:
                     print("The two loci do not start at the same position")
                 
-                # if the locus 'a' starts before the start of locus 'b'
+                # if the locus 'ref' starts before the start of locus 'alt'
                 if minv == vector_ref[0]:
                     if debug:
-                        print("Locus 'a' start before locus 'b'")
+                        print("Locus 'ref' start before locus 'alt'")
                     
                     # for every comparison of the numbers at each position in 
                     # the two strings, we increment by one the match or 
                     # mismatch value of the return list. We account for the 
                     # difference in start positions by adding the difference 
-                    # to the locus 'a' codon position retrieval
+                    # to the locus 'ref' codon position retrieval
                     for i in range( min(len(vector_ref[1]), len(vector_alt[1])) + diff ):
                         
                         # try to know if the current position is in a CDS in 
@@ -1057,14 +1057,14 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                             print(f"ref_in_cds = {ref_in_cds}")
                             print(f"alt_in_cds = {alt_in_cds}")
                         
-                        # if we are outside the coordinates of locus 'b' and 
-                        # locus 'a' has a CDS in this position, we increment 
+                        # if we are outside the coordinates of locus 'alt' and 
+                        # locus 'ref' has a CDS in this position, we increment 
                         # the mismatch count; else we do nothing
                         if i<diff and ref_in_cds:
                             comp_list[0] += 1
                         
-                        # if we are outside the coordinates of locus 'a' and 
-                        # locus 'b' has a CDS in this position, we increment 
+                        # if we are outside the coordinates of locus 'ref' and 
+                        # locus 'alt' has a CDS in this position, we increment 
                         # the mismatch count; else we do nothing
                         elif i >= len(vector_ref[1]) and alt_in_cds:
                             comp_list[0] += 1
@@ -1074,21 +1074,21 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                         # current position, else we increment the mismatch value
                         # if they don't have both '0' as a value
                         else:
-                            if ref_in_cds and vector_ref[1][i] == vector_alt[1][i-diff]:
+                            if ref_in_cds and alt_in_cds and vector_ref[1][i] == vector_alt[1][i-diff]:
                                 comp_list[1] +=1
                             elif ref_in_cds or alt_in_cds:
                                 comp_list[0] += 1
                 
-                # if the locus'a' starts after the start of locus 'b'
+                # if the locus'ref' starts after the start of locus 'alt'
                 elif minv == vector_alt[0]:
                     if debug:
-                        print("Locus 'b' starts before locus 'a'")
+                        print("Locus 'alt' starts before locus 'ref'")
                     
                     # for every comparison of the numbers at each position in 
                     # the two strings, we increment by one the match or 
                     # mismatch value of the return list. We account for the 
                     # difference in start positions by adding the difference 
-                    # to the locus 'b' codon position retrieval
+                    # to the locus 'alt' codon position retrieval
                     for i in range( min(len(vector_ref[1]), len(vector_alt[1])) + diff ):
                         
                         # try to know if the current position is in a CDS in 
@@ -1110,14 +1110,14 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                             print(f"ref_in_cds = {ref_in_cds}")
                             print(f"alt_in_cds = {alt_in_cds}")
                             
-                        # if we are outside the coordinates of locus 'a' and 
-                        # locus 'b' has a CDS in this position, we increment 
+                        # if we are outside the coordinates of locus 'ref' and 
+                        # locus 'alt' has a CDS in this position, we increment 
                         # the mismatch count; else we do nothing
                         if i<diff and alt_in_cds:
                             comp_list[0] += 1
                             
-                        # if we are outside the coordinates of locus 'b' and 
-                        # locus 'a' has a CDS in this position, we increment 
+                        # if we are outside the coordinates of locus 'alt' and 
+                        # locus 'ref' has a CDS in this position, we increment 
                         # the mismatch count; else we do nothing
                         elif i >= len(vector_alt[1]) and ref_in_cds:
                             comp_list[0] += 1
@@ -1127,7 +1127,7 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                         # current position, else we increment the mismatch 
                         # value if they don't have both '0' as a value
                         else:
-                            if ref_in_cds and vector_ref[1][i-diff] == vector_alt[1][i]:
+                            if ref_in_cds and alt_in_cds and vector_ref[1][i-diff] == vector_alt[1][i]:
                                 comp_list[1] +=1
                             elif ref_in_cds or alt_in_cds:
                                 comp_list[0] += 1
@@ -1178,6 +1178,12 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
             if identity > final_identity:
                 final_comparison = comp_list
                 final_identity = identity
+                if debug:
+                    print(f"comparison = {comp_list}\nfinal_comparison = {final_comparison}\nidentity = {identity}\nfinal identity = {final_identity}")
+            # if all mRNAs comparisons return 0% identity, we still want 
+            # mismatch values to be returned
+            elif comp_list[0] > final_comparison[0]:
+                final_comparison = comp_list
     
     # return the highest identity between the mRNA of both locus
     # (as a percentage)
@@ -1195,10 +1201,10 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
 #
 # @see construct_clusters()
 #
-# @param cluster_ref Dictionary of Locus class instances describing the loci
+# @param cluster_ref List of Locus class instances describing the loci
 # of the reference annotation cluster
 #
-# @param cluster_alt Dictionary of Locus class instances describing the loci
+# @param cluster_alt List of Locus class instances describing the loci
 # of the alternative annotation cluster
 #
 # @param create_strings Boolean indicating wether to use the new compare_loci
@@ -1214,9 +1220,9 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
 #
 # @see old_compare_loci()
 #
-# @returns Returns a dictionary detailing the locus information for each 
-# locus comparison 
-def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verbose=False):
+# @returns Returns a lsit of dictionaries detailing the locus information for 
+# each locus comparison 
+def annotation_match(cluster_ref, cluster_alt, create_strings=False, debug=False, verbose=False):
     if verbose:
         print("\nmatching annotations loci with each other")
     dyn_prog_matrix = [] # dynamic programmation matrix
@@ -1286,7 +1292,8 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             dyn_prog_matrix[i+1][j],
             dyn_prog_matrix[i][j] + identity) == dyn_prog_matrix[i][j]+identity:
             if create_strings:
-                comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)                
+                comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)    
+                mismatch_zones = '?'            
             else:
                 comparison, identity, mismatch_zones = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
             results.append({"reference" : cluster_ref[i-1].name,
@@ -1308,7 +1315,8 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
             dyn_prog_matrix[i+1][j],
             dyn_prog_matrix[i][j] + identity) == dyn_prog_matrix[i][j+1]:
             if create_strings:
-                comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)                
+                comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)   
+                mismatch_zones = '_'             
             else:
                 comparison, identity, mismatch_zones = compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)
             results.append({"reference" : cluster_ref[i-1].name,
@@ -1327,7 +1335,8 @@ def annotation_match(cluster_ref, cluster_alt, create_strings, debug=False, verb
         # informations to the results dictionary and 'progress' to the left cell
         else:
             if create_strings:
-                comparison, identity = old_compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)                
+                comparison, identity = old_compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)     
+                mismatch_zones = '_'           
             else:
                 comparison, identity, mismatch_zones = compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)
             results.append({"reference" : "_",
@@ -1469,6 +1478,8 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
         results.append(annotation_match(cluster["ref"], cluster["alt"], create_strings, debug, verbose))
         
     write_results(results, debug, verbose)
+    
+    return results
 
 
 def usage():
@@ -1523,11 +1534,7 @@ def main():
             assert False, "unhandled option"
             
     # call of the annotation_comparison function
-    annotation_comparison(ref_path, alt_path, debug, verbose, create_strings)
-    
-    # print("\nResult of the comparison of all loci of both annotations :\n")
-    # pprint.pprint(comparison)
-    # print("\n\n")
+    return annotation_comparison(ref_path, alt_path, debug, verbose, create_strings)
     
 if __name__ == "__main__":
     main()
