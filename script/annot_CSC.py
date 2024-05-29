@@ -1352,7 +1352,7 @@ def write_results(results, debug=False, verbose=False):
     
 ## Main function of this program. Given a reference and alternative path, 
 # gets the corresponding GFF files and compares the two annotations to return 
-# their structure's identity level
+# their information about their loci's comparison
 #
 # @param ref_path Path of the GFF file describing the reference annotation
 #
@@ -1364,11 +1364,8 @@ def write_results(results, debug=False, verbose=False):
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
-# @return Returns a dictionary of dictionaries of floats corresponding to 
-# the structure string identity between each locus of each annotation compared
-# to those of the reference
-#
-# @remark Loci found in one annotation but not the other are ignored
+# @return Returns a list of lists of dictionaries describing the 
+# comparison of the structure identity between the loci of each annotation 
 def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create_strings=False):
 
     # get all annotation files and generate the annotation data structure
