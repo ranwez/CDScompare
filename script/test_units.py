@@ -665,7 +665,31 @@ def test_old_compare_loci():
                                                     start=600, 
                                                     end=900, 
                                                     direction='direct'),
-                                         ([0, 200], 100.0)]
+                                         ([0, 200], 100.0)],
+        
+        'overlapping-loci (first cluster/locus)' : [annot_CSC.Locus(name='chr2A_1000', 
+                                                             mRNAs={'chr2A_1000_mrna': [50, 150]}, 
+                                                             start=50, 
+                                                             end=150, 
+                                                             direction='direct'),
+                                                    annot_CSC.Locus(name='chr2A_1000', 
+                                                              mRNAs={'chr2A_1000_mrna': [100, 250]}, 
+                                                              start=100, 
+                                                              end=250, 
+                                                              direction='direct'),
+                                                    ([200, 0], 0.0)],
+        
+        'overlapping-loci (first cluster / 2nd locus)' : [annot_CSC.Locus(name='chr2A_2000', 
+                                                             mRNAs={'chr2A_2000_mrna': [200, 350]}, 
+                                                             start=200, 
+                                                             end=350, 
+                                                             direction='direct'),
+                                                          annot_CSC.Locus(name='chr2A_2000', 
+                                                              mRNAs={'chr2A_2000_mrna': [300, 450]}, 
+                                                              start=300, 
+                                                              end=450, 
+                                                              direction='direct'),
+                                                          ([250, 0], 0.0)],
         }
     
     print("\n*************Testing the old_compare_loci function*************")
