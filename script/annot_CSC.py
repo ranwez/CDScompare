@@ -685,7 +685,7 @@ def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
 # @remark This function doesn't expect any annotation to be a 'reference'
 def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     # initialize final return values
-    final_comparison = []
+    final_comparison = [0,0]
     final_identity = 0.0
     final_mismatch_zones = []
     
@@ -812,12 +812,21 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 final_comparison = comparison
                 final_identity = identity
                 final_mismatch_zones = mismatch_zones
+                if debug:
+                    print(f"comparison = {comparison}\nfinal_comparison = {final_comparison}\nidentity = {identity}\nfinal identity = {final_identity}\nmismatch zones = {mismatch_zones}\nfinal mismatch zones = {final_mismatch_zones}")
+            # if all mRNAs comparisons return 0% identity, we still want 
+            # mismatch values to be returned
+            elif comparison[0] > final_comparison[0]:
+                final_comparison = comparison
+                final_mismatch_zones = mismatch_zones
     
     # return the highest mRNA identity between the locus of each annotation
     # (as a percentage)
     final_identity = round(final_identity * 100, 1)
+    if debug:
+        print(f"final mismatch zones = {final_mismatch_zones}")
     if verbose:
-        print(f"\nResult of the comparison of the locus : {final_comparison[1]} matches and {final_comparison[0]} mismatches" )
+        print(f"\nFinal result of the comparison of the locus : {final_comparison[1]} matches and {final_comparison[0]} mismatches (identity = {final_identity})" )
     return (final_comparison, final_identity, final_mismatch_zones)
 
 

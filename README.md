@@ -1,5 +1,5 @@
 
-# Annotation Comparison
+# Annot_CSC
 
 This is the repository for the 2024 internship of Vetea Jacot in the GE²pop team of the research unit AGAP. The goal of the program defined in this repo is to enable the comparison of two genome annotations in GFF format (one reference and one alternative) to determine the structure identity of the alternative to the reference. This program takes into account multiple caracteristics of the problem, for exemple the reading frames of a locus and overlapping loci. It creates two files: "log.txt" records all minor structure errors of the given input files, and "results.csv" lists the detailed results for each locus comparison.
 
