@@ -979,11 +979,9 @@ def create_vectors(borders, debug=False, verbose=False):
 #
 # @see create_vectors()
 #
-# @param borders_vector_ref List of start position and vector of the locus of 
-# the reference annotation
+# @param borders_vector_ref Instance of class 'Locus' of the reference locus
 #
-# @param borders_vector_alt List of start position and vector of the locus of 
-# the alternative annotation
+# @param borders_vector_alt Instance of class 'Locus' of the alternative locus
 #
 # @param debug If True, triggers display of many messages intended for 
 # debugging the program. Default is 'False'
@@ -1006,204 +1004,95 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
         for mRNA_alt_id, mRNA_alt in alt_locus.mRNAs.items():
             
             # we create the structure string for each mRNA
-            vector_ref = create_vectors(mRNA_ref, debug, verbose)
-            vector_alt = create_vectors(mRNA_alt, debug, verbose)
-            comp_list = [0,0]
+            start_ref, vector_ref = create_vectors(mRNA_ref, debug, verbose)
+            start_alt, vector_alt = create_vectors(mRNA_alt, debug, verbose)
+            comparison = [0,0]
+                
+            # we assign to 'minimum string' and 'maximum string' the reference
+            # and alternative strings
+            if start_ref <= start_alt:
+                vector_min = vector_ref
+                vector_max = vector_alt
+                start_min = start_ref
+                start_max = start_alt
+            else:
+                vector_min = vector_alt
+                vector_max = vector_ref
+                start_min = start_alt
+                start_max = start_ref
+                
+            # we get the difference between the start position of each locus
+            diff = start_max - start_min
+            
             if debug:
                 print(f"vector_ref = {vector_ref}")
                 print(f"vector_alt = {vector_alt}")
+                print(f"vector_min = {vector_min}")
+                print(f"vector_max = {vector_max}")
+                print(f"position difference = {diff}")
+                print(f"range = {max(len(vector_ref), len(vector_alt)) + diff}")
             
-            # we get the minimum start positions, maximum end positions, 
-            # and position difference of the loci
-            minv = min(vector_ref[0], vector_alt[0])
-            diff = abs(vector_ref[0] - vector_alt[0]) 
-            if debug:
-                print(f"minv = {minv}")
-                print(f"diff = {diff}")
-            
-            # if the two loci don't start at the same position
-            if vector_ref[0] != vector_alt[0]:
+            # for each position in the string of maximum length + position diff
+            for i in range(max(len(vector_ref), len(vector_alt)) + diff):
                 if debug:
-                    print("The two loci do not start at the same position")
+                    print(f"i = {i}")
+                    
+                # identitify the presence of a CDS at each position in
+                # the minimum and maximum strings (accounting for position
+                # difference)
+                try:
+                    min_in_cds = vector_min[i] in ["1", "2", "3"]    
+                except IndexError:
+                    min_in_cds = False
                 
-                # if the locus 'ref' starts before the start of locus 'alt'
-                if minv == vector_ref[0]:
+                # to prevent looping in case of negative 'i-diff', assign 
+                # 'False' to max_in_cds if 'i-diff' is negative
+                if i-diff >= 0:
+                    try:
+                        max_in_cds = vector_max[i-diff] in ["1", "2", "3"]
+                    except IndexError:
+                        max_in_cds = False
+                else:
+                    max_in_cds = False
+                    
+                # if both are in a cds and have the same codon position,
+                # identify as a 'match'
+                if min_in_cds and max_in_cds and vector_min[i] == vector_max[i-diff]:
                     if debug:
-                        print("Locus 'ref' start before locus 'alt'")
-                        print(f"Range of loop = {min(len(vector_ref[1]), len(vector_alt[1]) + diff)}")
+                        print("both ref and alt are in cds with same codon position value, adding to 'match'")
+                    comparison[1] += 1
                     
-                    # for every comparison of the numbers at each position in 
-                    # the two strings, we increment by one the match or 
-                    # mismatch value of the return list. We account for the 
-                    # difference in start positions by adding the difference 
-                    # to the locus 'ref' codon position retrieval
-                    for i in range( min(len(vector_ref[1]), len(vector_alt[1])) + diff ):
-                        
-                        # try to know if the current position is in a CDS in 
-                        # the reference or alternative. If we are outside the 
-                        # string of an annotation the value 'False' is assigned
-                        try:
-                            ref_in_cds = vector_ref[1][i] in ("1", "2", "3") 
-                        except IndexError:
-                            ref_in_cds = False
-                            
-                        if i >= diff:
-                            alt_in_cds = vector_alt[1][i-diff] in ("1", "2", "3")
-                        else:
-                            alt_in_cds = False
-                        
-                        if debug:
-                            print(f"i = {i}")
-                            print(f"ref_in_cds = {ref_in_cds}")
-                            print(f"alt_in_cds = {alt_in_cds}")
-                        
-                        # if we are outside the coordinates of locus 'alt' and 
-                        # locus 'ref' has a CDS in this position, we increment 
-                        # the mismatch count; else we do nothing
-                        if i<diff and ref_in_cds:
-                            if debug:
-                                print("outside of alt, with ref in cds, adding to mismatch")
-                            comp_list[0] += 1
-                        
-                        # if we are outside the coordinates of locus 'ref' and 
-                        # locus 'alt' has a CDS in this position, we increment 
-                        # the mismatch count; else we do nothing
-                        elif i >= len(vector_ref[1]) and alt_in_cds:
-                            if debug:
-                                print("outside of ref, with alt in cds, adding to mismatch")
-                            comp_list[0] += 1
-                        
-                        # if we are in both coordinates, we increment the match
-                        # count if both have the same non-zero value at the 
-                        # current position, else we increment the mismatch value
-                        # if they don't have both '0' as a value
-                        else:
-                            if ref_in_cds and alt_in_cds and vector_ref[1][i] == vector_alt[1][i-diff]:
-                                if debug:
-                                    print("both ref and alt in cds, adding to match")
-                                comp_list[1] +=1
-                            elif ref_in_cds or alt_in_cds:
-                                if debug:
-                                    print("ref or alt in cds, adding to mismatch")
-                                comp_list[0] += 1
-                
-                # if the locus'ref' starts after the start of locus 'alt'
-                elif minv == vector_alt[0]:
+                # if both are in a cds but don't have the same codon
+                # position, identify as a 'mismatch'
+                elif min_in_cds and max_in_cds and vector_min[i] != vector_max[i-diff]:
                     if debug:
-                        print("Locus 'alt' starts before locus 'ref'")
-                        print(f"Range of loop = {min(len(vector_ref[1]), len(vector_alt[1]) + diff)}")
+                        print("both ref and alt are in cds, with different codon position value, adding to 'mismatch'")
+                    comparison[0] += 1
                     
-                    # for every comparison of the numbers at each position in 
-                    # the two strings, we increment by one the match or 
-                    # mismatch value of the return list. We account for the 
-                    # difference in start positions by adding the difference 
-                    # to the locus 'alt' codon position retrieval
-                    for i in range( min(len(vector_ref[1]), len(vector_alt[1])) + diff ):
-                        
-                        # try to know if the current position is in a CDS in 
-                        # the reference or alternative. If we are outside the
-                        # string of an annotation the value 'False' is assigned
-                        if i >= diff:
-                            ref_in_cds = vector_ref[1][i-diff] in ("1", "2", "3")
-                        else:
-                            ref_in_cds = False
-                            
-                        try:
-                            alt_in_cds = vector_alt[1][i] in ("1", "2", "3")
-                        except IndexError:
-                            alt_in_cds = False
-                        
-                        if debug:
-                            print(f"i = {i}")
-                            print(f"ref_in_cds = {ref_in_cds}")
-                            print(f"alt_in_cds = {alt_in_cds}")
-                            
-                        # if we are outside the coordinates of locus 'ref' and 
-                        # locus 'alt' has a CDS in this position, we increment 
-                        # the mismatch count; else we do nothing
-                        if i<diff and alt_in_cds:
-                            if debug:
-                                print("outside of ref, with alt in cds, adding to mismatch")
-                            comp_list[0] += 1
-                            
-                        # if we are outside the coordinates of locus 'alt' and 
-                        # locus 'ref' has a CDS in this position, we increment 
-                        # the mismatch count; else we do nothing
-                        elif i >= len(vector_alt[1]) and ref_in_cds:
-                            if debug:
-                                print("outside of alt, with ref in cds, adding to mismatch")
-                            comp_list[0] += 1
-                    
-                        # if we are in both coordinates, we increment the match
-                        # count if both have the same non-zero value at the 
-                        # current position, else we increment the mismatch 
-                        # value if they don't have both '0' as a value
-                        else:
-                            if ref_in_cds and alt_in_cds and vector_ref[1][i-diff] == vector_alt[1][i]:
-                                if debug:
-                                    print("both ref and alt in cds, adding to match")
-                                comp_list[1] +=1
-                            elif ref_in_cds or alt_in_cds:
-                                if debug:
-                                    print("ref or alt in cds, adding to mismatch")
-                                comp_list[0] += 1
-            
-            # if the two loci start at the same position
-            else:
-                if debug:
-                    print("The two loci start at the same position")
-                    print(f"\nRange of loop = {len(vector_ref[1])}")
-            
-                # for every comparison of the numbers at each position in the
-                # two strings, we increment by the match value of the return
-                # list of the two string values at this position are equal,
-                # or the mismatch value if they are not or if only one 
-                # annotation has a CDS at this position
-                for i in range(len(vector_ref[1])):
-                
-                    # try to know if the current position is in a CDS in 
-                    # the reference or alternative. If we are outside the
-                    # string of an annotation the value 'False' is assigned
-                    if i < len(vector_ref[1]):
-                        ref_in_cds = vector_ref[1][i-diff] in ("1", "2", "3")
-                    else:
-                        ref_in_cds = False
-                        
-                    if i < len(vector_alt[1]):
-                        alt_in_cds = vector_alt[1][i-diff] in ("1", "2", "3")
-                    else:
-                        alt_in_cds = False
-                
+                # if only one is in a cds, identify as a 'mismatch'
+                elif min_in_cds or max_in_cds:
                     if debug:
-                        print(f"i = {i}")
-                        print(f"ref_in_cds = {ref_in_cds}")
-                        print(f"alt_in_cds = {alt_in_cds}")
+                        print("ref or alt in cds, adding to 'mismatch'")
+                    comparison[0] += 1
                     
-                    # if both reference and alternative are in a CDS and have
-                    # the same codon position at this coordinate,
-                    # increment match value, else increment mismatch
-                    if ref_in_cds and alt_in_cds and vector_ref[1][i] == vector_alt[1][i]:
-                        if debug:
-                            print("both annotations have same value, adding to match")
-                        comp_list[1] += 1
-                    elif ref_in_cds or alt_in_cds:
-                        if debug:
-                            print("ref or alt in cds, adding to mismatch")
-                        comp_list[0] += 1
-        
-            identity = comp_list[1] / (comp_list[0] + comp_list[1])
+                # else both are not in cds, this case is ignored
+                else:
+                    if debug:
+                        print("ref and alt not in cds, ignoring")
+                
+            identity = comparison[1] / (comparison[0] + comparison[1])
             
             # for each mRNA, we test wether the computed identity is higher 
             # than for the preceding mRNAs, to retrieve the highest identity
             if identity > final_identity:
-                final_comparison = comp_list
+                final_comparison = comparison
                 final_identity = identity
                 if debug:
-                    print(f"comparison = {comp_list}\nfinal_comparison = {final_comparison}\nidentity = {identity}\nfinal identity = {final_identity}")
+                    print(f"comparison = {comparison}\nfinal_comparison = {final_comparison}\nidentity = {identity}\nfinal identity = {final_identity}")
             # if all mRNAs comparisons return 0% identity, we still want 
             # mismatch values to be returned
-            elif comp_list[0] > final_comparison[0]:
-                final_comparison = comp_list
+            elif comparison[0] > final_comparison[0]:
+                final_comparison = comparison
     
     # return the highest identity between the mRNA of both locus
     # (as a percentage)
