@@ -762,6 +762,7 @@ def test_new_annotation_match():
                                                 start=100, 
                                                 end=300, 
                                                 direction='direct')],
+                             "cluster 0",
                              [{"reference" : 'chr2A_00611930',
                                 "reference start" : 100,
                                 "reference end" : 300,
@@ -770,7 +771,8 @@ def test_new_annotation_match():
                                 "alternative end" : 300,
                                 "mismatch/match" : [0, 150],
                                 "identity" : 100.0,
-                                "mismatch zones" : []}]],
+                                "mismatch zones" : [],
+                                "cluster name" : "cluster 0"}]],
                  
                  'shift' : [[annot_CSC.Locus(name='chr2A_00611930', 
                                               mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
@@ -782,6 +784,7 @@ def test_new_annotation_match():
                                                 start=100, 
                                                 end=300, 
                                                 direction='direct')],
+                            "cluster 0",
                             [{"reference" : 'chr2A_00611930',
                             "reference start" : 100,
                             "reference end" : 300,
@@ -790,27 +793,8 @@ def test_new_annotation_match():
                             "alternative end" : 300,
                             "mismatch/match" : [120, 30],
                             "identity" : 20.0,
-                            "mismatch zones" : ['150-151', '151-210', '240-300']}]],
-                 
-                 'reverse-basic' : [[annot_CSC.Locus(name='chr2A_00611930', 
-                                              mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
-                                              start=100, 
-                                              end=300, 
-                                              direction='direct')],
-                                          [annot_CSC.Locus(name='chr2A_00611930', 
-                                                             mRNAs={'chr2A_00611930_mrna': [300, 240, 210, 150, 130, 100]}, 
-                                                             start=300, 
-                                                             end=100, 
-                                                             direction='reverse')],
-                                          [{"reference" : 'chr2A_00611930',
-                                             "reference start" : 100,
-                                             "reference end" : 300,
-                                             "alternative" : 'chr2A_00611930',
-                                             "alternative start" : 300,
-                                             "alternative end" : 100,
-                                             "mismatch/match" : '_',
-                                             "identity" : 0.0,
-                                             "mismatch zones" : '_'}]],
+                            "mismatch zones" : ['150-151', '151-210', '240-300'],
+                            "cluster name" : "cluster 0"}]],
                  
                  'overlapping-loci (first cluster)' : [[annot_CSC.Locus(name='chr2A_1000', 
                                               mRNAs={'chr2A_1000_mrna': [50, 150]}, 
@@ -843,6 +827,7 @@ def test_new_annotation_match():
                                           start=500, 
                                           end=600, 
                                           direction='direct')],
+                                       "cluster 0",
                                     [{"reference" : 'chr2A_2000',
                                     "reference start" : 200,
                                     "reference end" : 350,
@@ -851,7 +836,8 @@ def test_new_annotation_match():
                                     "alternative end" : 450,
                                     "mismatch/match" : [250, 0],
                                     "identity" : 0.0,
-                                    "mismatch zones" : ['200-300', '300-350', '350-450']},
+                                    "mismatch zones" : ['200-300', '300-350', '350-450'],
+                                    "cluster name" : "cluster 0"},
                                      {"reference" : 'chr2A_1000',
                                     "reference start" : 50,
                                     "reference end" : 150,
@@ -860,7 +846,8 @@ def test_new_annotation_match():
                                     "alternative end" : 250,
                                     "mismatch/match" : [200, 0],
                                     "identity" : 0.0,
-                                    "mismatch zones" : ['50-100', '100-150', '150-250']},
+                                    "mismatch zones" : ['50-100', '100-150', '150-250'],
+                                    "cluster name" : "cluster 0"},
                                      {"reference" : 'chr2A_3000',
                                      "reference start" : 400,
                                      "reference end" : 550,
@@ -869,7 +856,8 @@ def test_new_annotation_match():
                                      "alternative end" : 600,
                                      "mismatch/match" : [200, 0],
                                      "identity" : 0.0,
-                                     "mismatch zones" : ['400-500', '500-550', '550-600']}]]
+                                     "mismatch zones" : ['400-500', '500-550', '550-600'],
+                                     "cluster name" : "cluster 0"}]]
         }
 
     print("\n*************Testing the 'new' annotation_match function*************")
@@ -878,10 +866,10 @@ def test_new_annotation_match():
         
         print(f"\n{test} test")
         
-        result = annot_CSC.annotation_match(test_dict[test][0], test_dict[test][1], False, False, False)
+        result = annot_CSC.annotation_match(test_dict[test][0], test_dict[test][1], test_dict[test][2], False, False, False)
         print(f"result : {result}\n")
-        print(f"expected result : {test_dict[test][2]}\n")
-        assert result == test_dict[test][2]
+        print(f"expected result : {test_dict[test][3]}\n")
+        assert result == test_dict[test][3]
         
         
 # test function for the 'annot_CSC.py' function 'annotation_match' (main annotation comparison function) with the 'create_strings' parameter as 'True' (uses old program version)
@@ -898,6 +886,7 @@ def test_old_annotation_match():
                                                 start=100, 
                                                 end=300, 
                                                 direction='direct')],
+                             "cluster 0",
                              [{"reference" : 'chr2A_00611930',
                                 "reference start" : 100,
                                 "reference end" : 300,
@@ -906,7 +895,8 @@ def test_old_annotation_match():
                                 "alternative end" : 300,
                                 "mismatch/match" : [0, 150],
                                 "identity" : 100.0,
-                                "mismatch zones" : '?'}]],
+                                "mismatch zones" : '?',
+                                "cluster name" : "cluster 0"}]],
                  
                  'shift' : [[annot_CSC.Locus(name='chr2A_00611930', 
                                               mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
@@ -918,6 +908,7 @@ def test_old_annotation_match():
                                                 start=100, 
                                                 end=300, 
                                                 direction='direct')],
+                            "cluster 0",
                             [{"reference" : 'chr2A_00611930',
                             "reference start" : 100,
                             "reference end" : 300,
@@ -926,27 +917,8 @@ def test_old_annotation_match():
                             "alternative end" : 300,
                             "mismatch/match" : [120, 30],
                             "identity" : 20.0,
-                            "mismatch zones" : '?'}]],
-                 
-                 'reverse-basic' : [[annot_CSC.Locus(name='chr2A_00611930', 
-                                              mRNAs={'chr2A_00611930_mrna': [100, 130, 150, 210, 240, 300]}, 
-                                              start=100, 
-                                              end=300, 
-                                              direction='direct')],
-                                          [annot_CSC.Locus(name='chr2A_00611930', 
-                                                             mRNAs={'chr2A_00611930_mrna': [300, 240, 210, 150, 130, 100]}, 
-                                                             start=300, 
-                                                             end=100, 
-                                                             direction='reverse')],
-                                          [{"reference" : 'chr2A_00611930',
-                                             "reference start" : 100,
-                                             "reference end" : 300,
-                                             "alternative" : 'chr2A_00611930',
-                                             "alternative start" : 300,
-                                             "alternative end" : 100,
-                                             "mismatch/match" : '_',
-                                             "identity" : 0.0,
-                                             "mismatch zones" : '_'}]],
+                            "mismatch zones" : '?',
+                            "cluster name" : "cluster 0"}]],
                  
                  'overlapping-loci (first cluster)' : [[annot_CSC.Locus(name='chr2A_1000', 
                                               mRNAs={'chr2A_1000_mrna': [50, 150]}, 
@@ -979,6 +951,9 @@ def test_old_annotation_match():
                                           start=500, 
                                           end=600, 
                                           direction='direct')],
+                                       
+                                       "cluster 0",
+                                       
                                     [{"reference" : 'chr2A_2000',
                                     "reference start" : 200,
                                     "reference end" : 350,
@@ -987,7 +962,8 @@ def test_old_annotation_match():
                                     "alternative end" : 450,
                                     "mismatch/match" : [250, 0],
                                     "identity" : 0.0,
-                                    "mismatch zones" : '?'},
+                                    "mismatch zones" : '?',
+                                    "cluster name" : "cluster 0"},
                                      {"reference" : 'chr2A_1000',
                                     "reference start" : 50,
                                     "reference end" : 150,
@@ -996,7 +972,8 @@ def test_old_annotation_match():
                                     "alternative end" : 250,
                                     "mismatch/match" : [200, 0],
                                     "identity" : 0.0,
-                                    "mismatch zones" : '?'},
+                                    "mismatch zones" : '?',
+                                    "cluster name" : "cluster 0"},
                                      {"reference" : 'chr2A_3000',
                                      "reference start" : 400,
                                      "reference end" : 550,
@@ -1005,7 +982,8 @@ def test_old_annotation_match():
                                      "alternative end" : 600,
                                      "mismatch/match" : [200, 0],
                                      "identity" : 0.0,
-                                     "mismatch zones" : '?'}]]
+                                     "mismatch zones" : '?',
+                                     "cluster name" : "cluster 0"}]]
         }
 
     print("\n*************Testing the 'old' annotation_match function*************")
@@ -1014,10 +992,10 @@ def test_old_annotation_match():
         
         print(f"\n{test} test")
         
-        result = annot_CSC.annotation_match(test_dict[test][0], test_dict[test][1], True, False, False)
+        result = annot_CSC.annotation_match(test_dict[test][0], test_dict[test][1], test_dict[test][2], True, False, False)
         print(f"result : {result}\n")
-        print(f"expected result : {test_dict[test][2]}\n")
-        assert result == test_dict[test][2]
+        print(f"expected result : {test_dict[test][3]}\n")
+        assert result == test_dict[test][3]
 
 
 # test function for the 'annot_CSC.py' function 'annotation_comparison' ('main' function of the program) with the 'create_strings' parameter as 'False' (uses new program version)
@@ -1035,7 +1013,8 @@ def test_new_annotation_comparison():
                            "alternative end" : 300,
                            "mismatch/match" : [0, 150],
                            "identity" : 100.0,
-                           "mismatch zones" : []}]]],
+                           "mismatch zones" : [],
+                           "cluster name" : "cluster 0"}]]],
         
         "minus-CDS" : ["./data/tests/basic_test.gff3", 
                        "./data/tests/minus-CDS_test.gff3",
@@ -1047,7 +1026,8 @@ def test_new_annotation_comparison():
                           "alternative end" : 300,
                           "mismatch/match" : [60, 90],
                           "identity" : 60.0,
-                          "mismatch zones" : ['150-210']}]]],
+                          "mismatch zones" : ['150-210'],
+                          "cluster name" : "cluster 0"}]]],
         
         "fusion" : ["./data/tests/basic_test.gff3", 
                     "./data/tests/fusion_test.gff3",
@@ -1059,7 +1039,8 @@ def test_new_annotation_comparison():
                        "alternative end" : 300,
                        "mismatch/match" : [140, 30],
                        "identity" : 17.6,
-                       "mismatch zones" : ['130-150', '150-210', '240-300']}]]],
+                       "mismatch zones" : ['130-150', '150-210', '240-300'],
+                       "cluster name" : "cluster 0"}]]],
         
         "shift" : ["./data/tests/basic_test.gff3", 
                    "./data/tests/shift_test.gff3",
@@ -1071,7 +1052,8 @@ def test_new_annotation_comparison():
                       "alternative end" : 300,
                       "mismatch/match" : [120, 30],
                       "identity" : 20.0,
-                      "mismatch zones" : ['150-151', '151-210', '240-300']}]]],
+                      "mismatch zones" : ['150-151', '151-210', '240-300'],
+                      "cluster name" : "cluster 0"}]]],
         
         "reverse-basic" : ["./data/tests/basic_test.gff3", 
                      "./data/tests/reverse_test.gff3",
@@ -1083,7 +1065,8 @@ def test_new_annotation_comparison():
                         "alternative end" : '_',
                         "mismatch/match" : [],
                         "identity" : 0.0,
-                        "mismatch zones" : '_'}],
+                        "mismatch zones" : '_',
+                        "cluster name" : "cluster 0"}],
                        [{"reference" : '_',
                           "reference start" : '_',
                           "reference end" : '_',
@@ -1092,7 +1075,8 @@ def test_new_annotation_comparison():
                           "alternative end" : 100,
                           "mismatch/match" : [],
                           "identity" : 0.0,
-                          "mismatch zones" : '_'}]]],
+                          "mismatch zones" : '_',
+                          "cluster name" : "cluster 1"}]]],
         
         "reverse-reverse" : ["./data/tests/reverse_test.gff3", 
                      "./data/tests/reverse_test.gff3",
@@ -1104,7 +1088,8 @@ def test_new_annotation_comparison():
                         "alternative end" : 100,
                         "mismatch/match" : [0,150],
                         "identity" : 100.0,
-                        "mismatch zones" : []}]]],     
+                        "mismatch zones" : [],
+                        "cluster name" : "cluster 0"}]]],     
         
         "diff-start-before" : ["./data/tests/basic_test.gff3",
                                "./data/tests/diff-start-before_test.gff3",
@@ -1116,7 +1101,8 @@ def test_new_annotation_comparison():
                                   "alternative end" : 240,
                                   "mismatch/match" : [210, 30],
                                   "identity" : 12.5,
-                                  "mismatch zones" : ['40-70', '90-100', '100-130', '130-150', '150-180', '210-240', '240-300']}]]],
+                                  "mismatch zones" : ['40-70', '90-100', '100-130', '130-150', '150-180', '210-240', '240-300'],
+                                  "cluster name" : "cluster 0"}]]],
         
         "diff-start-after" : ["./data/tests/basic_test.gff3",
                               "./data/tests/diff-start-after_test.gff3",
@@ -1128,7 +1114,8 @@ def test_new_annotation_comparison():
                                  "alternative end" : 360,
                                  "mismatch/match" : [210, 30],
                                  "identity" : 12.5,
-                                 "mismatch zones" : ['100-130', '150-160', '160-190', '190-210', '210-240', '270-300', '300-360']}]]],
+                                 "mismatch zones" : ['100-130', '150-160', '160-190', '190-210', '210-240', '270-300', '300-360'],
+                                 "cluster name" : "cluster 0"}]]],
         
         "basic-2-loci" : ["./data/tests/basic-2-loci_test.gff3",
                           "./data/tests/identical-2-loci_test.gff3",
@@ -1140,7 +1127,8 @@ def test_new_annotation_comparison():
                                  "alternative end" : 300,
                                  "mismatch/match" : [0, 150],
                                  "identity" : 100.0,
-                                 "mismatch zones" : []}],
+                                 "mismatch zones" : [],
+                                 "cluster name" : "cluster 0"}],
                                [{"reference" : 'chr2A_00620000',
                                   "reference start" : 600,
                                   "reference end" : 900,
@@ -1149,7 +1137,8 @@ def test_new_annotation_comparison():
                                   "alternative end" : 900,
                                   "mismatch/match" : [0, 200],
                                   "identity" : 100.0,
-                                  "mismatch zones" : []}]]],
+                                  "mismatch zones" : [],
+                                  "cluster name" : "cluster 2"}]]],
         
         "minus-loci" : ["./data/tests/basic_test.gff3",
                           "./data/tests/identical-2-loci_test.gff3",
@@ -1161,7 +1150,8 @@ def test_new_annotation_comparison():
                                  "alternative end" : 300,
                                  "mismatch/match" : [0, 150],
                                  "identity" : 100.0,
-                                 "mismatch zones" : []}],
+                                 "mismatch zones" : [],
+                                 "cluster name" : "cluster 0"}],
                                [{"reference" : '_',
                                   "reference start" : '_',
                                   "reference end" : '_',
@@ -1170,7 +1160,8 @@ def test_new_annotation_comparison():
                                   "alternative end" : 900,
                                   "mismatch/match" : [],
                                   "identity" : 0.0,
-                                  "mismatch zones" : '_'}]]],
+                                  "mismatch zones" : '_',
+                                  "cluster name" : "cluster 2"}]]],
         
         "overlapping-loci" : ["./data/tests/overlapping-loci_test.gff3",
                               "./data/tests/overlapping-loci-alt_test.gff3",
@@ -1182,7 +1173,8 @@ def test_new_annotation_comparison():
                                  'alternative end': 450,
                                  'mismatch/match': [250, 0],
                                  'identity': 0.0,
-                                 'mismatch zones': ['200-300', '300-350', '350-450']},
+                                 'mismatch zones': ['200-300', '300-350', '350-450'],
+                                 "cluster name" : "cluster 0"},
                                 {'reference': 'chr2A_1000',
                                  'reference start': 50,
                                  'reference end': 150,
@@ -1191,7 +1183,8 @@ def test_new_annotation_comparison():
                                  'alternative end': 250,
                                  'mismatch/match': [200, 0],
                                  'identity': 0.0,
-                                 'mismatch zones': ['50-100', '100-150', '150-250']},
+                                 'mismatch zones': ['50-100', '100-150', '150-250'],
+                                 "cluster name" : "cluster 0"},
                                 {'reference': 'chr2A_3000',
                                  'reference start': 400, 
                                  'reference end': 550,
@@ -1200,7 +1193,8 @@ def test_new_annotation_comparison():
                                  'alternative end': 600, 
                                  'mismatch/match': [200, 0], 
                                  'identity': 0.0, 
-                                 'mismatch zones': ['400-500', '500-550', '550-600']}],
+                                 'mismatch zones': ['400-500', '500-550', '550-600'],
+                                 "cluster name" : "cluster 0"}],
                                [{'reference': 'chr2A_4000', 
                                  'reference start': 650,
                                  'reference end': 700, 
@@ -1209,7 +1203,8 @@ def test_new_annotation_comparison():
                                  'alternative end': 700, 
                                  'mismatch/match': [0, 50], 
                                  'identity': 100.0, 
-                                 'mismatch zones': []}], 
+                                 'mismatch zones': [],
+                                 "cluster name" : "cluster 6"}], 
                                [{'reference': 'chr2A_5000',
                                  'reference start': 750, 
                                  'reference end': 800,
@@ -1218,7 +1213,8 @@ def test_new_annotation_comparison():
                                  'alternative end': 780, 
                                  'mismatch/match': [20, 30], 
                                  'identity': 60.0,
-                                 'mismatch zones': ['780-800']}, 
+                                 'mismatch zones': ['780-800'],
+                                 "cluster name" : "cluster 8"}, 
                                 {'reference': '_',
                                  'reference start': '_', 
                                  'reference end': '_',
@@ -1227,7 +1223,8 @@ def test_new_annotation_comparison():
                                  'alternative end': 850,
                                  'mismatch/match': [], 
                                  'identity': 0.0, 
-                                 'mismatch zones': '_'}]]]
+                                 'mismatch zones': '_',
+                                 "cluster name" : "cluster 8"}]]]
         }
 
     print("\n*************Testing the 'new' annotation_comparison function*************")
@@ -1257,7 +1254,8 @@ def test_old_annotation_comparison():
                            "alternative end" : 300,
                            "mismatch/match" : [0, 150],
                            "identity" : 100.0,
-                           "mismatch zones" : '?'}]]],
+                           "mismatch zones" : '?',
+                           "cluster name" : "cluster 0"}]]],
         
         "minus-CDS" : ["./data/tests/basic_test.gff3", 
                        "./data/tests/minus-CDS_test.gff3",
@@ -1269,7 +1267,8 @@ def test_old_annotation_comparison():
                           "alternative end" : 300,
                           "mismatch/match" : [60, 90],
                           "identity" : 60.0,
-                          "mismatch zones" : '?'}]]],
+                          "mismatch zones" : '?',
+                          "cluster name" : "cluster 0"}]]],
         
         "fusion" : ["./data/tests/basic_test.gff3", 
                     "./data/tests/fusion_test.gff3",
@@ -1281,7 +1280,8 @@ def test_old_annotation_comparison():
                        "alternative end" : 300,
                        "mismatch/match" : [140, 30],
                        "identity" : 17.6,
-                       "mismatch zones" : '?'}]]],
+                       "mismatch zones" : '?',
+                       "cluster name" : "cluster 0"}]]],
         
         "shift" : ["./data/tests/basic_test.gff3", 
                    "./data/tests/shift_test.gff3",
@@ -1293,7 +1293,8 @@ def test_old_annotation_comparison():
                       "alternative end" : 300,
                       "mismatch/match" : [120, 30],
                       "identity" : 20.0,
-                      "mismatch zones" : '?'}]]],
+                      "mismatch zones" : '?',
+                      "cluster name" : "cluster 0"}]]],
         
         "reverse-basic" : ["./data/tests/basic_test.gff3", 
                      "./data/tests/reverse_test.gff3",
@@ -1305,7 +1306,8 @@ def test_old_annotation_comparison():
                         "alternative end" : '_',
                         "mismatch/match" : [],
                         "identity" : 0.0,
-                        "mismatch zones" : '_'}],
+                        "mismatch zones" : '_',
+                        "cluster name" : "cluster 0"}],
                        [{"reference" : '_',
                           "reference start" : '_',
                           "reference end" : '_',
@@ -1314,7 +1316,8 @@ def test_old_annotation_comparison():
                           "alternative end" : 100,
                           "mismatch/match" : [],
                           "identity" : 0.0,
-                          "mismatch zones" : '_'}]]],
+                          "mismatch zones" : '_',
+                          "cluster name" : "cluster 1"}]]],
         
         "reverse-reverse" : ["./data/tests/reverse_test.gff3", 
                      "./data/tests/reverse_test.gff3",
@@ -1326,7 +1329,8 @@ def test_old_annotation_comparison():
                         "alternative end" : 100,
                         "mismatch/match" : [0,150],
                         "identity" : 100.0,
-                        "mismatch zones" : '?'}]]],        
+                        "mismatch zones" : '?',
+                        "cluster name" : "cluster 0"}]]],        
         
         "diff-start-before" : ["./data/tests/basic_test.gff3",
                                "./data/tests/diff-start-before_test.gff3",
@@ -1338,7 +1342,8 @@ def test_old_annotation_comparison():
                                   "alternative end" : 240,
                                   "mismatch/match" : [210, 30],
                                   "identity" : 12.5,
-                                  "mismatch zones" : '?'}]]],
+                                  "mismatch zones" : '?',
+                                  "cluster name" : "cluster 0"}]]],
         
         "diff-start-after" : ["./data/tests/basic_test.gff3",
                               "./data/tests/diff-start-after_test.gff3",
@@ -1350,7 +1355,8 @@ def test_old_annotation_comparison():
                                  "alternative end" : 360,
                                  "mismatch/match" : [210, 30],
                                  "identity" : 12.5,
-                                 "mismatch zones" : '?'}]]],
+                                 "mismatch zones" : '?',
+                                 "cluster name" : "cluster 0"}]]],
         
         "basic-2-loci" : ["./data/tests/basic-2-loci_test.gff3",
                           "./data/tests/identical-2-loci_test.gff3",
@@ -1362,7 +1368,8 @@ def test_old_annotation_comparison():
                                  "alternative end" : 300,
                                  "mismatch/match" : [0, 150],
                                  "identity" : 100.0,
-                                 "mismatch zones" : '?'}],
+                                 "mismatch zones" : '?',
+                                 "cluster name" : "cluster 0"}],
                                [{"reference" : 'chr2A_00620000',
                                   "reference start" : 600,
                                   "reference end" : 900,
@@ -1371,7 +1378,8 @@ def test_old_annotation_comparison():
                                   "alternative end" : 900,
                                   "mismatch/match" : [0, 200],
                                   "identity" : 100.0,
-                                  "mismatch zones" : '?'}]]],
+                                  "mismatch zones" : '?',
+                                  "cluster name" : "cluster 2"}]]],
         
         "minus-loci" : ["./data/tests/basic_test.gff3",
                           "./data/tests/identical-2-loci_test.gff3",
@@ -1383,7 +1391,8 @@ def test_old_annotation_comparison():
                                  "alternative end" : 300,
                                  "mismatch/match" : [0, 150],
                                  "identity" : 100.0,
-                                 "mismatch zones" : '?'}],
+                                 "mismatch zones" : '?',
+                                 "cluster name" : "cluster 0"}],
                                [{"reference" : '_',
                                   "reference start" : '_',
                                   "reference end" : '_',
@@ -1392,7 +1401,8 @@ def test_old_annotation_comparison():
                                   "alternative end" : 900,
                                   "mismatch/match" : [],
                                   "identity" : 0.0,
-                                  "mismatch zones" : '_'}]]],
+                                  "mismatch zones" : '_',
+                                  "cluster name" : "cluster 2"}]]],
         
         "overlapping-loci" : ["./data/tests/overlapping-loci_test.gff3",
                               "./data/tests/overlapping-loci-alt_test.gff3",
@@ -1404,7 +1414,8 @@ def test_old_annotation_comparison():
                                  'alternative end': 450,
                                  'mismatch/match': [250, 0],
                                  'identity': 0.0,
-                                 'mismatch zones': '?'},
+                                 'mismatch zones': '?',
+                                 "cluster name" : "cluster 0"},
                                 {'reference': 'chr2A_1000',
                                  'reference start': 50,
                                  'reference end': 150,
@@ -1413,7 +1424,8 @@ def test_old_annotation_comparison():
                                  'alternative end': 250,
                                  'mismatch/match': [200, 0],
                                  'identity': 0.0,
-                                 'mismatch zones': '?'},
+                                 'mismatch zones': '?',
+                                 "cluster name" : "cluster 0"},
                                 {'reference': 'chr2A_3000',
                                  'reference start': 400, 
                                  'reference end': 550,
@@ -1422,7 +1434,8 @@ def test_old_annotation_comparison():
                                  'alternative end': 600, 
                                  'mismatch/match': [200, 0], 
                                  'identity': 0.0, 
-                                 'mismatch zones': '?'}],
+                                 'mismatch zones': '?',
+                                 "cluster name" : "cluster 0"}],
                                [{'reference': 'chr2A_4000', 
                                  'reference start': 650,
                                  'reference end': 700, 
@@ -1431,7 +1444,8 @@ def test_old_annotation_comparison():
                                  'alternative end': 700, 
                                  'mismatch/match': [0, 50], 
                                  'identity': 100.0, 
-                                 'mismatch zones': '?'}], 
+                                 'mismatch zones': '?',
+                                 "cluster name" : "cluster 6"}], 
                                [{'reference': 'chr2A_5000',
                                  'reference start': 750, 
                                  'reference end': 800,
@@ -1440,7 +1454,8 @@ def test_old_annotation_comparison():
                                  'alternative end': 780, 
                                  'mismatch/match': [20, 30], 
                                  'identity': 60.0,
-                                 'mismatch zones': '?'}, 
+                                 'mismatch zones': '?',
+                                 "cluster name" : "cluster 8"}, 
                                 {'reference': '_',
                                  'reference start': '_', 
                                  'reference end': '_',
@@ -1449,7 +1464,8 @@ def test_old_annotation_comparison():
                                  'alternative end': 850,
                                  'mismatch/match': [], 
                                  'identity': 0.0, 
-                                 'mismatch zones': '_'}]]]
+                                 'mismatch zones': '_',
+                                 "cluster name" : "cluster 8"}]]]
         }
 
     print("\n*************Testing the 'old' annotation_comparison function*************")

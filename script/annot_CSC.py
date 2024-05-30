@@ -1151,6 +1151,8 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
 # @param cluster_alt List of Locus class instances describing the loci
 # of the alternative annotation cluster
 #
+# @param cluster_name name of the cluster containing the loci
+#
 # @param create_strings Boolean indicating wether to use the new compare_loci
 # fucntion ('False') or the old_compare_loci function ('True')
 #
@@ -1166,7 +1168,7 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
 #
 # @returns Returns a lsit of dictionaries detailing the locus information for 
 # each locus comparison 
-def annotation_match(cluster_ref, cluster_alt, create_strings=False, debug=False, verbose=False):
+def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=False, debug=False, verbose=False):
     if verbose:
         print("\nmatching annotations loci with each other")
     dyn_prog_matrix = [] # dynamic programmation matrix
@@ -1251,8 +1253,9 @@ def annotation_match(cluster_ref, cluster_alt, create_strings=False, debug=False
                             "alternative end" : cluster_alt[j-1].end,
                             "mismatch/match" : comparison,
                             "identity" : identity,
-                            "mismatch zones" : mismatch_zones})
-            print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
+                            "mismatch zones" : mismatch_zones,
+                            "cluster name" : cluster_name})
+            print(f"{results[-1]['cluster name']}\t\t{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             i -= 1
             j -= 1
         
@@ -1274,8 +1277,9 @@ def annotation_match(cluster_ref, cluster_alt, create_strings=False, debug=False
                             "alternative end" : "_",
                             "mismatch/match" : comparison,
                             "identity" : identity,
-                            "mismatch zones" : mismatch_zones})
-            print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
+                            "mismatch zones" : mismatch_zones,
+                            "cluster name" : cluster_name})
+            print(f"{results[-1]['cluster name']}\t\t{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             i -= 1
            
         # if the maximum value is the left value, we add the alternative locus 
@@ -1294,8 +1298,9 @@ def annotation_match(cluster_ref, cluster_alt, create_strings=False, debug=False
                             "alternative end" : cluster_alt[j-1].end,
                             "mismatch/match" : comparison,
                             "identity" : identity,
-                            "mismatch zones" : mismatch_zones})
-            print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
+                            "mismatch zones" : mismatch_zones,
+                            "cluster name" : cluster_name})
+            print(f"{results[-1]['cluster name']}\t\t{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             j -= 1
             
     # if we reached the first line but did not reach the first column,
@@ -1309,8 +1314,9 @@ def annotation_match(cluster_ref, cluster_alt, create_strings=False, debug=False
                         "alternative end" : cluster_alt[j-1].end,
                         "mismatch/match" : [],
                         "identity" : 0.0,
-                        "mismatch zones" : "_"})
-        print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
+                        "mismatch zones" : "_",
+                        "cluster name" : cluster_name})
+        print(f"{results[-1]['cluster name']}\t\t{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
         j -= 1
         
     # if we reached the first column but did not reach the first line,
@@ -1324,8 +1330,9 @@ def annotation_match(cluster_ref, cluster_alt, create_strings=False, debug=False
                         "alternative end" : "_",
                         "mismatch/match" : [],
                         "identity" : 0.0,
-                        "mismatch zones" : "_"})
-        print(f"{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
+                        "mismatch zones" : "_",
+                        "cluster name" : cluster_name})
+        print(f"{results[-1]['cluster name']}\t\t{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
         i -= 1    
             
     return results
@@ -1356,7 +1363,7 @@ def write_results(results, debug=False, verbose=False):
         os.mkdir("./results/") # create 'results' subdirectory
         results_file = open("./results/results.csv", "w")
     
-    results_file.write("Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start,Reference end, Alternative start, Alternative end, non-correspondance zones\n")
+    results_file.write("Cluster name, Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start,Reference end, Alternative start, Alternative end, non-correspondance zones\n")
         
     # annotation origin of each locus in the results
     # (first value : both,  second value : reference,  third value : alternative)
@@ -1375,14 +1382,14 @@ def write_results(results, debug=False, verbose=False):
             # if no comparison was done for the loci, write '_' instead of 
             # the comparison values
             if loc['mismatch/match'] == []:
-                results_file.write(f"{loc['reference']},{loc['alternative']},_,_,{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, _\n")       
+                results_file.write(f"{loc['cluster name']},{loc['reference']},{loc['alternative']},_,_,{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, _\n")       
                 if loc['reference'] == '_':
                     locus_initial_annot[2] += 1
                 else:                       
                     locus_initial_annot[1] += 1
             else:
-                results_file.write(f"{loc['reference']},{loc['alternative']},{loc['mismatch/match'][1]},{loc['mismatch/match'][0]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {mismatch_zones}\n")
-                locus_initial_annot[0] += 1
+                results_file.write(f"{loc['cluster name']},{loc['reference']},{loc['alternative']},{loc['mismatch/match'][1]},{loc['mismatch/match'][0]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {mismatch_zones}\n")
+                locus_initial_annot[0] += 2
                 
     print(f"\nNumber of loci:\n- found in both annotations : {locus_initial_annot[0]}\n- found only in the reference : {locus_initial_annot[1]}\n- found only in the alternative : {locus_initial_annot[2]}\n")
     results_file.close()
@@ -1417,9 +1424,9 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     clusters = construct_clusters(ref_annotations, alt_annotations, locus_order, debug, verbose)
     
     results = []
-    print("\nReference_Locus\t\tAlternative_Locus\t\tComparison[mismatch, match]\t\tIdentity_Score\n")
+    print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[mismatch, match]\t\tIdentity_Score\n")
     for cluster_id, cluster in clusters.clusters.items():
-        results.append(annotation_match(cluster["ref"], cluster["alt"], create_strings, debug, verbose))
+        results.append(annotation_match(cluster["ref"], cluster["alt"], cluster_id, create_strings, debug, verbose))
         
     write_results(results, debug, verbose)
     
