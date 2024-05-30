@@ -242,6 +242,9 @@ def get_parent_id(line, debug=False, verbose=False):
 #
 # @see Locus
 #
+# @remark if a locus is on the reverse strand, its CDS borders list is reversed
+# to be in ascending order
+#
 def get_gff_borders(path, debug=False, verbose=False):
     
     try:    
@@ -277,7 +280,11 @@ def get_gff_borders(path, debug=False, verbose=False):
             
             # if there was a previous gene, add it to return dictionary and
             # delete it. Then we create a new Locus instance
+            # (if the gene is on the reverse strand, reverse its border list
+            # before adding it to the dictionary)
             if locus.mRNAs != {}:
+                if locus.direction == "reverse":
+                    locus.mRNAs[mRNA_id].reverse()
                 loci[locus_id] = locus
             del locus
             locus = Locus()
@@ -330,12 +337,14 @@ def get_gff_borders(path, debug=False, verbose=False):
                 
         line_index += 1 # increment the line indicator (for debug purposes)
                 
-    if locus_id == "": # if the locus_id still has defautl value, return error
+    if locus_id == "": # if the locus_id still has default value, return error
         print(f"\nget_gff_borders() function error : no locus could be found in file '{path}'\n")
         sys.exit(1)
         
     file.close()
     log.close()
+    if locus.direction == "reverse":
+        locus.mRNAs[mRNA_id].reverse()
     loci[locus_id] = locus # add the last locus to the return dictionary
     
     # we return the entire dictionary with all loci
@@ -431,8 +440,6 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
     # initialising a new instance of 'Clusters' class
     clusters = Clusters()
     
-    print(locus_order)
-    
     # for each locus in the loci list...
     for i in range(len(locus_order)):   
         # we get the identifier of the current locus, the lower and upper 
@@ -446,6 +453,7 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
             print(f"\ni = {i}")
             print(f"locus id = {locus_id}")
             print(f"locus borders = {locus_borders}")
+            print(f"locus strand = {locus_strand}")
             
         if locus_is_ref:
             is_ref_marker = "_ref"
@@ -491,6 +499,7 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                 print(f"\nj = {j}")
                 print(f"next lower border = {next_lower_border}")
                 print(f"already grouped : {already_grouped}")
+                print(f"next locus strand = {next_strand}")
                 
             # if the locus pointed by 'j' has not already been grouped and 
             # is not on a different strand...
@@ -501,7 +510,7 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                 # 'already_grouped' list
                 # upper bound of the current locus search is also extended 
                 # to upper bound of the 'j' locus
-                if next_lower_border <= locus_borders[1]:
+                if locus_borders[0] <= next_lower_border <= locus_borders[1] or locus_borders[0] >= next_lower_border >= locus_borders[1]:
                     if debug:
                         print("next locus found in current borders")
                     new_upper_border = locus_order[i+j][1]
@@ -547,7 +556,6 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
             print(f"cluster name = {cluster_name}")
             print(clusters.clusters[cluster_name]["ref"])
             print(clusters.clusters[cluster_name]["alt"])
-    print("\n")
     
     return clusters
 
@@ -722,6 +730,9 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
             # we retrieve the bounds of all areas delimited by all the CDS 
             # coordinates of both border lists
             area_bounds = get_area_bounds(mRNA_ref, mRNA_alt, debug, verbose)
+            
+            if debug:
+                print(f"area bounds = {area_bounds}")
             
             # we retrieve the list indicating the areas which include or not 
             # a CDS for both annotations
