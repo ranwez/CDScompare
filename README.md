@@ -9,7 +9,7 @@ This is the repository for the 2024 internship of Vetea Jacot in the GE²pop tea
 Run following command :
 
 ```
-path/to/annot_CSC.py [ -h/--help -d/--debug -v/--verbose -o/--old_version ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ]
+python path/to/annot_CSC.py [ -h/--help -d/--debug -v/--verbose -o/--old_version ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ]
 ```
 
 where <reference_file_path> is the path to the file containing the reference annotation to analyze, and <alternative_file_path> is the path to the file containing the alternative annotation. These two parameters are required, while all others are not.
@@ -30,7 +30,7 @@ options:
 An automatic unit testing script is included (data/tests/test_units.py) and can be used to check if an update didn't change the expected results of the program. Simply run :
 
 ```
-pytest
+pytest -vv
 ```
 
 in the root (highest directory) of the repository. If the result of any function of the program is not what is expected, error messages should appear; if not, the program is working as intended. 
