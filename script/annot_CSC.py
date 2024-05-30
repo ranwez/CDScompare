@@ -1140,7 +1140,7 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                     print(f"comparison = {comparison}\nfinal_comparison = {final_comparison}\nidentity = {identity}\nfinal identity = {final_identity}")
             # if all mRNAs comparisons return 0% identity, we still want 
             # mismatch values to be returned
-            elif comparison[0] > final_comparison[0]:
+            elif identity == 0.0 and comparison[0] > final_comparison[0]:
                 final_comparison = comparison
     
     # return the highest identity between the mRNA of both locus
