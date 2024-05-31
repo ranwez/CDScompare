@@ -315,7 +315,7 @@ def get_gff_borders(path, debug=False, verbose=False):
             mRNA_id = get_structure_id(line, debug, verbose)
             locus.mRNAs[mRNA_id] = []
             if verbose :
-                print("\n**************** Reading mRNA " + locus_id + " ****************")
+                print("\nReading mRNA " + locus_id)
 
         # if we encounter a CDS, we add its start and end positions to the 
         # corresponding mRNA key in the locus' mRNAs attribute
@@ -373,7 +373,7 @@ def get_gff_borders(path, debug=False, verbose=False):
 # from the reference (True) or the alternative (False)
 def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
     if verbose:
-        print("\n**************** Constructing the locus order list of the two annotations ****************")
+        print("\n\n**************** Constructing the locus order list of the two annotations ****************")
     locus_order = []
     
     # get all reference loci bounds and locus ids as tuples in a list
@@ -580,7 +580,7 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
 def get_area_bounds(ref, alt, debug=False, verbose=False):
     
     if verbose:
-        print("\n**************** Creating comparison areas for the two annotations ****************")
+        print("\nCreating comparison areas for the two annotations")
     bounds=[] # the return list
     i=0
     j=0    
@@ -710,7 +710,7 @@ def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
 def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     
     if verbose:
-        print(f"\n**************** comparing loci {ref_locus.name} of reference and {alt_locus.name} of alternative ****************")
+        print(f"\n\n**************** comparing loci {ref_locus.name} of reference and {alt_locus.name} of alternative ****************")
         
     # initialize final return values
     final_comparison = [0,0]
@@ -732,7 +732,7 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 print(f"mRNA_alt = {mRNA_alt}")
                 
             if verbose:
-                print(f"\n**************** comparing mRNA {mRNA_ref_id} of reference locus {ref_locus.name} and mRNA {mRNA_alt_id} of alternative locus {alt_locus.name} ****************")
+                print(f"**************** comparing mRNA {mRNA_ref_id} of reference locus {ref_locus.name} and mRNA {mRNA_alt_id} of alternative locus {alt_locus.name} ****************")
             
             # we retrieve the bounds of all areas delimited by all the CDS 
             # coordinates of both border lists
@@ -744,7 +744,7 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
             # we retrieve the list indicating the areas which include or not 
             # a CDS for both annotations
             if verbose:
-                print("\n**************** Evaluating presence of CDS in the comparison areas ****************")
+                print("\nEvaluating presence of CDS in the comparison areas")
             ref_in_CDS = is_in_cds(mRNA_ref, area_bounds, debug, verbose)
             alt_in_CDS = is_in_cds(mRNA_alt, area_bounds, debug, verbose)
             if debug:
@@ -840,7 +840,7 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
             comparison[1] = abs(comparison[1])    
             
             if verbose:
-                print(f"\nResult of the comparison of the locus : {comparison[1]} matches and {comparison[0]} mismatches\n")
+                print(f"\nResult of the comparison of the locus : {comparison[1]} matches and {comparison[0]} mismatches")
                 
             identity = comparison[1] / (comparison[0] + comparison[1])
         
@@ -1034,7 +1034,7 @@ def create_vectors(borders, debug=False, verbose=False):
 def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False): 
     
     if verbose:
-        print(f"\n**************** comparing loci {ref_locus.name} of reference and {alt_locus.name} of alternative ****************")
+        print(f"\n\n**************** comparing loci {ref_locus.name} of reference and {alt_locus.name} of alternative ****************")
     
     # initialisation of the final return values
     final_comparison = [0,0]
@@ -1050,7 +1050,7 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
         for mRNA_alt_id, mRNA_alt in alt_locus.mRNAs.items():
                 
             if verbose:
-                print(f"\n**************** comparing mRNA {mRNA_ref_id} of reference locus {ref_locus.name} and mRNA {mRNA_alt_id} of alternative locus {alt_locus.name} ****************")
+                print(f"**************** comparing mRNA {mRNA_ref_id} of reference locus {ref_locus.name} and mRNA {mRNA_alt_id} of alternative locus {alt_locus.name} ****************")
             
             # we create the structure string for each mRNA
             start_ref, vector_ref = create_vectors(mRNA_ref, debug, verbose)
@@ -1184,7 +1184,7 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
 # each locus comparison 
 def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=False, debug=False, verbose=False):
     if verbose:
-        print("\n**************** matching annotations loci with each other ****************")
+        print("\n\n**************** matching annotations loci with each other ****************")
     dyn_prog_matrix = [] # dynamic programmation matrix
     
     # initialisation (expand matrix and fill it with zeros)
@@ -1276,7 +1276,6 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
                             "cluster name" : cluster_name,
                             "reference mRNA number" : num_mRNAs_ref,
                             "alternative mRNA number" : num_mRNAs_alt})
-            print(f"{results[-1]['cluster name']}\t\t{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             i -= 1
             j -= 1
         
@@ -1307,7 +1306,6 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
                             "cluster name" : cluster_name,
                             "reference mRNA number" : num_mRNAs_ref,
                             "alternative mRNA number" : num_mRNAs_alt})
-            print(f"{results[-1]['cluster name']}\t\t{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             i -= 1
            
         # if the maximum value is the left value, we add the alternative locus 
@@ -1335,7 +1333,6 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
                             "cluster name" : cluster_name,
                             "reference mRNA number" : num_mRNAs_ref,
                             "alternative mRNA number" : num_mRNAs_alt})
-            print(f"{results[-1]['cluster name']}\t\t{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
             j -= 1
             
     # if we reached the first line but did not reach the first column,
@@ -1358,7 +1355,6 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
                         "cluster name" : cluster_name,
                         "reference mRNA number" : num_mRNAs_ref,
                         "alternative mRNA number" : num_mRNAs_alt})
-        print(f"{results[-1]['cluster name']}\t\t{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
         j -= 1
         
     # if we reached the first column but did not reach the first line,
@@ -1381,7 +1377,6 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
                         "cluster name" : cluster_name,
                         "reference mRNA number" : num_mRNAs_ref,
                         "alternative mRNA number" : num_mRNAs_alt})
-        print(f"{results[-1]['cluster name']}\t\t{results[-1]['reference']}\t\t{results[-1]['alternative']}\t\t\t{results[-1]['mismatch/match']}\t\t\t\t{results[-1]['identity']}%")
         i -= 1    
             
     return results
@@ -1418,6 +1413,9 @@ def write_results(results, debug=False, verbose=False):
     # (first value : both,  second value : reference,  third value : alternative)
     locus_initial_annot = [0,0,0]
     
+    # sort the results dictionary to display results in order of locus start
+    
+    
     for cluster in results:
         for loc in cluster:
             # convert the mismatch zones so that commas don't modify 
@@ -1431,12 +1429,14 @@ def write_results(results, debug=False, verbose=False):
             # if no comparison was done for the loci, write '_' instead of 
             # the comparison values
             if loc['mismatch/match'] == []:
+                print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t_\t\t\t\t_")
                 results_file.write(f"{loc['cluster name']},{loc['reference']},{loc['alternative']},_,_,{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, _, {loc['reference mRNA number']}, {loc['alternative mRNA number']}\n")       
                 if loc['reference'] == '_':
                     locus_initial_annot[2] += 1
                 else:                       
                     locus_initial_annot[1] += 1
             else:
+                print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t{loc['mismatch/match']}\t\t\t\t{loc['identity']}%")
                 results_file.write(f"{loc['cluster name']},{loc['reference']},{loc['alternative']},{loc['mismatch/match'][1]},{loc['mismatch/match'][0]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {mismatch_zones}, {loc['reference mRNA number']}, {loc['alternative mRNA number']}\n")
                 locus_initial_annot[0] += 2
                 
@@ -1473,10 +1473,10 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     clusters = construct_clusters(ref_annotations, alt_annotations, locus_order, debug, verbose)
     
     results = []
-    print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[mismatch, match]\t\tIdentity_Score\n")
     for cluster_id, cluster in clusters.clusters.items():
         results.append(annotation_match(cluster["ref"], cluster["alt"], cluster_id, create_strings, debug, verbose))
         
+    print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[mismatch, match]\t\tIdentity_Score\n")
     write_results(results, debug, verbose)
     
     return results
