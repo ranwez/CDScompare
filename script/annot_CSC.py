@@ -782,11 +782,11 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 # codon positions
                 if(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt == codon_position_ref):
                     if debug:
-                        print(f"Identical codon positions for the area, adding {bound-prev_bounds} to match values")
+                        print(f"Identical codon positions for the area, adding {bound-prev_bounds-1} to match values")
                     
-                    comparison[1] += bound-prev_bounds
-                    codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
-                    codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3
+                    comparison[1] += bound-prev_bounds-1
+                    codon_position_alt = (codon_position_alt + (bound-prev_bounds-1))%3 
+                    codon_position_ref = (codon_position_ref + (bound-prev_bounds-1))%3
                     
                 # if both annotations are in a CDS but don't have the same 
                 # codon position, then all codon positions for the rest of the
@@ -795,11 +795,11 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 # positions
                 elif(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt != codon_position_ref):
                     if debug:
-                        print(f"Different codon positions for the area, adding {bound-prev_bounds} to mismatch values")
+                        print(f"Different codon positions for the area, adding {bound-prev_bounds-1} to mismatch values")
                         
-                    comparison[0] += bound-prev_bounds
-                    codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
-                    codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
+                    comparison[0] += bound-prev_bounds-1
+                    codon_position_alt = (codon_position_alt + (bound-prev_bounds-1))%3 
+                    codon_position_ref = (codon_position_ref + (bound-prev_bounds-1))%3 
                     mismatch_zones.append(f"{prev_bounds}-{bound}")
                 
                 # if only one annotation has a CDS in the comparison area, we 
@@ -808,19 +808,19 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 
                 elif(ref_in_CDS[bound_id]):
                     if debug:
-                        print(f"Alternative is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
+                        print(f"Alternative is not in CDS for the area, adding {bound-prev_bounds-1} to mismatch values")
                         
-                    comparison[0] += bound-prev_bounds
-                    codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3 
+                    comparison[0] += bound-prev_bounds-1
+                    codon_position_ref = (codon_position_ref + (bound-prev_bounds-1))%3 
                     mismatch_zones.append(f"{prev_bounds}-{bound}")
                     
                 
                 elif(alt_in_CDS[bound_id]):
                     if debug:
-                        print(f"Reference is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
+                        print(f"Reference is not in CDS for the area, adding {bound-prev_bounds-1} to mismatch values")
                         
-                    comparison[0] += bound-prev_bounds
-                    codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
+                    comparison[0] += bound-prev_bounds-1
+                    codon_position_alt = (codon_position_alt + (bound-prev_bounds-1))%3 
                     mismatch_zones.append(f"{prev_bounds}-{bound}")
                         
                 # the case of both annotations being outside of a CDS is not 
@@ -935,7 +935,7 @@ def create_vectors(borders, debug=False, verbose=False):
                     print(f"Codon position = {codon_pos}")
                     
                 # for each nucleotide between this coordinate and the next...
-                for j in range( borders[i+1] - borders[i] ):
+                for j in range( borders[i+1] - borders[i] - 1):
                     
                     # we append the codon position to the structure string 
                     vector[1] += str(codon_pos)
@@ -956,7 +956,7 @@ def create_vectors(borders, debug=False, verbose=False):
                     print("in_exon = False (adding 0 to structure string)")
                 
                 # for each nucleotide between this coordinate and the next...
-                for j in range( borders[i+1] - borders[i] ):
+                for j in range( borders[i+1] - borders[i] - 1):
                     vector[1] += "0"
                 if debug:
                     print(f"New structure string : {vector[1]}")
@@ -978,7 +978,7 @@ def create_vectors(borders, debug=False, verbose=False):
                     print(f"Codon position = {codon_pos}")
                 
                 # for each nucleotide between this coordinate and the next...
-                for j in range( borders[i-1] - borders[i] ):
+                for j in range( borders[i-1] - borders[i] - 1):
                     
                     # we append the codon position to the structure string 
                     vector[1] += str(codon_pos)
@@ -999,7 +999,7 @@ def create_vectors(borders, debug=False, verbose=False):
                     print("in_exon = False (adding 0 to structure string)")
                 
                 # for each nucleotide between this coordinate and the next...
-                for j in range( borders[i-1] - borders[i] ):
+                for j in range( borders[i-1] - borders[i] - 1):
                     vector[1] += "0"
                 if debug:
                     print(f"New structure string : {vector[1]}")
