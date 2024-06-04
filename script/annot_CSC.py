@@ -944,8 +944,9 @@ def create_vectors(borders, debug=False, verbose=False):
     
     # if the locus is on the direct strand
     if borders[1] > borders[0]:
+
         if debug:
-            print(f"\nLocus is on direct strand, retrieving start of locus : {borders[0]}")
+            print(f"\nLocus is on direct strand, retrieving start of locus from start of coordinates list : {borders[0]}")
         
         # we get the start of the locus
         vector[0] = borders[0]
@@ -967,91 +968,89 @@ def create_vectors(borders, debug=False, verbose=False):
     # it is incremented at each transition between annotations (each element 
     # in the 'borders' list) to represent the exon-intron change along the gene
     in_exon = 1
-    
-    if borders[1] > borders[0]:
-    
-        # for each coordinate indexed for this locus in 'borders'
-        for i in range(len(borders)-1):
-        
-            # if we are in a CDS, we append the numbers 1, 2, and 3 
-            # (with looping) 
-            if in_exon % 2 == 1:
-                if debug:
-                    print(f"i = {i}")
-                    print("in_exon = True (adding codon positions to structure string)")
-                    print(f"Codon position = {codon_pos}")
-                    
-                # for each nucleotide between this coordinate and the next...
-                for j in range( borders[i+1] - borders[i] - 1):
-                    
-                    # we append the codon position to the structure string 
-                    vector[1] += str(codon_pos)
-                    
-                    # we increment the codon position with looping
-                    if codon_pos == 3:
-                        codon_pos = 1
-                    else:
-                        codon_pos += 1
-                if debug:
-                    print(f"New codon position = {codon_pos}")
-                    print(f"New structure string : {vector[1]}")
-                
-            # if we are not in a CDS, we append 0
-            if in_exon % 2 == 0:
-                if debug:
-                    print(f"i = {i}")
-                    print("in_exon = False (adding 0 to structure string)")
-                
-                # for each nucleotide between this coordinate and the next...
-                for j in range( borders[i+1] - borders[i] - 1):
-                    vector[1] += "0"
-                if debug:
-                    print(f"New structure string : {vector[1]}")
-            
-            in_exon += 1    
-        
-    elif borders[1] < borders[0]:
 
-        # for each coordinate indexed for this locus in 'borders' in 
-        # reverse order
-        for i in range(len(borders)-1, 0, -1):
-        
-            # if we are in a CDS, we append the numbers 1, 2, and 3 
-            # (with looping) 
-            if in_exon % 2 == 1:
-                if debug:
-                    print(f"i = {i}")
-                    print("in_exon = True (adding codon positions to structure string)")
-                    print(f"Codon position = {codon_pos}")
+    # for each coordinate indexed for this locus in 'borders'
+    for i in range(len(borders)-1):
+    
+        # if we are in a CDS, we append the numbers 1, 2, and 3 
+        # (with looping) 
+        if in_exon % 2 == 1:
+            if debug:
+                print(f"i = {i}")
+                print("in_exon = True (adding codon positions to structure string)")
+                print(f"Codon position = {codon_pos}")
                 
-                # for each nucleotide between this coordinate and the next...
-                for j in range( borders[i-1] - borders[i] - 1):
-                    
-                    # we append the codon position to the structure string 
-                    vector[1] += str(codon_pos)
-                    
-                    # we increment the codon position with looping
-                    if codon_pos == 3:
-                        codon_pos = 1
-                    else:
-                        codon_pos += 1
-                if debug:
-                    print(f"New codon position = {codon_pos}")
-                    print(f"New structure string : {vector[1]}")
+            # for each nucleotide between this coordinate and the next...
+            for j in range( borders[i+1] - borders[i]+1):
                 
-            # if we are not in a CDS, we append 0
-            if in_exon % 2 == 0:
-                if debug:
-                    print(f"i = {i}")
-                    print("in_exon = False (adding 0 to structure string)")
+                # we append the codon position to the structure string 
+                vector[1] += str(codon_pos)
                 
-                # for each nucleotide between this coordinate and the next...
-                for j in range( borders[i-1] - borders[i] - 1):
-                    vector[1] += "0"
-                if debug:
-                    print(f"New structure string : {vector[1]}")
+                # we increment the codon position with looping
+                if codon_pos == 3:
+                    codon_pos = 1
+                else:
+                    codon_pos += 1
+            if debug:
+                print(f"New codon position = {codon_pos}")
+                print(f"New structure string : {vector[1]}")
             
-            in_exon += 1   
+        # if we are not in a CDS, we append 0
+        if in_exon % 2 == 0:
+            if debug:
+                print(f"i = {i}")
+                print("in_exon = False (adding 0 to structure string)")
+            
+            # for each nucleotide between this coordinate and the next...
+            for j in range( borders[i+1] - borders[i]-1):
+                vector[1] += "0"
+            if debug:
+                print(f"New structure string : {vector[1]}")
+        
+        in_exon += 1    
+        
+    # elif borders[1] < borders[0]:
+
+    #     # for each coordinate indexed for this locus in 'borders' in 
+    #     # reverse order
+    #     for i in range(len(borders)-1, 0, -1):
+        
+    #         # if we are in a CDS, we append the numbers 1, 2, and 3 
+    #         # (with looping) 
+    #         if in_exon % 2 == 1:
+    #             if debug:
+    #                 print(f"i = {i}")
+    #                 print("in_exon = True (adding codon positions to structure string)")
+    #                 print(f"Codon position = {codon_pos}")
+                
+    #             # for each nucleotide between this coordinate and the next...
+    #             for j in range( borders[i-1] - borders[i]):
+                    
+    #                 # we append the codon position to the structure string 
+    #                 vector[1] += str(codon_pos)
+                    
+    #                 # we increment the codon position with looping
+    #                 if codon_pos == 3:
+    #                     codon_pos = 1
+    #                 else:
+    #                     codon_pos += 1
+    #             if debug:
+    #                 print(f"New codon position = {codon_pos}")
+    #                 print(f"New structure string : {vector[1]}")
+                
+    #         # if we are not in a CDS, we append 0
+    #         if in_exon % 2 == 0:
+    #             if debug:
+    #                 print(f"i = {i}")
+    #                 print("in_exon = False (adding 0 to structure string)")
+                
+    #             # for each nucleotide between this coordinate and the next...
+    #             for j in range( borders[i-1] - borders[i]):
+    #                 vector[1] += "0"
+    #             if debug:
+    #                 print(f"New structure string : {vector[1]}")
+            
+    #         in_exon += 1   
     
     if verbose:
         print("\nStructure string of the locus :\n" + vector[1] + "\n")

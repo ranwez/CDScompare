@@ -1,8 +1,8 @@
-chr2A	exonerate:protein2genome:local	gene	300	100	.	-	.	ID=chr2A_00611930
-chr2A	exonerate:protein2genome:local	mRNA	300	100	.	-	.	ID=chr2A_00611930_mrna;Parent=chr2A_00611930
-chr2A	exonerate:protein2genome:local	exon	300	240	.	-	.	ID=chr2A_00611930:exon_1;Parent=chr2A_00611930_mrna
-chr2A	exonerate:protein2genome:local	exon	210	150	.	-	.	ID=chr2A_00611930:exon_2;Parent=chr2A_00611930_mrna
-chr2A	exonerate:protein2genome:local	exon	130	100	.	-	.	ID=chr2A_00611930:exon_2;Parent=chr2A_00611930_mrna
-chr2A	exonerate:protein2genome:local	CDS	300	240	.	-	.	ID=chr2A_00611930:cds_1;Parent=chr2A_00611930_mrna
-chr2A	exonerate:protein2genome:local	CDS	210	150	.	-	.	ID=chr2A_00611930:cds_2;Parent=chr2A_00611930_mrna
-chr2A	exonerate:protein2genome:local	CDS	130	100	.	-	.	ID=chr2A_00611930:cds_2;Parent=chr2A_00611930_mrna
+chr2A	exonerate:protein2genome:local	gene	299	100	.	-	.	ID=chr2A_00611930
+chr2A	exonerate:protein2genome:local	mRNA	299	100	.	-	.	ID=chr2A_00611930_mrna;Parent=chr2A_00611930
+chr2A	exonerate:protein2genome:local	exon	299	240	.	-	.	ID=chr2A_00611930:exon_1;Parent=chr2A_00611930_mrna
+chr2A	exonerate:protein2genome:local	exon	209	150	.	-	.	ID=chr2A_00611930:exon_2;Parent=chr2A_00611930_mrna
+chr2A	exonerate:protein2genome:local	exon	129	100	.	-	.	ID=chr2A_00611930:exon_2;Parent=chr2A_00611930_mrna
+chr2A	exonerate:protein2genome:local	CDS	299	240	.	-	.	ID=chr2A_00611930:cds_1;Parent=chr2A_00611930_mrna
+chr2A	exonerate:protein2genome:local	CDS	209	150	.	-	.	ID=chr2A_00611930:cds_2;Parent=chr2A_00611930_mrna
+chr2A	exonerate:protein2genome:local	CDS	129	100	.	-	.	ID=chr2A_00611930:cds_2;Parent=chr2A_00611930_mrna
