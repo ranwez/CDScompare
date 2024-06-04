@@ -781,12 +781,25 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 # second value of the comparison list and update both 
                 # codon positions
                 if(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt == codon_position_ref):
-                    if debug:
-                        print(f"Identical codon positions for the area, adding {bound-prev_bounds-1} to match values")
                     
-                    comparison[1] += bound-prev_bounds-1
-                    codon_position_alt = (codon_position_alt + (bound-prev_bounds-1))%3 
-                    codon_position_ref = (codon_position_ref + (bound-prev_bounds-1))%3
+                    if bound_id < len(area_bounds)-2 and (alt_in_CDS[bound_id+1] or ref_in_CDS[bound_id+1]):
+                        if debug:
+                            print(f"Identical codon positions for the area, adding {bound-prev_bounds} to match values")
+                        comparison[1] += bound-prev_bounds
+                    else:
+                        if debug:
+                            print(f"Identical codon positions for the area, adding {bound-prev_bounds+1} to match values")
+                        comparison[1] += bound-prev_bounds+1
+                    
+                    if bound_id < len(area_bounds)-2 and alt_in_CDS[bound_id+1]:
+                        codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
+                    else:
+                        codon_position_alt = (codon_position_alt + (bound-prev_bounds+1))%3 
+                        
+                    if bound_id < len(area_bounds)-2 and ref_in_CDS[bound_id+1]:
+                        codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3
+                    else:
+                        codon_position_ref = (codon_position_ref + (bound-prev_bounds+1))%3
                     
                 # if both annotations are in a CDS but don't have the same 
                 # codon position, then all codon positions for the rest of the
@@ -794,12 +807,26 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 # the first value of the comparison list and update both codon
                 # positions
                 elif(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt != codon_position_ref):
-                    if debug:
-                        print(f"Different codon positions for the area, adding {bound-prev_bounds-1} to mismatch values")
                         
-                    comparison[0] += bound-prev_bounds-1
-                    codon_position_alt = (codon_position_alt + (bound-prev_bounds-1))%3 
-                    codon_position_ref = (codon_position_ref + (bound-prev_bounds-1))%3 
+                    if bound_id < len(area_bounds)-2 and (alt_in_CDS[bound_id+1] or ref_in_CDS[bound_id+1]):
+                        if debug:
+                            print(f"Different codon positions for the area, adding {bound-prev_bounds} to mismatch values")
+                        comparison[0] += bound-prev_bounds
+                    else:
+                        if debug:
+                            print(f"Different codon positions for the area, adding {bound-prev_bounds+1} to mismatch values")
+                        comparison[0] += bound-prev_bounds+1
+                    
+                    if bound_id < len(area_bounds)-2 and alt_in_CDS[bound_id+1]:
+                        codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
+                    else:
+                        codon_position_alt = (codon_position_alt + (bound-prev_bounds+1))%3 
+                        
+                    if bound_id < len(area_bounds)-2 and ref_in_CDS[bound_id+1]:
+                        codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3
+                    else:
+                        codon_position_ref = (codon_position_ref + (bound-prev_bounds+1))%3
+                            
                     mismatch_zones.append(f"{prev_bounds}-{bound}")
                 
                 # if only one annotation has a CDS in the comparison area, we 
@@ -807,20 +834,40 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 # one codon position
                 
                 elif(ref_in_CDS[bound_id]):
-                    if debug:
-                        print(f"Alternative is not in CDS for the area, adding {bound-prev_bounds-1} to mismatch values")
                         
-                    comparison[0] += bound-prev_bounds-1
-                    codon_position_ref = (codon_position_ref + (bound-prev_bounds-1))%3 
+                    if bound_id < len(area_bounds)-2 and ref_in_CDS[bound_id+1]:
+                        if debug:
+                            print(f"Alternative is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
+                        comparison[0] += bound-prev_bounds
+                    else:
+                        if debug:
+                            print(f"Alternative is not in CDS for the area, adding {bound-prev_bounds+1} to mismatch values")
+                        comparison[0] += bound-prev_bounds+1
+                    
+                    if bound_id < len(area_bounds)-2 and ref_in_CDS[bound_id+1]:
+                        codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3
+                    else:
+                        codon_position_ref = (codon_position_ref + (bound-prev_bounds+1))%3
+                    
                     mismatch_zones.append(f"{prev_bounds}-{bound}")
                     
                 
                 elif(alt_in_CDS[bound_id]):
-                    if debug:
-                        print(f"Reference is not in CDS for the area, adding {bound-prev_bounds-1} to mismatch values")
                         
-                    comparison[0] += bound-prev_bounds-1
-                    codon_position_alt = (codon_position_alt + (bound-prev_bounds-1))%3 
+                    if bound_id < len(area_bounds)-2 and alt_in_CDS[bound_id+1]:
+                        if debug:
+                            print(f"Reference is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
+                        comparison[0] += bound-prev_bounds
+                    else:
+                        if debug:
+                            print(f"Reference is not in CDS for the area, adding {bound-prev_bounds+1} to mismatch values")
+                        comparison[0] += bound-prev_bounds+1
+                    
+                    if bound_id < len(area_bounds)-2 and alt_in_CDS[bound_id+1]:
+                        codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
+                    else:
+                        codon_position_alt = (codon_position_alt + (bound-prev_bounds+1))%3 
+                    
                     mismatch_zones.append(f"{prev_bounds}-{bound}")
                         
                 # the case of both annotations being outside of a CDS is not 
