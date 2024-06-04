@@ -102,6 +102,13 @@ def test_get_gff_borders():
                                    "chr2A_4000" : {'chr2A_4000_mrna' : [650, 699]},
                                    "chr2A_5000" : {'chr2A_5000_mrna' : [750, 779]},
                                    "chr2A_6000" : {'chr2A_6000_mrna' : [790, 849]}}],
+        
+        "length_computation_ref" : ["./data/tests/length_computation_ref_test.gff3", 
+                        {"chr2A_00611930" : {'chr2A_00611930_mrna': [8, 13]}}],
+        
+        "length_computation_alt" : ["./data/tests/length_computation_alt_test.gff3", 
+                        {"chr2A_00611930" : {'chr2A_00611930_mrna': [1, 4, 12, 13]}}]
+        
         }
     
     print("\n*************Testing the get_gff_borders function*************")
@@ -367,7 +374,12 @@ def test_get_area_bounds():
         
         "basic-2-loci (second locus)" : [[600, 699, 800, 899],
                                          [600, 699, 800, 899],
-                                         [600, 699, 800, 899]]
+                                         [600, 699, 800, 899]],
+        
+        "length_computation" : [[8, 13], 
+                       [1, 4, 12, 13], 
+                       [1, 4, 8, 12, 13]]
+        
         }
     
     print("\n*************Testing the get_area_bounds function*************")
@@ -417,7 +429,12 @@ def test_is_in_cds():
         
         "basic-2-loci (second locus)" : [[600, 699, 800, 899],
                                          [600, 699, 800, 899],
-                                         [True, False, True]]
+                                         [True, False, True]],
+        
+        "length_computation" : [[8, 13],
+                       [1, 4, 12, 13],
+                       [False, False, True]],
+        
         }
     
     print("\n*************Testing the is_in_cds function*************")
@@ -544,7 +561,20 @@ def test_compare_loci():
                                                     start=600, 
                                                     end=899, 
                                                     direction='direct'),
-                                         ([0, 200], 100.0, [])]
+                                         ([0, 200], 100.0, [])],
+        
+        "length_computation" : [annot_CSC.Locus(name='chr2A_00611930', 
+                                 mRNAs={'chr2A_00611930_mrna': [8, 13]}, 
+                                 start=8, 
+                                 end=13, 
+                                 direction='direct'), 
+                       annot_CSC.Locus(name='chr2A_00611930', 
+                                    mRNAs={'chr2A_00611930_mrna': [1, 4, 12, 13]}, 
+                                    start=1, 
+                                    end=13, 
+                                    direction='direct'),
+                       ([8, 2], 20.0, ['1-4', '8-12'])]
+        
         }
     
     print("\n*************Testing the compare_loci function*************")
@@ -589,7 +619,14 @@ def test_create_vectors():
                               [160, "12312312312312312312312312312300000000000000000000123123123123123123123123123123123123123123123123123123123123000000000000000000000000000000123123123123123123123123123123123123123123123123123123123123"]],
         
         "basic-2-loci (second locus)" : [[600, 699, 800, 899],
-                                         [600, "123123123123123123123123123123123123123123123123123123123123123123123123123123123123123123123123123100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002312312312312312312312312312312312312312312312312312312312312312312312312312312312312312312312312312"]]
+                                         [600, "123123123123123123123123123123123123123123123123123123123123123123123123123123123123123123123123123100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002312312312312312312312312312312312312312312312312312312312312312312312312312312312312312312312312312"]],
+        
+        "length_computation_ref" : [[8, 13], 
+                   [8, "123123"]],
+        
+        "length_computation_alt" : [[1, 4, 12, 13], 
+                   [1, "1231000000023"]]
+        
         }
     
     print("\n*************Testing the create_vectors function*************")
@@ -753,6 +790,18 @@ def test_old_compare_loci():
                                                               end=449, 
                                                               direction='direct'),
                                                           ([250, 0], 0.0)],
+                         
+        "length_computation" : [annot_CSC.Locus(name='chr2A_00611930', 
+                                 mRNAs={'chr2A_00611930_mrna': [8, 13]}, 
+                                 start=8, 
+                                 end=13, 
+                                 direction='direct'), 
+                       annot_CSC.Locus(name='chr2A_00611930', 
+                                    mRNAs={'chr2A_00611930_mrna': [1, 4, 12, 13]}, 
+                                    start=1, 
+                                    end=13, 
+                                    direction='direct'),
+                       ([8, 2], 20.0)]
         }
     
     print("\n*************Testing the old_compare_loci function*************")
@@ -911,7 +960,31 @@ def test_new_annotation_match():
                                      "mismatch zones" : ['400-500', '500-549', '549-599'],
                                      "cluster name" : "cluster 0",
                                      "reference mRNA number" : 1,
-                                     "alternative mRNA number" : 1}]]
+                                     "alternative mRNA number" : 1}]],
+                 
+                 'length_computation' : [[annot_CSC.Locus(name='chr2A_00611930', 
+                                          mRNAs={'chr2A_00611930_mrna': [8, 13]}, 
+                                          start=8, 
+                                          end=13, 
+                                          direction='direct')], 
+                                         [annot_CSC.Locus(name='chr2A_00611930', 
+                                             mRNAs={'chr2A_00611930_mrna': [1, 4, 12, 13]}, 
+                                             start=1, 
+                                             end=13, 
+                                             direction='direct')],
+                                          "cluster 0",
+                                          [{"reference" : 'chr2A_00611930',
+                                             "reference start" : 8,
+                                             "reference end" : 13,
+                                             "alternative" : 'chr2A_00611930',
+                                             "alternative start" : 1,
+                                             "alternative end" : 13,
+                                             "mismatch/match" : [8, 2],
+                                             "identity" : 20.0,
+                                             "mismatch zones" : ['1-4', '8-12'],
+                                             "cluster name" : "cluster 0",
+                                             "reference mRNA number" : 1,
+                                             "alternative mRNA number" : 1}]]
         }
 
     print("\n*************Testing the 'new' annotation_match function*************")
@@ -1072,7 +1145,31 @@ def test_old_annotation_match():
                                      "mismatch zones" : '?',
                                      "cluster name" : "cluster 0",
                                      "reference mRNA number" : 1,
-                                     "alternative mRNA number" : 1}]]
+                                     "alternative mRNA number" : 1}]],
+                 
+                 'length_computation' : [[annot_CSC.Locus(name='chr2A_00611930', 
+                                          mRNAs={'chr2A_00611930_mrna': [8, 13]}, 
+                                          start=8, 
+                                          end=13, 
+                                          direction='direct')], 
+                                         [annot_CSC.Locus(name='chr2A_00611930', 
+                                             mRNAs={'chr2A_00611930_mrna': [1, 4, 12, 13]}, 
+                                             start=1, 
+                                             end=13, 
+                                             direction='direct')],
+                                          "cluster 0",
+                                          [{"reference" : 'chr2A_00611930',
+                                             "reference start" : 8,
+                                             "reference end" : 13,
+                                             "alternative" : 'chr2A_00611930',
+                                             "alternative start" : 1,
+                                             "alternative end" : 13,
+                                             "mismatch/match" : [8, 2],
+                                             "identity" : 20.0,
+                                             "mismatch zones" : '?',
+                                             "cluster name" : "cluster 0",
+                                             "reference mRNA number" : 1,
+                                             "alternative mRNA number" : 1}]]
         }
 
     print("\n*************Testing the 'old' annotation_match function*************")
@@ -1351,7 +1448,23 @@ def test_new_annotation_comparison():
                                  'mismatch zones': '_',
                                  "cluster name" : "cluster 8",
                                  "reference mRNA number" : '_',
-                                 "alternative mRNA number" : 1}]]]
+                                 "alternative mRNA number" : 1}]]],
+        
+        'length_computation' : ["./data/tests/length_computation_ref_test.gff3", 
+                                "./data/tests/length_computation_alt_test.gff3",
+                                 [[{"reference" : 'chr2A_00611930',
+                                    "reference start" : 8,
+                                    "reference end" : 13,
+                                    "alternative" : 'chr2A_00611930',
+                                    "alternative start" : 1,
+                                    "alternative end" : 13,
+                                    "mismatch/match" : [8, 2],
+                                    "identity" : 20.0,
+                                    "mismatch zones" : ['1-4', '8-12'],
+                                    "cluster name" : "cluster 0",
+                                    "reference mRNA number" : 1,
+                                    "alternative mRNA number" : 1}]]]
+        
         }
 
     print("\n*************Testing the 'new' annotation_comparison function*************")
@@ -1630,7 +1743,23 @@ def test_old_annotation_comparison():
                                  'mismatch zones': '_',
                                  "cluster name" : "cluster 8",
                                  "reference mRNA number" : '_',
-                                 "alternative mRNA number" : 1}]]]
+                                 "alternative mRNA number" : 1}]]],
+        
+        'length_computation' : ["./data/tests/length_computation_ref_test.gff3", 
+                                "./data/tests/length_computation_alt_test.gff3",
+                                 [[{"reference" : 'chr2A_00611930',
+                                    "reference start" : 8,
+                                    "reference end" : 13,
+                                    "alternative" : 'chr2A_00611930',
+                                    "alternative start" : 1,
+                                    "alternative end" : 13,
+                                    "mismatch/match" : [8, 2],
+                                    "identity" : 20.0,
+                                    "mismatch zones" : '?',
+                                    "cluster name" : "cluster 0",
+                                    "reference mRNA number" : 1,
+                                    "alternative mRNA number" : 1}]]]
+        
         }
 
     print("\n*************Testing the 'old' annotation_comparison function*************")
