@@ -1342,7 +1342,7 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
             results.append({"reference" : cluster_ref[i-1].name,
                             "reference start" : cluster_ref[i-1].start,
                             "reference end" : cluster_ref[i-1].end,
-                            "alternative" : "_",
+                            "alternative" : "~",
                             "alternative start" : "_",
                             "alternative end" : "_",
                             "mismatch/match" : [],
@@ -1363,7 +1363,7 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
             num_mRNAs_ref = '_'
             num_mRNAs_alt = len(cluster_alt[j-1].mRNAs.keys())
             
-            results.append({"reference" : "_",
+            results.append({"reference" : "~",
                             "reference start" : "_",
                             "reference end" : "_",
                             "alternative" : cluster_alt[j-1].name,
@@ -1385,7 +1385,7 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
         num_mRNAs_ref = '_'
         num_mRNAs_alt = len(cluster_alt[j-1].mRNAs.keys())
 
-        results.append({"reference" : "_",
+        results.append({"reference" : "~",
                         "reference start" : "_",
                         "reference end" : "_",
                         "alternative" : cluster_alt[j-1].name,
@@ -1410,7 +1410,7 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
         results.append({"reference" : cluster_ref[i-1].name,
                         "reference start" : cluster_ref[i-1].start,
                         "reference end" : cluster_ref[i-1].end,
-                        "alternative" : "_",
+                        "alternative" : "~",
                         "alternative start" : "_",
                         "alternative end" : "_",
                         "mismatch/match" : [],
@@ -1421,7 +1421,10 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
                         "alternative mRNA number" : num_mRNAs_alt})
         i -= 1    
             
-    return results
+    # sort the results dictionary list so they are in order of locus start
+    final_results = sorted(results, key=lambda d: d['reference'])
+        
+    return final_results
 
 
 ## This function writes to a new 'results.csv' file the results of the 
@@ -1453,10 +1456,7 @@ def write_results(results, debug=False, verbose=False):
         
     # annotation origin of each locus in the results
     # (first value : both,  second value : reference,  third value : alternative)
-    locus_initial_annot = [0,0,0]
-    
-    # sort the results dictionary to display results in order of locus start
-    
+    locus_initial_annot = [0,0,0]    
     
     for cluster in results:
         for loc in cluster:
@@ -1468,12 +1468,12 @@ def write_results(results, debug=False, verbose=False):
                 mismatch_zones += zone
             mismatch_zones = mismatch_zones[:-4]
             
-            # if no comparison was done for the loci, write '_' instead of 
+            # if no comparison was done for the loci, write '~' instead of 
             # the comparison values
             if loc['mismatch/match'] == []:
                 print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t_\t\t\t\t_")
                 results_file.write(f"{loc['cluster name']},{loc['reference']},{loc['alternative']},_,_,{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, _, {loc['reference mRNA number']}, {loc['alternative mRNA number']}\n")       
-                if loc['reference'] == '_':
+                if loc['reference'] == '~':
                     locus_initial_annot[2] += 1
                 else:                       
                     locus_initial_annot[1] += 1
