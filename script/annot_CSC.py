@@ -128,7 +128,8 @@ class Locus:
 ## This function retrieves and returns the id of the structure described from 
 # a line read from a GFF file.
 #
-# @param line The line read from the file (string)
+# @param parsed_line The list of the line read from the file parsed through its
+# tabulations (string 'split' method)
 #
 # @param debug If True, triggers display of many messages intended for 
 # debugging the program. Default is 'False'
@@ -139,11 +140,11 @@ class Locus:
 # @remark This function expects the file to be in GFF format
 #
 # @returns Returns the id of the structure described by the line
-def get_structure_id(line, debug=False, verbose=False):
+def get_structure_id(parsed_line, debug=False, verbose=False):
     
     # try to retrieve the last column, else return an error
     try: 
-        last_col = line.split("\t")[8]
+        last_col = parsed_line[8]
     except IndexError:
         print("\nFile is not in GFF format (no ninth column)")
         sys.exit(1)
@@ -173,7 +174,8 @@ def get_structure_id(line, debug=False, verbose=False):
 ## This function retrieves and returns the parent id of the structure 
 # described from a line read from a GFF file.
 #
-# @param line The line read from the file (string)
+# @param parsed_line The list of the line read from the file parsed through its
+# tabulations (string 'split' method)
 #
 # @param debug If True, triggers display of many messages intended for 
 # debugging the program. Default is 'False'
@@ -185,11 +187,11 @@ def get_structure_id(line, debug=False, verbose=False):
 # parent id field to come after the id field
 #
 # @returns Returns the id of the parent of the structure described by the line
-def get_parent_id(line, debug=False, verbose=False):
+def get_parent_id(parsed_line, debug=False, verbose=False):
     
     # try to retrieve the last column, else return an error
     try: 
-        last_col = line.split("\t")[8]
+        last_col = parsed_line[8]
     except IndexError:
         print("\nFile is not in GFF format (no ninth column)")
         sys.exit(1)
@@ -267,9 +269,11 @@ def get_gff_borders(path, debug=False, verbose=False):
     
     for line in file:
         
+        parsed_line = line.split("\t")
+        
         # if we encounter a new gene which is not from a contig, 
         # we get its information and create an instance in 'loci'
-        if str(line.split("\t")[2]) == "gene" and line.split("\t")[0] != "contig": 
+        if str(parsed_line[2]) == "gene" and parsed_line[0] != "contig": 
             
             # if there was a previous gene, but its borders list is empty, 
             # return an error
@@ -286,20 +290,20 @@ def get_gff_borders(path, debug=False, verbose=False):
             del locus
             locus = Locus()
             
-            strand = str(line.split("\t")[6])
+            strand = str(parsed_line[6])
             if strand == "-":
                 locus.direction = "reverse"
             else:
                 locus.direction = "direct"
             
             # we retrieve the id of the locus
-            locus_id = get_structure_id(line, debug, verbose)
+            locus_id = get_structure_id(parsed_line, debug, verbose)
             locus.name = locus_id
             
             # we retrieve the start and end coordinates of the locus
-            start = int(line.split("\t")[3])
+            start = int(parsed_line[3])
             locus.start = start
-            end = int(line.split("\t")[4])
+            end = int(parsed_line[4])
             locus.end = end
             
             if verbose :
@@ -307,17 +311,17 @@ def get_gff_borders(path, debug=False, verbose=False):
 
         # if we encounter a new mRNA, we get its ID and create a key 
         # in the instance's mRNAs attribute with an empty list
-        if str(line.split("\t")[2]) == "mRNA" and line.split("\t")[0] != "contig": 
+        if str(parsed_line[2]) == "mRNA" and parsed_line[0] != "contig": 
             
-            mRNA_id = get_structure_id(line, debug, verbose)
+            mRNA_id = get_structure_id(parsed_line, debug, verbose)
             locus.mRNAs[mRNA_id] = []
             if verbose :
                 print("\nReading mRNA " + locus_id)
 
         # if we encounter a CDS, we add its start and end positions to the 
         # corresponding mRNA key in the locus' mRNAs attribute
-        if str(line.split("\t")[2]) == "CDS" and line.split("\t")[0] != "contig":
-            parent_id = get_parent_id(line, debug, verbose)
+        if str(parsed_line[2]) == "CDS" and parsed_line[0] != "contig":
+            parent_id = get_parent_id(parsed_line, debug, verbose)
             
             if parent_id != mRNA_id:
                 print("\nIncorrect file structure (Parent of CDS is not previous mRNA). See 'log.txt' for more information")
@@ -327,10 +331,10 @@ def get_gff_borders(path, debug=False, verbose=False):
                 print(f"\nLine {line_index} = get_gff_borders() function error : CDS has been found before any mRNA")
                 sys.exit(1)
             
-            locus.mRNAs[mRNA_id].append(int(line.split("\t")[3]))
-            locus.mRNAs[mRNA_id].append(int(line.split("\t")[4]))
+            locus.mRNAs[mRNA_id].append(int(parsed_line[3]))
+            locus.mRNAs[mRNA_id].append(int(parsed_line[4]))
             if verbose:
-                print("Adding borders to " + locus_id + " : " + line.split("\t")[3] + ", " + line.split("\t")[4])
+                print("Adding borders to " + locus_id + " : " + parsed_line[3] + ", " + parsed_line[4])
             if debug:
                 print(f"new border list : {locus.mRNAs[mRNA_id]}")
                 

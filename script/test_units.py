@@ -19,19 +19,19 @@ import annot_CSC
 # test function for the 'annot_CSC.py' function 'get_structure_id' (structure id acquisition function)
 def test_get_structure_id():
     test_dict = {        
-        "TRITD_HC" : ["chr2A	PGSB_Jan2017	gene	22128	24635	.	-	.	ID=TRITD2Av1G000030;primconf=HC\n",
+        "TRITD_HC" : [["chr2A", "PGSB_Jan2017", "gene", "22128", "24635", ".", "-", ".", "ID=TRITD2Av1G000030;primconf=HC\n"],
                       "TRITD2Av1G000030"],
         
-        "EXP_chr2A" : ["chr2A	exonerate:protein2genome:local	gene	608664	611579	.	-	.	ID=chr2A_00611930;color=2;comment=modified:yes / Gene-Class:Non-canonical / start_changed_to3f;note=Origin:OSJnip_Chr04_04489784 / pred:prot2genome / prot-%25-ident:51.6 / prot-%25-cov:99.2118 / exo_corr:NA / Origin-Fam:NLR / Origin-Class:Canonical / noStart / Gene-Class:Non-canonical\n",
+        "EXP_chr2A" : [["chr2A", "exonerate:protein2genome:local", "gene", "608664", "611579", ".", "-", ".", "ID=chr2A_00611930;color=2;comment=modified:yes / Gene-Class:Non-canonical / start_changed_to3f;note=Origin:OSJnip_Chr04_04489784 / pred:prot2genome / prot-%25-ident:51.6 / prot-%25-cov:99.2118 / exo_corr:NA / Origin-Fam:NLR / Origin-Class:Canonical / noStart / Gene-Class:Non-canonical\n"],
                        "chr2A_00611930"],
         
-        "chr2A" : ["chr2A	exonerate:protein2genome:local	gene	608664	611630	.	-	.	ID=chr2A_00611930;comment=Origin:OSJnip_Chr04_04489784 / pred:prot2genome / prot-%-ident:51.6 / prot-%-cov:99.2118 / exo_corr:NA / Origin-Fam:NLR / Origin-Class:Canonical / noStart / Gene-Class:Non-canonical;color=2\n",
+        "chr2A" : [["chr2A", "exonerate:protein2genome:local", "gene", "608664", "611630", ".", "-", ".", "ID=chr2A_00611930;comment=Origin:OSJnip_Chr04_04489784 / pred:prot2genome / prot-%-ident:51.6 / prot-%-cov:99.2118 / exo_corr:NA / Origin-Fam:NLR / Origin-Class:Canonical / noStart / Gene-Class:Non-canonical;color=2\n"],
                    "chr2A_00611930"],
         
-        "annot_best" : ["contig	exonerate:protein2genome:local	gene	5131	9328	.	+	.	ID=DWSvevo3_contig_0000005131;comment=Origin:DWSvevo1_chr2A_4125497 / pred:prot2genome / prot-%-ident:44.063 / prot-%-cov:68.2268 / score:51.7466 / scoreNC:46.9466 / exo_corr:corrected_intron / exo_corr:modif_stop / exo_corr:fix_overlap / Origin-Fam:Non-canonical / Origin-Class:LRR-RLK Gene-Class:Non-canonical / noStart / pbFrameshift / unexpectedSplicingSite / stopInFrame;color=2\n",
+        "annot_best" : [["contig", "exonerate:protein2genome:local", "gene", "5131", "9328", ".", "+", ".", "ID=DWSvevo3_contig_0000005131;comment=Origin:DWSvevo1_chr2A_4125497 / pred:prot2genome / prot-%-ident:44.063 / prot-%-cov:68.2268 / score:51.7466 / scoreNC:46.9466 / exo_corr:corrected_intron / exo_corr:modif_stop / exo_corr:fix_overlap / Origin-Fam:Non-canonical / Origin-Class:LRR-RLK Gene-Class:Non-canonical / noStart / pbFrameshift / unexpectedSplicingSite / stopInFrame;color=2\n"],
                         "DWSvevo3_contig_0000005131"],
         
-        "basic_test" : ["chr2A	exonerate:protein2genome:local	gene	100	300	.	-	.	ID=chr2A_00611930\n",
+        "basic_test" : [["chr2A", "exonerate:protein2genome:local", "gene", "100", "300", ".", "-", ".", "ID=chr2A_00611930\n"],
                         "chr2A_00611930"]
         }
     
