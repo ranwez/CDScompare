@@ -291,10 +291,15 @@ def get_gff_borders(path, debug=False, verbose=False):
             locus = Locus()
             
             strand = str(parsed_line[6])
+            if debug:
+                print(f"strand = {strand}")
             if strand == "-":
                 locus.direction = "reverse"
-            else:
+            elif strand == "+":
                 locus.direction = "direct"
+            else:
+                print(f"unknown symbol encountered in line {line}, column 6 (strand direction) : {strand}")
+                sys.exit(1)
             
             # we retrieve the id of the locus
             locus_id = get_structure_id(parsed_line, debug, verbose)
@@ -1259,7 +1264,7 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
             
             if debug:
                 print("comparison identity score = " + str(identity))
-                print(f"top value = {dyn_prog_matrix[i-1][j]}; left value = {dyn_prog_matrix[i][j-1]}; diagonal value (identity) = {dyn_prog_matrix[i-1][j-1] + identity}")
+                print(f"top value = {dyn_prog_matrix[i-1][j]}; left value = {dyn_prog_matrix[i][j-1]}; diagonal value+identity = {dyn_prog_matrix[i-1][j-1]} + {identity}")
             
             dyn_prog_matrix[i][j] = max(dyn_prog_matrix[i-1][j],
                                         dyn_prog_matrix[i][j-1],
@@ -1271,14 +1276,14 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
         
     # retrieve best match alignment through backtracking
     
-    i = len(cluster_ref)-1
-    j = len(cluster_alt)-1
+    i = len(cluster_ref)
+    j = len(cluster_alt)
     results = []
     if debug:
-        print(f"i = {i}, j = {j}")
+        print(f"initial i = {i}, initial j = {j}")
     
     # while we did not yet reach the first column or line...
-    while i>=0 and j>=0:
+    while i>0 and j>0:
         if debug:
             print(f"i = {i}, j = {j}")
         
@@ -1288,23 +1293,20 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
             comparison, identity, mismatch_zones = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
         
         if debug:
-            print(f"top value : {dyn_prog_matrix[i][j+1]}, \nleft value : {dyn_prog_matrix[i+1][j]}, \ndiagonal value : {dyn_prog_matrix[i][j] + identity}")
-            print(f"max value : {max(dyn_prog_matrix[i][j+1], dyn_prog_matrix[i+1][j], dyn_prog_matrix[i][j] + identity)}")
+            print(f"top value : {dyn_prog_matrix[i-1][j]}, \nleft value : {dyn_prog_matrix[i][j-1]}, \ndiagonal value : {dyn_prog_matrix[i-1][j-1]} + {identity}")
+            print(f"max value : {max(dyn_prog_matrix[i-1][j], dyn_prog_matrix[i][j-1], dyn_prog_matrix[i-1][j-1] + identity)}")
         
         # if the maximum value is the diagonal value + computed identity, we
         # add both locus informations to the results dictionary and 'progress'
         # to the top-left cell
-        if max(dyn_prog_matrix[i][j+1],
-            dyn_prog_matrix[i+1][j],
-            dyn_prog_matrix[i][j] + identity) == dyn_prog_matrix[i][j]+identity:
-            if create_strings:
-                comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)    
+        if max(dyn_prog_matrix[i-1][j],
+            dyn_prog_matrix[i][j-1],
+            dyn_prog_matrix[i-1][j-1] + identity) == dyn_prog_matrix[i-1][j-1]+identity:
+            if create_strings: 
                 if comparison == '_':
                     mismatch_zones = '_'
                 else:
-                    mismatch_zones = '?'            
-            else:
-                comparison, identity, mismatch_zones = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
+                    mismatch_zones = '?'
                 
             # we retrieve the number of mRNAs of each locus
             num_mRNAs_ref = len(cluster_ref[i-1].mRNAs.keys())
@@ -1327,14 +1329,11 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
         
         # if the maximum value is the top value, we add the reference locus 
         # informations to the results dictionary and 'progress' to the top cell
-        elif max(dyn_prog_matrix[i][j+1],
-            dyn_prog_matrix[i+1][j],
-            dyn_prog_matrix[i][j] + identity) == dyn_prog_matrix[i][j+1]:
+        elif max(dyn_prog_matrix[i-1][j],
+            dyn_prog_matrix[i][j-1],
+            dyn_prog_matrix[i-1][j-1] + identity) == dyn_prog_matrix[i-1][j]:
             if create_strings:
-                comparison, identity = old_compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)   
-                mismatch_zones = '_'             
-            else:
-                comparison, identity, mismatch_zones = compare_loci(cluster_ref[i-1], cluster_alt[j], False, False)
+                mismatch_zones = '_'
                 
             # we retrieve the number of mRNAs of the reference locus
             num_mRNAs_ref = len(cluster_ref[i-1].mRNAs.keys())
@@ -1346,9 +1345,9 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
                             "alternative" : "_",
                             "alternative start" : "_",
                             "alternative end" : "_",
-                            "mismatch/match" : comparison,
-                            "identity" : identity,
-                            "mismatch zones" : mismatch_zones,
+                            "mismatch/match" : [],
+                            "identity" : "_",
+                            "mismatch zones" : "_",
                             "cluster name" : cluster_name,
                             "reference mRNA number" : num_mRNAs_ref,
                             "alternative mRNA number" : num_mRNAs_alt})
@@ -1358,10 +1357,7 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
         # informations to the results dictionary and 'progress' to the left cell
         else:
             if create_strings:
-                comparison, identity = old_compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)     
-                mismatch_zones = '_'           
-            else:
-                comparison, identity, mismatch_zones = compare_loci(cluster_ref[i], cluster_alt[j-1], False, False)
+                mismatch_zones = '_'
                 
             # we retrieve the number of mRNAs of the alternative locus
             num_mRNAs_ref = '_'
@@ -1373,9 +1369,9 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
                             "alternative" : cluster_alt[j-1].name,
                             "alternative start" : cluster_alt[j-1].start,
                             "alternative end" : cluster_alt[j-1].end,
-                            "mismatch/match" : comparison,
-                            "identity" : identity,
-                            "mismatch zones" : mismatch_zones,
+                            "mismatch/match" : [],
+                            "identity" : "_",
+                            "mismatch zones" : "_",
                             "cluster name" : cluster_name,
                             "reference mRNA number" : num_mRNAs_ref,
                             "alternative mRNA number" : num_mRNAs_alt})
@@ -1383,7 +1379,7 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
             
     # if we reached the first line but did not reach the first column,
     # we add the rest of the alternative loci to the results
-    while i==-1 and j!=-1:
+    while i==0 and j!=0:
     
         # we retrieve the number of mRNAs of the alternative locus
         num_mRNAs_ref = '_'
@@ -1405,7 +1401,7 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
         
     # if we reached the first column but did not reach the first line,
     # we add the rest of the reference loci to the results
-    while i!=-1 and j==-1:
+    while i!=0 and j==0:
     
         # we retrieve the number of mRNAs of the reference locus
         num_mRNAs_ref = len(cluster_ref[i-1].mRNAs.keys())
