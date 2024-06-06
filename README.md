@@ -14,7 +14,7 @@ python path/to/annot_CSC.py [ -h/--help -d/--debug -v/--verbose -o/--old_version
 
 where <reference_file_path> is the path to the file containing the reference annotation to analyze, and <alternative_file_path> is the path to the file containing the alternative annotation. These two parameters are required, while all others are not.
 
-options:
+optional parameters :
  
 -h/--help : displays script usage
 
@@ -25,7 +25,7 @@ options:
 -o/--old_version : triggers use of the old program version which uses comparison of entire locus structure strings to compute identity, which can take up more memory during execution
 
 
-## Testing the program
+## Program's unit tests
 
 An automatic unit testing script is included (data/tests/test_units.py) and can be used to check if an update didn't change the expected results of the program. Simply run :
 
@@ -34,3 +34,9 @@ pytest -vv
 ```
 
 in the root (highest directory) of the repository. If the result of any function of the program is not what is expected, error messages should appear; if not, the program is working as intended. 
+
+if pytest is not installed, run the following command :
+
+```
+pip install -U pytest
+```

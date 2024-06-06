@@ -216,7 +216,6 @@ def get_parent_id(line, debug=False, verbose=False):
         print(f"Structure parent ID = {structure_id}")
         
     return structure_id
-    
 
 
 ## This function expects a string corresponding to the file path of the GFF 
@@ -283,11 +282,15 @@ def get_gff_borders(path, debug=False, verbose=False):
             # (if the gene is on the reverse strand, reverse its border list
             # before adding it to the dictionary)
             if locus.mRNAs != {}:
-                if locus.direction == "reverse":
-                    locus.mRNAs[mRNA_id].reverse()
                 loci[locus_id] = locus
             del locus
             locus = Locus()
+            
+            strand = str(line.split("\t")[6])
+            if strand == "-":
+                locus.direction = "reverse"
+            else:
+                locus.direction = "direct"
             
             # we retrieve the id of the locus
             locus_id = get_structure_id(line, debug, verbose)
@@ -298,12 +301,6 @@ def get_gff_borders(path, debug=False, verbose=False):
             locus.start = start
             end = int(line.split("\t")[4])
             locus.end = end
-            
-            # we deduce from the coordinates the direction of the locus
-            if locus.end < locus.start:
-                locus.direction = "reverse"
-            else:
-                locus.direction = "direct"
             
             if verbose :
                 print("\n**************** Reading the locus " + locus_id + " ****************")
@@ -334,6 +331,8 @@ def get_gff_borders(path, debug=False, verbose=False):
             locus.mRNAs[mRNA_id].append(int(line.split("\t")[4]))
             if verbose:
                 print("Adding borders to " + locus_id + " : " + line.split("\t")[3] + ", " + line.split("\t")[4])
+            if debug:
+                print(f"new border list : {locus.mRNAs[mRNA_id]}")
                 
         line_index += 1 # increment the line indicator (for debug purposes)
                 
@@ -343,8 +342,6 @@ def get_gff_borders(path, debug=False, verbose=False):
         
     file.close()
     log.close()
-    if locus.direction == "reverse":
-        locus.mRNAs[mRNA_id].reverse()
     loci[locus_id] = locus # add the last locus to the return dictionary
     
     # we return the entire dictionary with all loci
@@ -1275,7 +1272,6 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
     results = []
     if debug:
         print(f"i = {i}, j = {j}")
-    
     
     # while we did not yet reach the first column or line...
     while i>=0 and j>=0:
