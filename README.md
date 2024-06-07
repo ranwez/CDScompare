@@ -9,7 +9,7 @@ This is the repository for the 2024 internship of Vetea Jacot in the GE²pop tea
 Run following command :
 
 ```
-python path/to/annot_CSC.py [ -h/--help -d/--debug -v/--verbose -o/--old_version -e/--exon_mode ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ]
+python path/to/annot_CSC/script/annot_CSC.py [ -h/--help -d/--debug -v/--verbose -o/--old_version -e/--exon_mode ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ]
 ```
 
 where <reference_file_path> is the path to the file containing the reference annotation to analyze, and <alternative_file_path> is the path to the file containing the alternative annotation. These two parameters are required, while all others are not.
@@ -25,6 +25,15 @@ optional parameters :
 -o/--old_version : triggers use of the old program version which uses comparison of entire locus structure strings to compute identity, which can take up more memory during execution
 
 -e/--exon_mode : triggers use of the exon coordinates instead of the CDS coordinates to compare the two annotations' loci
+
+
+## Program test
+
+A small example of reference and alternative public annotations are included in the repository and can be used to test and visualize program results before using it on real data. This example can be run using the command :
+
+```
+python path/to/annot_CSC/script/annot_CSC.py -r data/tests/program_test_ref.gff3 -a data/tests/program_test_alt.gff3
+```
 
 
 ## Program's unit tests
