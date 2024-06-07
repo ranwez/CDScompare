@@ -884,13 +884,7 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                         print("Reference and alternative are not in CDS for the area, ignoring area")
                     
                 prev_bounds = bound
-                bound_id += 1
-                
-            # when the loci are on the reverse strand, matches and mismatches
-            # are counted in the negatives, so we convert them using the 
-            # absolute value
-            comparison[0] = abs(comparison[0])
-            comparison[1] = abs(comparison[1])    
+                bound_id += 1    
             
             if verbose:
                 print(f"\nResult of the comparison of the locus : {comparison[1]} matches and {comparison[0]} mismatches")
