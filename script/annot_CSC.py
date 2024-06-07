@@ -232,6 +232,11 @@ def get_parent_id(parsed_line, debug=False, verbose=False):
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
+# @param exon_mode Boolean indicating if the main comparison structures read
+# from the file should be coding sequences (CDS, False) or exons (True).
+# Default is 'False' (CDS comaprison)
+#
+#
 # @remark If the parent ID of a CDS does not match the ID of the previous 
 # mRNA (indicating an incorrect file structure), an entry is added to a 'log' 
 # file but the function is not interrupted
@@ -246,7 +251,13 @@ def get_parent_id(parsed_line, debug=False, verbose=False):
 # @remark if a locus is on the reverse strand, its CDS borders list is reversed
 # to be in ascending order
 #
-def get_gff_borders(path, debug=False, verbose=False):
+def get_gff_borders(path, debug=False, verbose=False, exon_mode=False):
+    
+    # specifiy the desired main structure to be read
+    if exon_mode:
+        exon_or_cds = "exon"
+    else:
+        exon_or_cds = "CDS"
     
     try:    
         file = open(path, "r") # the file to read
@@ -325,7 +336,7 @@ def get_gff_borders(path, debug=False, verbose=False):
 
         # if we encounter a CDS, we add its start and end positions to the 
         # corresponding mRNA key in the locus' mRNAs attribute
-        if str(parsed_line[2]) == "CDS" and parsed_line[0] != "contig":
+        if str(parsed_line[2]) == exon_or_cds and parsed_line[0] != "contig":
             parent_id = get_parent_id(parsed_line, debug, verbose)
             
             if parent_id != mRNA_id:
@@ -884,7 +895,7 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                         print("Reference and alternative are not in CDS for the area, ignoring area")
                     
                 prev_bounds = bound
-                bound_id += 1    
+                bound_id += 1
             
             if verbose:
                 print(f"\nResult of the comparison of the locus : {comparison[1]} matches and {comparison[0]} mismatches")
@@ -1494,13 +1505,17 @@ def write_results(results, debug=False, verbose=False):
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
+# @param exon_mode Boolean indicating if the main comparison structures read
+# from the file should be coding sequences (CDS, False) or exons (True).
+# Default is 'False' (CDS comparison)
+#
 # @return Returns a list of lists of dictionaries describing the 
 # comparison of the structure identity between the loci of each annotation 
-def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create_strings=False):
+def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create_strings=False, exon_mode=False):
 
     # get all annotation files and generate the annotation data structure
-    ref_annotations = get_gff_borders(ref_path, debug, verbose)
-    alt_annotations = get_gff_borders(alt_path, debug, verbose)
+    ref_annotations = get_gff_borders(ref_path, debug, verbose, exon_mode)
+    alt_annotations = get_gff_borders(alt_path, debug, verbose, exon_mode)
     
     # get the order of the loci of both annotations
     locus_order = annotation_sort(ref_annotations, alt_annotations, debug, verbose)
@@ -1529,7 +1544,7 @@ def main():
     
     # we retrieve all script call options
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hdvor:a:", ["help", "debug", "verbose", "old_version", "reference=", "alternative="])
+        opts, args = getopt.getopt(sys.argv[1:], "hdvoer:a:", ["help", "debug", "verbose", "old_version", "exon-mode", "reference=", "alternative="])
     except getopt.GetoptError as err:
         print(err)
         usage()
@@ -1545,6 +1560,11 @@ def main():
     # integrated in a pipeline or workflow)
     debug = False
     verbose = False
+    
+    # boolean indicating which version of the file reading function to use: 
+    # False = read coding sequences (CDS) from the given files, True = read
+    # the exons from the given files
+    exon_mode = False  
     
     # boolean indicating which version of the program to use: False = new 
     # version without any structure string creation, True = 'old' version with 
@@ -1562,6 +1582,8 @@ def main():
             verbose = True
         elif o in ("-o", "--old_version"):
             create_strings = True
+        elif o in ("-e", "--exon_mode"):
+            exon_mode = True
         elif o in ("-r", "--reference"):
             ref_path = a
         elif o in ("-a", "--alternative"):
@@ -1570,7 +1592,7 @@ def main():
             assert False, "unhandled option"
             
     # call of the annotation_comparison function
-    return annotation_comparison(ref_path, alt_path, debug, verbose, create_strings)
+    return annotation_comparison(ref_path, alt_path, debug, verbose, create_strings, exon_mode)
     
 if __name__ == "__main__":
     main()

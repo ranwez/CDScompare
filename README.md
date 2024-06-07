@@ -9,7 +9,7 @@ This is the repository for the 2024 internship of Vetea Jacot in the GE²pop tea
 Run following command :
 
 ```
-python path/to/annot_CSC.py [ -h/--help -d/--debug -v/--verbose -o/--old_version ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ]
+python path/to/annot_CSC.py [ -h/--help -d/--debug -v/--verbose -o/--old_version -e/--exon_mode ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ]
 ```
 
 where <reference_file_path> is the path to the file containing the reference annotation to analyze, and <alternative_file_path> is the path to the file containing the alternative annotation. These two parameters are required, while all others are not.
@@ -23,6 +23,8 @@ optional parameters :
 -v/--verbose : displays messages indicating progress during execution
 
 -o/--old_version : triggers use of the old program version which uses comparison of entire locus structure strings to compute identity, which can take up more memory during execution
+
+-e/--exon_mode : triggers use of the exon coordinates instead of the CDS coordinates to compare the two annotations' loci
 
 
 ## Program's unit tests
