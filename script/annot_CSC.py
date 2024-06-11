@@ -720,8 +720,8 @@ def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
 # @returns Returns a tuple containing a list indicating the number of codon 
 # position mismatches (first position) and matches (second position) between 
 # the two border lists giving the maximum indentity between all mRNAs, the 
-# identity level computed from this list, and the comaprison areas
-# producing mismatches
+# identity level computed from this list, the comaprison areas
+# producing mismatches, and the compared mRNA names
 #
 # @remark This function doesn't expect any annotation to be a 'reference'
 def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
@@ -738,14 +738,14 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     if ref_locus.direction != alt_locus.direction:
         if debug:
             print(f"{ref_locus.name} and {alt_locus.name} are not on the same strand, returning 0% identity")
-        return ('_', 0.0, '_')
+        return ('_', 0.0, '_', '_', '_')
     
     overlap = (alt_locus.start <= ref_locus.end <= alt_locus.end) or (ref_locus.start <= alt_locus.end <= ref_locus.end)
     # if the loci don't overlap, return 'null' values
     if not overlap:
         if debug:
             print(f"{ref_locus.name} and {alt_locus.name} do not overlap, returning 0% identity")
-        return('_', 0.0, '_')
+        return('_', 0.0, '_', '_', '_')
         
     # for each mRNA in the reference locus...
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
@@ -1056,7 +1056,8 @@ def create_vectors(borders, debug=False, verbose=False):
 # Default is 'False'
 #
 # @returns Returns a tuple containing the list of mismatches (first value) 
-# and matches (second value) and the computed string identity
+# and matches (second value) and the computed string identity, and the
+# compared mRNA names
 #
 # @remark This function doesn't expect any annotation to be a 'reference'
 def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False): 
@@ -1072,14 +1073,14 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     if ref_locus.direction != alt_locus.direction:
         if debug:
             print(f"{ref_locus.name} and {alt_locus.name} are not on the same strand, returning 0% identity")
-        return ('_', 0.0)
+        return ('_', 0.0, "_", "_")
     
     overlap = (alt_locus.start <= ref_locus.end <= alt_locus.end) or (ref_locus.start <= alt_locus.end <= ref_locus.end)
     # if the loci don't overlap, return 'null' values
     if not overlap:
         if debug:
             print(f"{ref_locus.name} and {alt_locus.name} do not overlap, returning 0% identity")
-        return('_', 0.0)
+        return('_', 0.0, "_", "_")
     
     # for each reference locus mRNA...
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
@@ -1391,7 +1392,7 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
                         "mismatch zones" : "_",
                         "cluster name" : cluster_name,
                         "reference mRNA" : "_",
-                        "alternative mRNA" : alt_mRNA,
+                        "alternative mRNA" : "_",
                         "reference mRNA number" : num_mRNAs_ref,
                         "alternative mRNA number" : num_mRNAs_alt})
         j -= 1
@@ -1414,7 +1415,7 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
                         "identity" : 0.0,
                         "mismatch zones" : "_",
                         "cluster name" : cluster_name,
-                        "reference mRNA" : ref_mRNA,
+                        "reference mRNA" : "_",
                         "alternative mRNA" : "_",
                         "reference mRNA number" : num_mRNAs_ref,
                         "alternative mRNA number" : num_mRNAs_alt})
