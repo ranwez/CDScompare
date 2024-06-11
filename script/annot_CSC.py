@@ -289,7 +289,7 @@ def get_gff_borders(path, debug=False, verbose=False, exon_mode=False):
             # if there was a previous gene, but its borders list is empty, 
             # return an error
             if locus_id != "" and locus.mRNAs[mRNA_id] == []:
-                print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the previous mRNA '{mRNA_id}'\n")
+                print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the previous mRNA '{mRNA_id}'\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
                 sys.exit(1)
             
             # if there was a previous gene, add it to return dictionary and
@@ -344,7 +344,7 @@ def get_gff_borders(path, debug=False, verbose=False, exon_mode=False):
                 log.write("Line " + str(line_index) + " : CDS parent ID (" + parent_id + ") does not match last mRNA ID (" + locus_id +")\n")
                 
             if locus_id == '':
-                print(f"\nLine {line_index} = get_gff_borders() function error : CDS has been found before any mRNA")
+                print(f"\nLine {line_index} = get_gff_borders() function error : CDS has been found before any mRNA\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
                 sys.exit(1)
             
             locus.mRNAs[mRNA_id].append(int(parsed_line[3]))
@@ -736,8 +736,17 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     
     # if the loci are on different strands, return 'null' values
     if ref_locus.direction != alt_locus.direction:
+        if debug:
+            print(f"{ref_locus.name} and {alt_locus.name} are not on the same strand, returning 0% identity")
         return ('_', 0.0, '_')
     
+    overlap = (alt_locus.start <= ref_locus.end <= alt_locus.end) or (ref_locus.start <= alt_locus.end <= ref_locus.end)
+    # if the loci don't overlap, return 'null' values
+    if not overlap:
+        if debug:
+            print(f"{ref_locus.name} and {alt_locus.name} do not overlap, returning 0% identity")
+        return('_', 0.0, '_')
+        
     # for each mRNA in the reference locus...
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
         # for each mRNA in the alternative locus...
@@ -1099,7 +1108,16 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     
     # if the loci are on different strands, return 'null' values
     if ref_locus.direction != alt_locus.direction:
+        if debug:
+            print(f"{ref_locus.name} and {alt_locus.name} are not on the same strand, returning 0% identity")
         return ('_', 0.0)
+    
+    overlap = (alt_locus.start <= ref_locus.end <= alt_locus.end) or (ref_locus.start <= alt_locus.end <= ref_locus.end)
+    # if the loci don't overlap, return 'null' values
+    if not overlap:
+        if debug:
+            print(f"{ref_locus.name} and {alt_locus.name} do not overlap, returning 0% identity")
+        return('_', 0.0)
     
     # for each reference locus mRNA...
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():

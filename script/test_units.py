@@ -697,13 +697,13 @@ def test_old_compare_loci():
         
         "reverse-reverse" : [annot_CSC.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
-                                 start=299, 
-                                 end=100, 
+                                 start=100, 
+                                 end=299, 
                                  direction='reverse'),
                      annot_CSC.Locus(name='chr2A_00611930', 
                                 mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
-                                start=299, 
-                                end=100, 
+                                start=100, 
+                                end=299, 
                                 direction='reverse'),
                      ([0, 150], 100.0)],
         
@@ -799,7 +799,7 @@ def test_old_compare_loci():
         
         print(f"\n{test} file test")
         
-        result = annot_CSC.old_compare_loci(test_dict[test][0], test_dict[test][1], False, False)
+        result = annot_CSC.old_compare_loci(test_dict[test][0], test_dict[test][1], True, True)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
