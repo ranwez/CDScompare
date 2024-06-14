@@ -18,6 +18,7 @@ Created on Thu May  2 11:57:29 2024
 import getopt
 import sys
 import os
+import intervals_utils as iu;
 
 
 ## This class represents clusters of overlapping loci computed by the 
@@ -632,6 +633,82 @@ def get_area_bounds(ref, alt, debug=False, verbose=False):
             
     return bounds
 
+
+def get_reading_frame(cds_bounds, area_bounds, debug=False, verbose=False):
+    nb_nt = 0;
+    nb_nt_in_cds=0;
+    cdsb=0; # cds bounds index
+    reading_frames = [];
+    for i in range(0, len(area_bounds)-1, 2):
+        # move to the CDS containing the current area
+        while area_bounds[i] > cds_bounds[cdsb+1]:
+            nb_nt += cds_bounds[cdsb+1] - cds_bounds[cdsb] +1;
+            cdsb+=2
+        # now set the reading frame of the current are
+        nb_nt_in_cds = area_bounds[i]-cds_bounds[cdsb]+1;
+        reading_frames.append((nb_nt+nb_nt_in_cds-1) % 3 +1);
+    return reading_frames;
+
+def test_get_reading_frame():
+    cds_bounds_ref =[4,9,12,13]
+    cds_bounds_alt=[1,6,9,10]
+    cds_inter = [4,6,9,9]
+    rf_ref=get_reading_frame(cds_bounds_ref, cds_inter, True, True)
+    rf_alt=get_reading_frame(cds_bounds_alt, cds_inter, True, True)
+    print(rf_ref)
+    print(rf_alt)
+
+def test2_get_reading_frame():
+    cds_bounds_ref =[4,9,12,13]
+    cds_bounds_alt=[4,13]
+    cds_inter = [4,9,12,13]
+    rf_ref=get_reading_frame(cds_bounds_ref, cds_inter, True, True)
+    rf_alt=get_reading_frame(cds_bounds_alt, cds_inter, True, True)
+    print(rf_ref)
+    print(rf_alt)
+
+def test3_get_reading_frame():
+    cds_bounds_ref =[4,9,12,13]
+    cds_bounds_alt=[5,9,12,13]
+    cds_inter = [5,9,12,13]
+    rf_ref=get_reading_frame(cds_bounds_ref, cds_inter, True, True)
+    rf_alt=get_reading_frame(cds_bounds_alt, cds_inter, True, True)
+    print(rf_ref)
+    print(rf_alt)
+
+def test_mrna_comp():
+    cds_bounds_ref =[4,9,12,13]
+    cds_bounds_alt=[1,6,9,10]
+    intervals_ref = iu.OrderedIntervals(cds_bounds_ref, True);
+    (matches, mismatches_EI, mismatches_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
+    print([matches, mismatches_EI, mismatches_RF])
+    print( matches / (matches + mismatches_EI+mismatches_RF) * 100)
+
+def test_mrna_comp2():
+    cds_bounds_ref =[4,9,12,13]
+    cds_bounds_alt=[4,13]
+    intervals_ref = iu.OrderedIntervals(cds_bounds_ref, True);
+    (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
+    print([matches, mismatches_EI, mismatches_RF])
+    print( matches / (matches + mismatches_EI+mismatches_RF) * 100)
+
+
+def test_mrna_comp3():
+    cds_bounds_ref =[4,9,12,13]
+    cds_bounds_alt=[5,9,12,13]
+    intervals_ref = iu.OrderedIntervals(cds_bounds_ref, True);
+    (matches, mismatches_EI, mismatches_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
+    print([matches, mismatches_EI, mismatches_RF])
+    print( matches / (matches + mismatches_EI+mismatches_RF) * 100)
+
+def test_mrna_comp4():
+    cds_bounds_ref =[4,9,12,13]
+    cds_bounds_alt=[5,9,11,13]
+    intervals_ref = iu.OrderedIntervals(cds_bounds_ref, True);
+    (matches, mismatches_EI, mismatches_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
+    print([matches, mismatches_EI, mismatches_RF])
+    print( matches / (matches + mismatches_EI+mismatches_RF) * 100)
+
 ## This function indicates for each couple of bounds in the given list of area
 # bounds (@param area_bounds), if they delimit an area which includes a CDS 
 # from the given CDS coordinates list (@param cds_bounds). It is used during 
@@ -750,166 +827,11 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     # for each mRNA in the reference locus...
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
         # for each mRNA in the alternative locus...
+        intervals_ref = iu.OrderedIntervals(mRNA_ref, True);
+    
         for mRNA_alt_id, mRNA_alt in alt_locus.mRNAs.items():
-            if debug:
-                print(f"mRNA_ref name = {mRNA_ref_id}")
-                print(f"mRNA_alt_ name = {mRNA_alt_id}")
-                print(f"mRNA_ref = {mRNA_ref}")
-                print(f"mRNA_alt = {mRNA_alt}")
-                
-            if verbose:
-                print(f"**************** comparing mRNA {mRNA_ref_id} of reference locus {ref_locus.name} and mRNA {mRNA_alt_id} of alternative locus {alt_locus.name} ****************")
-            
-            # we retrieve the bounds of all areas delimited by all the CDS 
-            # coordinates of both border lists
-            area_bounds = get_area_bounds(mRNA_ref, mRNA_alt, debug, verbose)
-            
-            if debug:
-                print(f"area bounds = {area_bounds}")
-            
-            # we retrieve the list indicating the areas which include or not 
-            # a CDS for both annotations
-            if verbose:
-                print("\nEvaluating presence of CDS in the comparison areas")
-            ref_in_CDS = is_in_cds(mRNA_ref, area_bounds, debug, verbose)
-            alt_in_CDS = is_in_cds(mRNA_alt, area_bounds, debug, verbose)
-            if debug:
-                print("Ref_in_CDS = " + str(ref_in_CDS))
-                print("Alt_in_CDS = " + str(alt_in_CDS))
-            
-            # initialize the return values for this mRNA
-            # (first value of 'comparison' is mismatches, second value 
-            # is identities)
-            codon_position_ref=0
-            codon_position_alt=0
-            comparison = [0,0] 
-            mismatch_zones = []
-            bound_id = 0
-            prev_bounds = area_bounds[0]
-            
-            # for each comparison area delimited by the bounds in the 
-            # list 'area_bounds'...
-            for bound in area_bounds[1:] :
-                if debug:
-                    print("\n")
-                    print("Bound = " + str(bound))
-                    print("Prev_bound = " + str(prev_bounds))
-                    print("Bound_id = " + str(bound_id))
-                    print("Codon_position_ref = " + str(codon_position_ref))
-                    print("Codon_position_alt = " + str(codon_position_alt))
-                    print("Ref_in_CDS[bound_id] = " + str(ref_in_CDS[bound_id]))
-                    print("Alt_in_CDS[bound_id] = " + str(alt_in_CDS[bound_id]))
-                    print("\n")
-                    
-                # if both annotations are in a CDS and have the same codon 
-                # position, then all codon positions for the rest of the area 
-                # will be identical, so we add the length of the area to the 
-                # second value of the comparison list and update both 
-                # codon positions
-                if(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt == codon_position_ref):
-                    
-                    if bound_id < len(area_bounds)-2 and (alt_in_CDS[bound_id+1] or ref_in_CDS[bound_id+1]):
-                        if debug:
-                            print(f"Identical codon positions for the area, adding {bound-prev_bounds} to match values")
-                        comparison[1] += bound-prev_bounds
-                    else:
-                        if debug:
-                            print(f"Identical codon positions for the area, adding {bound-prev_bounds+1} to match values")
-                        comparison[1] += bound-prev_bounds+1
-                    
-                    if bound_id < len(area_bounds)-2 and alt_in_CDS[bound_id+1]:
-                        codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
-                    else:
-                        codon_position_alt = (codon_position_alt + (bound-prev_bounds+1))%3 
-                        
-                    if bound_id < len(area_bounds)-2 and ref_in_CDS[bound_id+1]:
-                        codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3
-                    else:
-                        codon_position_ref = (codon_position_ref + (bound-prev_bounds+1))%3
-                    
-                # if both annotations are in a CDS but don't have the same 
-                # codon position, then all codon positions for the rest of the
-                # area will be different, so we add the length of the are to 
-                # the first value of the comparison list and update both codon
-                # positions
-                elif(ref_in_CDS[bound_id] and alt_in_CDS[bound_id] and codon_position_alt != codon_position_ref):
-                        
-                    if bound_id < len(area_bounds)-2 and (alt_in_CDS[bound_id+1] or ref_in_CDS[bound_id+1]):
-                        if debug:
-                            print(f"Different codon positions for the area, adding {bound-prev_bounds} to mismatch values")
-                        comparison[0] += bound-prev_bounds
-                    else:
-                        if debug:
-                            print(f"Different codon positions for the area, adding {bound-prev_bounds+1} to mismatch values")
-                        comparison[0] += bound-prev_bounds+1
-                    
-                    if bound_id < len(area_bounds)-2 and alt_in_CDS[bound_id+1]:
-                        codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
-                    else:
-                        codon_position_alt = (codon_position_alt + (bound-prev_bounds+1))%3 
-                        
-                    if bound_id < len(area_bounds)-2 and ref_in_CDS[bound_id+1]:
-                        codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3
-                    else:
-                        codon_position_ref = (codon_position_ref + (bound-prev_bounds+1))%3
-                            
-                    mismatch_zones.append(f"{prev_bounds}-{bound}")
-                
-                # if only one annotation has a CDS in the comparison area, we 
-                # add to the first value of the comparison list and update only
-                # one codon position
-                
-                elif(ref_in_CDS[bound_id]):
-                        
-                    if bound_id < len(area_bounds)-2 and ref_in_CDS[bound_id+1]:
-                        if debug:
-                            print(f"Alternative is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
-                        comparison[0] += bound-prev_bounds
-                    else:
-                        if debug:
-                            print(f"Alternative is not in CDS for the area, adding {bound-prev_bounds+1} to mismatch values")
-                        comparison[0] += bound-prev_bounds+1
-                    
-                    if bound_id < len(area_bounds)-2 and ref_in_CDS[bound_id+1]:
-                        codon_position_ref = (codon_position_ref + (bound-prev_bounds))%3
-                    else:
-                        codon_position_ref = (codon_position_ref + (bound-prev_bounds+1))%3
-                    
-                    mismatch_zones.append(f"{prev_bounds}-{bound}")
-                    
-                
-                elif(alt_in_CDS[bound_id]):
-                        
-                    if bound_id < len(area_bounds)-2 and alt_in_CDS[bound_id+1]:
-                        if debug:
-                            print(f"Reference is not in CDS for the area, adding {bound-prev_bounds} to mismatch values")
-                        comparison[0] += bound-prev_bounds
-                    else:
-                        if debug:
-                            print(f"Reference is not in CDS for the area, adding {bound-prev_bounds+1} to mismatch values")
-                        comparison[0] += bound-prev_bounds+1
-                    
-                    if bound_id < len(area_bounds)-2 and alt_in_CDS[bound_id+1]:
-                        codon_position_alt = (codon_position_alt + (bound-prev_bounds))%3 
-                    else:
-                        codon_position_alt = (codon_position_alt + (bound-prev_bounds+1))%3 
-                    
-                    mismatch_zones.append(f"{prev_bounds}-{bound}")
-                        
-                # the case of both annotations being outside of a CDS is not 
-                # used in the computation of global loci identity, and is 
-                # ignored
-                else:
-                    if debug:
-                        print("Reference and alternative are not in CDS for the area, ignoring area")
-                    
-                prev_bounds = bound
-                bound_id += 1
-            
-            if verbose:
-                print(f"\nResult of the comparison of the locus : {comparison[1]} matches and {comparison[0]} mismatches")
-                
-            identity = comparison[1] / (comparison[0] + comparison[1])
+            (matches, mismatches) = compute_matches_mismatches(mRNA_ref, intervals_ref, mRNA_alt) 
+            identity = matches / (matches + mismatches)
         
             # for each mRNA, we test wether the computed identity is higher 
             # than for the preceding mRNAs, to retrieve the highest identity
@@ -939,6 +861,29 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
         print(f"\nFinal result of the comparison of the locus : {final_comparison[1]} matches and {final_comparison[0]} mismatches (identity = {final_identity})" )
     return (final_comparison, final_identity, final_mismatch_zones, final_ref_mRNA, final_alt_mRNA)
 
+def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt):
+    matches=0
+    mismatches=0    
+    intervals_alt = iu.OrderedIntervals(mRNA_alt, True);
+    inter_mrna = intervals_ref.intersection(intervals_alt);
+    union_mrna = intervals_ref.union(intervals_alt);
+    # exon and intron (EI) mismatches
+    mismatches_EI=union_mrna.total_length()-inter_mrna.total_length();
+    inter_mrna_bounds=inter_mrna.get_intervals_with_included_ub();
+    rf_ref=get_reading_frame(mRNA_ref, inter_mrna_bounds, True, True)
+    rf_alt=get_reading_frame(mRNA_alt, inter_mrna_bounds, True, True)
+    interval_id=0;
+    diff_EI=intervals_ref.symmetric_difference(intervals_alt);
+    diff_RF=[];
+    mismatches_RF=0; # reading frame (RF) mismatches
+    for interval_id in range(0, len(rf_ref)):
+        interval_lg= inter_mrna_bounds[2*interval_id+1]-inter_mrna_bounds[2*interval_id]+1;
+        if rf_ref[interval_id] != rf_alt[interval_id]:
+            mismatches_RF+=interval_lg
+            diff_RF.append([inter_mrna_bounds[2*interval_id], inter_mrna_bounds[2*interval_id+1]]);
+        else:
+            matches+=interval_lg
+    return (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF)
 
 ## This function expects a list of all CDS coordinates (start and end) of a 
 # locus. It returns a list indicating the start of the locus as first value 
@@ -1590,8 +1535,12 @@ def main():
     return annotation_comparison(ref_path, alt_path, debug, verbose, create_strings, exon_mode)
     
 if __name__ == "__main__":
-    main()
-    
+    #main()
+    test_mrna_comp(); # [3, 8, 1]
+    test_mrna_comp2(); # [6, 2, 2]
+    test_mrna_comp3(); # [0, 2, 7]
+    test_mrna_comp4(); # [2, 2, 5]
+
 
     
     
