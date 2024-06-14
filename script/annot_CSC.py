@@ -18,7 +18,7 @@ Created on Thu May  2 11:57:29 2024
 import getopt
 import sys
 import os
-import intervals_utils as iu;
+import intervals_utils as iu
 
 
 ## This class represents clusters of overlapping loci computed by the 
@@ -680,7 +680,7 @@ def test_mrna_comp():
     cds_bounds_ref =[4,9,12,13]
     cds_bounds_alt=[1,6,9,10]
     intervals_ref = iu.OrderedIntervals(cds_bounds_ref, True);
-    (matches, mismatches_EI, mismatches_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
+    (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
     print([matches, mismatches_EI, mismatches_RF])
     print( matches / (matches + mismatches_EI+mismatches_RF) * 100)
 
@@ -697,7 +697,7 @@ def test_mrna_comp3():
     cds_bounds_ref =[4,9,12,13]
     cds_bounds_alt=[5,9,12,13]
     intervals_ref = iu.OrderedIntervals(cds_bounds_ref, True);
-    (matches, mismatches_EI, mismatches_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
+    (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
     print([matches, mismatches_EI, mismatches_RF])
     print( matches / (matches + mismatches_EI+mismatches_RF) * 100)
 
@@ -705,7 +705,7 @@ def test_mrna_comp4():
     cds_bounds_ref =[4,9,12,13]
     cds_bounds_alt=[5,9,11,13]
     intervals_ref = iu.OrderedIntervals(cds_bounds_ref, True);
-    (matches, mismatches_EI, mismatches_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
+    (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
     print([matches, mismatches_EI, mismatches_RF])
     print( matches / (matches + mismatches_EI+mismatches_RF) * 100)
 
@@ -807,7 +807,7 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
         print(f"\n\n**************** comparing loci {ref_locus.name} of reference and {alt_locus.name} of alternative ****************")
         
     # initialize final return values
-    final_comparison = [0,0]
+    final_comparison = [0,0,0]
     final_identity = 0.0
     final_mismatch_zones = []
     
@@ -830,24 +830,22 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
         intervals_ref = iu.OrderedIntervals(mRNA_ref, True);
     
         for mRNA_alt_id, mRNA_alt in alt_locus.mRNAs.items():
-            (matches, mismatches) = compute_matches_mismatches(mRNA_ref, intervals_ref, mRNA_alt) 
-            identity = matches / (matches + mismatches)
+            (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt) 
+            identity = matches / (matches + mismatches_EI + mismatches_RF)
         
             # for each mRNA, we test wether the computed identity is higher 
             # than for the preceding mRNAs, to retrieve the highest identity
             if identity > final_identity:
-                final_comparison = comparison
+                final_comparison = [matches, mismatches_EI, mismatches_RF]
                 final_identity = identity
-                final_mismatch_zones = mismatch_zones
+                final_mismatch_zones = (diff_EI, diff_RF)
                 final_ref_mRNA = mRNA_ref_id
                 final_alt_mRNA = mRNA_alt_id 
-                if debug:
-                    print(f"comparison = {comparison}\nfinal_comparison = {final_comparison}\nidentity = {identity}\nfinal identity = {final_identity}\nmismatch zones = {mismatch_zones}\nfinal mismatch zones = {final_mismatch_zones}")
             # if all mRNAs comparisons return 0% identity, we still want 
             # mismatch values to be returned
-            elif identity == 0.0 and comparison[0] > final_comparison[0]:
-                final_comparison = comparison
-                final_mismatch_zones = mismatch_zones
+            elif identity == 0.0 and mismatches_EI + mismatches_RF > final_comparison[1] + final_comparison[2]:
+                final_comparison = [matches, mismatches_EI, mismatches_RF]
+                final_mismatch_zones = (diff_EI, diff_RF)
                 final_ref_mRNA = mRNA_ref_id
                 final_alt_mRNA = mRNA_alt_id 
     
@@ -862,8 +860,7 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     return (final_comparison, final_identity, final_mismatch_zones, final_ref_mRNA, final_alt_mRNA)
 
 def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt):
-    matches=0
-    mismatches=0    
+    matches=0    
     intervals_alt = iu.OrderedIntervals(mRNA_alt, True);
     inter_mrna = intervals_ref.intersection(intervals_alt);
     union_mrna = intervals_ref.union(intervals_alt);
@@ -1407,11 +1404,7 @@ def write_results(results, debug=False, verbose=False):
         for loc in cluster:
             # convert the mismatch zones so that commas don't modify 
             # the csv structure
-            mismatch_zones = ""
-            for zone in loc['mismatch zones']:
-                zone += " // "
-                mismatch_zones += zone
-            mismatch_zones = mismatch_zones[:-4]
+            mismatch_zones = str(loc["mismatch zones"][0].intervals) + str(loc["mismatch zones"][1])
             
             # if no comparison was done for the loci, write '~' instead of 
             # the comparison values
@@ -1467,7 +1460,7 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     for cluster_id, cluster in clusters.clusters.items():
         results.append(annotation_match(cluster["ref"], cluster["alt"], cluster_id, create_strings, debug, verbose))
         
-    print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[mismatch, match]\t\tIdentity_Score\n")
+    print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[match/mismatch_EI/mismatch_RF]\t\tIdentity_Score\n")
     write_results(results, debug, verbose)
     
     return results
@@ -1535,11 +1528,7 @@ def main():
     return annotation_comparison(ref_path, alt_path, debug, verbose, create_strings, exon_mode)
     
 if __name__ == "__main__":
-    #main()
-    test_mrna_comp(); # [3, 8, 1]
-    test_mrna_comp2(); # [6, 2, 2]
-    test_mrna_comp3(); # [0, 2, 7]
-    test_mrna_comp4(); # [2, 2, 5]
+    main()
 
 
     

@@ -88,21 +88,3 @@ class OrderedIntervals:
             scan = min(current_bound[0], current_bound[1])
 
         return OrderedIntervals(res)
-
-
-# Example usage
-intervals1 = OrderedIntervals.new([1, 2, 8, 10, 16, 18])
-intervals2 = OrderedIntervals.new([2, 4, 7, 10, 15, 16, 18, 20])
-intervals3 = intervals1.union(intervals2)
-print(intervals3.intervals)  # Output: [1, 4, 7, 10, 15, 20]
-assert intervals3.intervals == [1, 4, 7, 10, 15, 20]
-lg = intervals1.total_length()
-print(lg)  # Output: 5
-
-intervals1bis = OrderedIntervals.new([1, 2, 8, 10, 16, 18], include_ub=True)
-lg1bis = intervals1bis.total_length()
-print(lg1bis)  # Output: 7
-
-intervals4 = intervals1.intersection(intervals2)
-print(intervals4.intervals)  # Output: [2, 10, 16, 18]
-assert intervals4.intervals == [8, 10]
