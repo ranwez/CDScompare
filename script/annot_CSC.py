@@ -880,7 +880,7 @@ def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt):
             diff_RF.append([inter_mrna_bounds[2*interval_id], inter_mrna_bounds[2*interval_id+1]]);
         else:
             matches+=interval_lg
-    return (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF)
+    return (matches, mismatches_EI, mismatches_RF, diff_EI.intervals, diff_RF)
 
 ## This function expects a list of all CDS coordinates (start and end) of a 
 # locus. It returns a list indicating the start of the locus as first value 
@@ -1404,7 +1404,13 @@ def write_results(results, debug=False, verbose=False):
         for loc in cluster:
             # convert the mismatch zones so that commas don't modify 
             # the csv structure
-            mismatch_zones = str(loc["mismatch zones"][0].intervals) + str(loc["mismatch zones"][1])
+            mismatch_zones = ""
+            
+            for i in range(0, len(loc["mismatch zones"][0]), 2):
+                mismatch_zones += "[" + str(loc["mismatch zones"][0][i]) + "//" + str(loc["mismatch zones"][0][i+1]) + "] "
+                    
+            for i in range(len(loc["mismatch zones"][1])):
+                mismatch_zones += "[" + str(loc["mismatch zones"][1][i][0]) + "//" + str(loc["mismatch zones"][1][i][1]) + "] "    
             
             # if no comparison was done for the loci, write '~' instead of 
             # the comparison values
