@@ -20,7 +20,7 @@ import sys
 import os
 import intervals_utils as iu
 
-
+#TODO update docu
 ## This class represents clusters of overlapping loci computed by the 
 # function construct_clusters. It posesses only one attribute, 'clusters',
 # which is a dictionary of dictionaries of instances of the class 'Locus'
@@ -29,17 +29,30 @@ import intervals_utils as iu
 # @see construct_clusters()
 #
 # @see Locus
-class Clusters:
+class Cluster:
     
     ## This method initialises the class with an empty dictionary
-    def __init__(self):
-        self.clusters = {}
+    def __init__(self, name):
+        self.name = name
+        self.loci = {"ref": [], "alt": []}
         
     ## This method is used to retrieve the 'clusters' attribute of an instance
     #
     # @returns Returns the 'clusters' attribute of the class instance
-    def clusters(self):
-        return self.clusters
+    def get_loci(self):
+        return self.loci.copy()
+    
+    #TODO docu
+    def append_to_loci(self, annotation, value):
+        self.loci[annotation].append(value)
+        
+    #TODO docu
+    def get_end(self):
+        return self.end
+    
+    #TODO docu
+    def set_end(self, value):
+        self.end = value
     
     ## This method is used to retrieve the complete list of mRNAs of the locus
     # of the cluster specified with its locus ID and a boolean indicating
@@ -100,6 +113,10 @@ class Locus:
     def mRNAs(self):
         return self.mRNAs
     
+    #TODO docu
+    def set_mRNAs(self, value):
+        self.mRNAs = value
+    
     ## This method is used to verify if all mRNAs of a dictionary are present 
     # in the class instance's 'mRNAs' attribute
     #
@@ -116,6 +133,15 @@ class Locus:
             if mrna_name not in self.mRNAs:
                 return False
             return self.mRNAs[mrna_name] == positions_list
+        
+    #TODO docu
+    def reverse(self, cluster_end):
+        new_mRNAs = {}
+        for mRNA_id, mRNA in self.mRNAs.items():
+            new_mRNAs[mRNA_id] = []
+            for i in range(len(mRNA)-1, -1, -1):
+                new_mRNAs[mRNA_id].append(cluster_end-mRNA[i])
+        self.set_mRNAs(new_mRNAs)
 
     ## This function was added for convenience as a way to easily retrieve the
     # attribute values of the class instance as a formatted string
@@ -455,8 +481,8 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
     # been fused
     already_grouped = []
     
-    # initialising a new instance of 'Clusters' class
-    clusters = Clusters()
+    # initialising the return dictionary of instances of 'Cluster' class
+    cluster_list = {}
     
     # for each locus in the loci list...
     for i in range(len(locus_order)):   
@@ -484,19 +510,19 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
             if locus_id + "_ref" not in already_grouped:
                 cluster_name = "cluster " + str(i)
                 
-                if cluster_name not in clusters.clusters:
-                    clusters.clusters[cluster_name] = {"ref" : [],
-                                                   "alt" : []}
-                clusters.clusters[cluster_name]["ref"].append(dict_ref[locus_id])
+                if cluster_name not in cluster_list.keys():
+                    cluster = Cluster(cluster_name)
+                    cluster_list[cluster_name] = cluster
+                cluster.append_to_loci("ref", dict_ref[locus_id])
                 already_grouped.append(locus_id + is_ref_marker)
         else:
             if locus_id + "_alt" not in already_grouped:
                 cluster_name = "cluster " + str(i)
                 
-                if cluster_name not in clusters.clusters:
-                    clusters.clusters[cluster_name] = {"ref" : [],
-                                                   "alt" : []}
-                clusters.clusters[cluster_name]["alt"].append(dict_alt[locus_id])
+                if cluster_name not in cluster_list.keys():
+                    cluster = Cluster(cluster_name)
+                    cluster_list[cluster_name] = cluster
+                cluster.append_to_loci("alt", dict_alt[locus_id])
                 already_grouped.append(locus_id + is_ref_marker)
             
         # while we did not reach the end of the list and a 'stop signal' (j=-1)
@@ -537,10 +563,10 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                         print(f"new locus borders = {locus_borders}")
                     
                     if next_is_ref:
-                        clusters.clusters[cluster_name]["ref"].append(dict_ref[next_locus_id])
+                        cluster.append_to_loci("ref", dict_ref[next_locus_id])
                         already_grouped.append(next_locus_id + next_is_ref_marker)
                     else:
-                        clusters.clusters[cluster_name]["alt"].append(dict_alt[next_locus_id])
+                        cluster.append_to_loci("alt", dict_alt[next_locus_id])
                         already_grouped.append(next_locus_id + next_is_ref_marker)
                     j += 1
                       
@@ -570,12 +596,18 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                     print(f"{next_locus_id} on different strand, skipping")        
                 j += 1
                          
+        # assign the end coordinate value to the cluster
+        ref_end = cluster.get_loci()["ref"][-1].end
+        alt_end = cluster.get_loci()["alt"][-1].end
+        cluster.set_end(max(ref_end, alt_end))
+        
         if debug:
             print(f"cluster name = {cluster_name}")
-            print(clusters.clusters[cluster_name]["ref"])
-            print(clusters.clusters[cluster_name]["alt"])
+            print(cluster.get_loci()["ref"])
+            print(cluster.get_loci()["alt"])
+            print(cluster.get_end())
     
-    return clusters
+    return cluster_list
 
 
 ## This function retrieves all the CDS coordinates from the given lists of 
@@ -775,6 +807,13 @@ def is_in_cds(cds_bounds, area_bounds, debug=False, verbose=False):
     return in_cds
 
 
+#TODO docu (et remettre à un autre endroit)
+def reverse_coord(cds_list, cluster_end):
+    new_list = []
+    new_list.append(abs(cds_list[1]-cluster_end))
+    new_list.append(abs(cds_list[0]-cluster_end))
+    return new_list
+
 ## This function compares two annotations' loci returned by the function 
 # get_gff_borders and creates for each pair of reference-alternative mRNAs 
 # a comparison list detailing the identities and differences between the two
@@ -824,13 +863,13 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
             print(f"{ref_locus.name} and {alt_locus.name} do not overlap, returning 0% identity")
         return('_', 0.0, '_', '_', '_')
         
-    # for each mRNA in the reference locus...
+    # for each mRNA in the reference and lalternative loci...
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
-        # for each mRNA in the alternative locus...
         intervals_ref = iu.OrderedIntervals(mRNA_ref, True);
     
         for mRNA_alt_id, mRNA_alt in alt_locus.mRNAs.items():
-            (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt) 
+            (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, verbose)
+                
             identity = matches / (matches + mismatches_EI + mismatches_RF)
         
             # for each mRNA, we test wether the computed identity is higher 
@@ -859,27 +898,37 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
         print(f"\nFinal result of the comparison of the locus : {final_comparison[1]} matches and {final_comparison[0]} mismatches (identity = {final_identity})" )
     return (final_comparison, final_identity, final_mismatch_zones, final_ref_mRNA, final_alt_mRNA)
 
-def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt):
+#TODO docu
+def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, verbose):
+    if debug: print(f"reference CDS list = {mRNA_ref}\nalternative CDS list = {mRNA_alt}")
     matches=0    
     intervals_alt = iu.OrderedIntervals(mRNA_alt, True);
     inter_mrna = intervals_ref.intersection(intervals_alt);
     union_mrna = intervals_ref.union(intervals_alt);
+    if debug: print(f"CDS unions : {union_mrna.get_intervals_with_included_ub()}")
     # exon and intron (EI) mismatches
     mismatches_EI=union_mrna.total_length()-inter_mrna.total_length();
     inter_mrna_bounds=inter_mrna.get_intervals_with_included_ub();
+    if debug: print(f"CDS intersections : {inter_mrna_bounds}")
     rf_ref=get_reading_frame(mRNA_ref, inter_mrna_bounds, True, True)
     rf_alt=get_reading_frame(mRNA_alt, inter_mrna_bounds, True, True)
     interval_id=0;
     diff_EI=intervals_ref.symmetric_difference(intervals_alt);
+    if debug: print(f"CDS-intron comparison zones : {diff_EI.get_intervals_with_included_ub()}")
     diff_RF=[];
     mismatches_RF=0; # reading frame (RF) mismatches
+    if debug: print(f"reference mRNAs = {mRNA_ref}\nalternative mRNAs = {mRNA_alt}\nreference reading frames = {rf_ref}\nalternative reading frames = {rf_alt}")
     for interval_id in range(0, len(rf_ref)):
         interval_lg= inter_mrna_bounds[2*interval_id+1]-inter_mrna_bounds[2*interval_id]+1;
+        if debug: print(f"comparison area :\nlower bound = {inter_mrna_bounds[2*interval_id]+1}\nupper bound = {inter_mrna_bounds[2*interval_id+1]}\nlength = {interval_lg}")
         if rf_ref[interval_id] != rf_alt[interval_id]:
+            if debug: print(f"different reading frames for reference and alternative: adding length ({interval_lg}) to reading frame mismatches (mismatches_RF)")
             mismatches_RF+=interval_lg
             diff_RF.append([inter_mrna_bounds[2*interval_id], inter_mrna_bounds[2*interval_id+1]]);
         else:
+            if debug: print(f"identical reading frames for reference and alternative: adding length ({interval_lg}) to matches")
             matches+=interval_lg
+            
     return (matches, mismatches_EI, mismatches_RF, diff_EI.intervals, diff_RF)
 
 ## This function expects a list of all CDS coordinates (start and end) of a 
@@ -1135,6 +1184,7 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     return (final_comparison, final_identity, final_ref_mRNA, final_alt_mRNA)
     
 
+#TODO update docu (cluster_ref/alt/name --> juste cluster)
 ## This function compares the loci of the reference and alternative clusters
 # returned by the construct_clusters function by assigning each locus to the 
 # overlapping locus of the other annotation cluster which gives the highest
@@ -1166,11 +1216,23 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
 #
 # @returns Returns a list of dictionaries detailing the locus information for 
 # each locus comparison 
-def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=False, debug=False, verbose=False):
+def annotation_match(cluster, create_strings=False, debug=False, verbose=False):
+    cluster_ref = cluster.get_loci()["ref"]
+    cluster_alt = cluster.get_loci()["alt"]
+    cluster_name = cluster.name
     if verbose:
         print("\n\n**************** matching annotations loci with each other ****************")
     dyn_prog_matrix = [] # dynamic programmation matrix
     
+    # if the loci stored in the cluster are on the reverse strand, reverse 
+    # their mRNA's cds lists
+    if cluster_ref[0].direction == "reverse":
+        cluster_end = cluster.get_end()
+        for loc in cluster_ref:
+            loc.reverse(cluster_end)
+        for loc in cluster_alt:
+            loc.reverse(cluster_end)
+            
     # initialisation (expand matrix and fill it with zeros)
     for i in range(len(cluster_ref)+1):
         dyn_prog_matrix.append([])
@@ -1192,7 +1254,7 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
             if create_strings:
                 comparison, identity, ref_mRNA, alt_mRNA = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
             else:
-                comparison, identity, mismatch_zones, ref_mRNA, alt_mRNA = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
+                comparison, identity, EI_RF_mismatch_zones, ref_mRNA, alt_mRNA = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
             
             if debug:
                 print("comparison identity score = " + str(identity))
@@ -1223,6 +1285,14 @@ def annotation_match(cluster_ref, cluster_alt, cluster_name, create_strings=Fals
             comparison, identity, ref_mRNA, alt_mRNA = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)    
         else:
             comparison, identity, mismatch_zones, ref_mRNA, alt_mRNA = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
+            if debug: print(f"mismatch zones = {EI_RF_mismatch_zones}")
+            if cluster_ref[0].direction == "reverse":
+                new_mismatch_zones = []
+                new_mismatch_zones.append(reverse_coord(mismatch_zones[0], cluster_end))
+                for k in range(len(mismatch_zones[1])-1, -1, -1):
+                    new_mismatch_zones.append(reverse_coord(mismatch_zones[1][k], cluster_end))
+                mismatch_zones = new_mismatch_zones
+                if debug: print(f"new mismatch zones = {mismatch_zones}")
         
         if debug:
             print(f"top value : {dyn_prog_matrix[i-1][j]}, \nleft value : {dyn_prog_matrix[i][j-1]}, \ndiagonal value : {dyn_prog_matrix[i-1][j-1]} + {identity}")
@@ -1406,12 +1476,10 @@ def write_results(results, debug=False, verbose=False):
             # the csv structure
             mismatch_zones = ""
             
-            for i in range(0, len(loc["mismatch zones"][0]), 2):
-                mismatch_zones += "[" + str(loc["mismatch zones"][0][i]) + "//" + str(loc["mismatch zones"][0][i+1]) + "] "
-                    
-            for i in range(len(loc["mismatch zones"][1])):
-                mismatch_zones += "[" + str(loc["mismatch zones"][1][i][0]) + "//" + str(loc["mismatch zones"][1][i][1]) + "] "    
-            
+            if loc["mismatch zones"][0] not in ["_", "?"]:
+                for coords in loc["mismatch zones"]:
+                    mismatch_zones += "[" + str(coords[0]) + "//" + str(coords[1]) + "] "
+                            
             # if no comparison was done for the loci, write '~' instead of 
             # the comparison values
             if loc['mismatch/match'] == []:
@@ -1460,11 +1528,11 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     locus_order = annotation_sort(ref_annotations, alt_annotations, debug, verbose)
     
     # construct clusters of overlapping loci
-    clusters = construct_clusters(ref_annotations, alt_annotations, locus_order, debug, verbose)
+    cluster_list = construct_clusters(ref_annotations, alt_annotations, locus_order, debug, verbose)
     
     results = []
-    for cluster_id, cluster in clusters.clusters.items():
-        results.append(annotation_match(cluster["ref"], cluster["alt"], cluster_id, create_strings, debug, verbose))
+    for cluster_id, cluster in cluster_list.items():
+        results.append(annotation_match(cluster, create_strings, debug, verbose))
         
     print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[match/mismatch_EI/mismatch_RF]\t\tIdentity_Score\n")
     write_results(results, debug, verbose)
@@ -1532,10 +1600,16 @@ def main():
             
     # call of the annotation_comparison function
     return annotation_comparison(ref_path, alt_path, debug, verbose, create_strings, exon_mode)
+
+def test_reverse():
+    loc = Locus(name="locus1", mRNAs={"chrblabla": [100, 200, 300, 400]}, start=100, end=400, direction="reverse")
+    loc.reverse(600)
+    print(loc.mRNAs)
+    #FAIRE LA REINVERSION POUR LES ZONES DE MISMATCH
     
 if __name__ == "__main__":
     main()
-
+    #test_reverse()
 
     
     

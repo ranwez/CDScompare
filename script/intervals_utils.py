@@ -30,10 +30,7 @@ class OrderedIntervals:
     @staticmethod
     def new(intervals,include_ub=False):
         return OrderedIntervals(intervals,include_ub)
-
-    def union(self, other):
-        res =self.merge(other, lambda a, b: a or b).get_intervals_with_included_ub()
-
+    
     def union(self, other):
         return self.merge(other, lambda a, b: a or b)
 
