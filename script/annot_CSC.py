@@ -64,6 +64,7 @@ def write_results(results, debug=False, verbose=False):
             mismatch_zones = ""
             
             if loc["mismatch zones"][0] not in ["_", "?"]:
+                if debug: print(f"mismatch zones = {loc['mismatch zones']}")
                 for coords in loc["mismatch zones"]:
                     mismatch_zones += "[" + str(coords[0]) + "//" + str(coords[1]) + "] "
                             

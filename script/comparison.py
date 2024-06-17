@@ -65,7 +65,7 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
         return('_', 0.0, '_', '_', '_')
         
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
-        intervals_ref = iu.OrderedIntervals(mRNA_ref, True);
+        intervals_ref = iu.OrderedIntervals(mRNA_ref, True, debug);
     
         for mRNA_alt_id, mRNA_alt in alt_locus.mRNAs.items():
             (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, verbose)
@@ -101,7 +101,7 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
 def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, verbose):
     if debug: print(f"reference CDS list = {mRNA_ref}\nalternative CDS list = {mRNA_alt}")
     matches=0    
-    intervals_alt = iu.OrderedIntervals(mRNA_alt, True);
+    intervals_alt = iu.OrderedIntervals(mRNA_alt, True, debug);
     inter_mrna = intervals_ref.intersection(intervals_alt);
     union_mrna = intervals_ref.union(intervals_alt);
     if debug: print(f"CDS unions : {union_mrna.get_intervals_with_included_ub()}")
@@ -154,7 +154,7 @@ def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, v
 def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     if verbose:
         print(f"\n\n**************** comparing loci {ref_locus.name} of reference and {alt_locus.name} of alternative ****************")
-    final_comparison = [0,0]
+    final_comparison = [0,0,0]
     final_identity = 0.0
     
     # if the loci are on different strands, return 'null' values
@@ -178,7 +178,7 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
             # we create the structure string for each mRNA
             start_ref, vector_ref = pc.create_vectors(mRNA_ref, debug, verbose)
             start_alt, vector_alt = pc.create_vectors(mRNA_alt, debug, verbose)
-            comparison = [0,0]
+            comparison = [0,0,0]
                 
             # we assign to 'minimum string' and 'maximum string' the reference
             # and alternative strings
@@ -227,26 +227,26 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 if min_in_cds and max_in_cds and vector_min[i] == vector_max[i-diff]:
                     if debug:
                         print("both ref and alt are in cds with same codon position value, adding to 'match'")
-                    comparison[1] += 1
+                    comparison[0] += 1
                     
                 # if both are in a cds but don't have the same codon
                 # position, identify as a 'mismatch'
                 elif min_in_cds and max_in_cds and vector_min[i] != vector_max[i-diff]:
                     if debug:
                         print("both ref and alt are in cds, with different codon position value, adding to 'mismatch'")
-                    comparison[0] += 1
+                    comparison[2] += 1
                     
                 # if only one is in a cds, identify as a 'mismatch'
                 elif min_in_cds or max_in_cds:
                     if debug:
                         print("ref or alt in cds, adding to 'mismatch'")
-                    comparison[0] += 1
+                    comparison[1] += 1
                     
                 # the cas of both not being in a cds is ignored
                 else:
                     if debug:
                         print("ref and alt not in cds, ignoring")
-            identity = comparison[1] / (comparison[0] + comparison[1])
+            identity = comparison[0] / (comparison[0] + comparison[1] + comparison[2])
             
             # for each mRNA, we test wether the computed identity is higher 
             # than for the preceding mRNAs, to retrieve the highest identity
@@ -259,7 +259,7 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                     print(f"comparison = {comparison}\nfinal_comparison = {final_comparison}\nidentity = {identity}\nfinal identity = {final_identity}")
             # if all mRNAs comparisons return 0% identity, we still want 
             # mismatch values to be returned
-            elif identity == 0.0 and comparison[0] > final_comparison[0]:
+            elif identity == 0.0 and comparison[1]+comparison[2] > final_comparison[1]+final_comparison[2]:
                 final_comparison = comparison
                 final_ref_mRNA = mRNA_ref_id
                 final_alt_mRNA = mRNA_alt_id 

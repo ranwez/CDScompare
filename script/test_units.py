@@ -12,6 +12,12 @@ import os, sys
 script_dir = os.path.dirname( __file__ )
 sys.path.append( script_dir )
 import annot_CSC
+import locus
+import cluster as cl
+import intervals_utils as iu
+import read_files as rf
+import pre_comparison as pc
+import comparison as comp
 
 ## This script tests the 'annot_CSC.py' program on multiple basic 'artificial' test files and checks if their return values match what is expected
 
@@ -41,7 +47,7 @@ def test_get_structure_id():
         
         print(f"\n{test} test")
         
-        result = annot_CSC.get_structure_id(test_dict[test][0], False, False)
+        result = rf.get_structure_id(test_dict[test][0], False, False)
         print(f"result : {result}\n")
         print(test_dict[test][1])
         assert result == test_dict[test][1]
@@ -115,7 +121,7 @@ def test_get_gff_borders():
     
     for test in test_dict:
         print(f"\n{test} file test")
-        result = annot_CSC.get_gff_borders(test_dict[test][0], False, False)
+        result = rf.get_gff_borders(test_dict[test][0], False, False)
         
         # verify presence of expected mRNAs
         for loc_id, loc in test_dict[test][1].items():
@@ -128,63 +134,349 @@ def test_get_gff_borders():
             assert result[loc_id].contain_mrnas(**expected_mRNA)
         
         
+# test function for the 'intervals_utils.py' class method 'transform_intervals_to_exclude_ub'
+def test_transform_intervals_to_exclude_ub():
+    
+    # dictionary of inputs and expected ouputs for the method
+    test_dict = {
+        "basic" : [[100, 129, 150, 209, 240, 299], 
+                   [100, 130, 150, 210, 240, 300]],
+        
+        "identical" : [[100, 129, 150, 209, 240, 299], 
+                   [100, 130, 150, 210, 240, 300]],
+        
+        "minus-CDS" : [[100, 129, 240, 299], 
+                   [100, 130, 240, 300]],
+        
+        "fusion" : [[100, 209, 240, 299], 
+                   [100, 210, 240, 300]],
+        
+        "shift" : [[100, 129, 151, 209, 240, 299], 
+                   [100, 130, 151, 210, 240, 300]],
+        
+        "diff-start-before" : [[40, 69, 90, 149, 180, 239], 
+                               [40, 70, 90, 150, 180, 240]],
+        
+        "diff-start-after" : [[160, 189, 210, 269, 300, 359], 
+                              [160, 190, 210, 270, 300, 360]],
+        
+        "basic-2-loci (second locus)" : [[600, 699, 800, 899], 
+                                         [600, 700, 800, 900]],
+        
+        "length_computation_ref" : [[8, 13], 
+                   [8, 14]],
+        
+        "length_computation_alt" : [[1, 4, 12, 13], 
+                   [1, 5, 12, 14]]
+        
+        }
+    
+    print("\n*************Testing the transform_intervals_to_exclude_ub function*************")
+    
+    for test in test_dict:
+        
+        print(f"\n{test} file test")
+        # transform_intervals_to_exclude_ub is called by the class constructor
+        interval = iu.OrderedIntervals(test_dict[test][0], True, False)
+        result = interval.intervals
+        print(f"result : {result}\n")
+        print(test_dict[test][1])
+        assert result == test_dict[test][1]
+        
+        
+# test function for the 'intervals_utils.py' class method 'total_length'
+def test_total_length():
+    
+    # dictionary of inputs and expected ouputs for the method
+    test_dict = {
+        "basic" : [[100, 129, 150, 209, 240, 299],
+                   150],
+        
+        "identical" : [[100, 129, 150, 209, 240, 299],
+                   150],
+        
+        "minus-CDS" : [[100, 129, 240, 299],
+                   90],
+        
+        "fusion" : [[100, 209, 240, 299],
+                   170],
+        
+        "shift" : [[100, 129, 151, 209, 240, 299],
+                   149],
+        
+        "diff-start-before" : [[40, 69, 90, 149, 180, 239],
+                               150],
+        
+        "diff-start-after" : [[160, 189, 210, 269, 300, 359],
+                              150],
+        
+        "basic-2-loci (second locus)" : [[600, 699, 800, 899],
+                                         200],
+        
+        "length_computation_ref" : [[8, 13],
+                                    6],
+        
+        "length_computation_alt" : [[1, 4, 12, 13],
+                                    6],
+        
+        }
+    
+    print("\n*************Testing the total_length function*************")
+    
+    for test in test_dict:
+        
+        print(f"\n{test} file test")
+        
+        interval = iu.OrderedIntervals(test_dict[test][0], True, False)
+        result = interval.total_length()
+        print(f"result : {result}\n")
+        print(test_dict[test][1])
+        assert result == test_dict[test][1]
+        
+        
+# test function for the 'intervals_utils.py' class method 'intersection'
+def test_intersection():
+    
+    # dictionary of inputs and expected ouputs for the method
+    test_dict = {
+        
+        "identical" : [[100, 129, 150, 209, 240, 299],
+                       [100, 129, 150, 209, 240, 299],
+                   [100, 129, 150, 209, 240, 299]],
+        
+        "minus-CDS" : [[100, 129, 150, 209, 240, 299],
+                       [100, 129, 240, 299],
+                   [100, 129, 240, 299]],
+        
+        "fusion" : [[100, 129, 150, 209, 240, 299],
+                    [100, 209, 240, 299],
+                   [100, 129, 150, 209, 240, 299]],
+        
+        "shift" : [[100, 129, 150, 209, 240, 299],
+                   [100, 129, 151, 209, 240, 299],
+                   [100, 129, 151, 209, 240, 299]],
+        
+        "diff-start-before" : [[100, 129, 150, 209, 240, 299],
+                               [40, 69, 90, 149, 180, 239],
+                               [100, 129, 180, 209]],
+        
+        "diff-start-after" : [[100, 129, 150, 209, 240, 299],
+                              [160, 189, 210, 269, 300, 359],
+                              [160, 189, 240, 269]],
+        
+        }
+    
+    print("\n*************Testing the intersection function*************")
+    
+    for test in test_dict:
+        
+        print(f"\n{test} file test")
+        
+        interval1 = iu.OrderedIntervals(test_dict[test][0], True, False)
+        interval2 = iu.OrderedIntervals(test_dict[test][1], True, False)
+        result = interval1.intersection(interval2).get_intervals_with_included_ub()
+        print(f"result : {result}\n")
+        print(test_dict[test][2])
+        assert result == test_dict[test][2]
+        
+        
+# test function for the 'intervals_utils.py' class method 'union'
+def test_union():
+    
+    # dictionary of inputs and expected ouputs for the method
+    test_dict = {
+        
+        "identical" : [[100, 129, 150, 209, 240, 299],
+                       [100, 129, 150, 209, 240, 299],
+                   [100, 129, 150, 209, 240, 299]],
+        
+        "minus-CDS" : [[100, 129, 150, 209, 240, 299],
+                       [100, 129, 240, 299],
+                   [100, 129, 150, 209, 240, 299]],
+        
+        "fusion" : [[100, 129, 150, 209, 240, 299],
+                    [100, 209, 240, 299],
+                   [100, 209, 240, 299]],
+        
+        "shift" : [[100, 129, 150, 209, 240, 299],
+                   [100, 129, 151, 209, 240, 299],
+                   [100, 129, 150, 209, 240, 299]],
+        
+        "diff-start-before" : [[100, 129, 150, 209, 240, 299],
+                               [40, 69, 90, 149, 180, 239],
+                               [40, 69, 90, 299]],
+        
+        "diff-start-after" : [[100, 129, 150, 209, 240, 299],
+                              [160, 189, 210, 269, 300, 359],
+                              [100, 129, 150, 359]],
+        
+        }
+    
+    print("\n*************Testing the intersection function*************")
+    
+    for test in test_dict:
+        
+        print(f"\n{test} file test")
+        
+        interval1 = iu.OrderedIntervals(test_dict[test][0], True, False)
+        interval2 = iu.OrderedIntervals(test_dict[test][1], True, False)
+        result = interval1.union(interval2).get_intervals_with_included_ub()
+        print(f"result : {result}\n")
+        print(test_dict[test][2])
+        assert result == test_dict[test][2]
+        
+        
+# test function for the 'locus.py' class method 'reverse'
+def test_reverse():
+    
+    # dictionary of inputs and expected ouputs for the method
+    test_dict = {
+        
+        "basic" : [[100, 129, 150, 209, 240, 299],
+                   300,
+                   {"test_mRNA": [1, 60, 91, 150, 171, 200]}],
+        
+        "diff_cluster" : [[100, 129, 150, 209, 240, 299],
+                          400,
+                          {"test_mRNA": [101, 160, 191, 250, 271, 300]}]
+        
+        }
+    
+    print("\n*************Testing the reverse function*************")
+    
+    for test in test_dict:
+        
+        print(f"\n{test} file test")
+        
+        loc = locus.Locus(mRNAs = {"test_mRNA": test_dict[test][0]})
+        loc.reverse(test_dict[test][1])
+        result = loc.mRNAs
+        print(f"result : {result}\n")
+        print(test_dict[test][2])
+        assert result == test_dict[test][2]
+        
+        
+# test function for the 'pre_comparison.py' class function 'get_reading_frame'
+def test_get_reading_frame():
+    
+    # dictionary of inputs and expected ouputs for the method
+    test_dict = {
+        
+        "identical" : [[100, 129, 150, 209, 240, 299],
+                       [100, 129, 150, 209, 240, 299],
+                       [1, 1, 1]],
+        
+        "minus-CDS_ref" : [[100, 129, 150, 209, 240, 299],
+                           [100, 129, 240, 299],
+                           [1, 1]],
+        
+        "minus-CDS_alt" : [[100, 129, 240, 299],
+                           [100, 129, 240, 299],
+                           [1, 1]],
+        
+        "fusion_ref" : [[100, 129, 150, 209, 240, 299],
+                        [100, 129, 150, 209, 240, 299],
+                        [1, 1, 1]],
+        
+        "fusion_alt" : [[100, 209, 240, 299],
+                        [100, 129, 150, 209, 240, 299],
+                        [1, 3, 3]],
+        
+        "shift_ref" : [[100, 129, 150, 209, 240, 299],
+                       [100, 129, 151, 209, 240, 299],
+                       [1, 2, 1]],
+        
+        "shift_alt" : [[100, 129, 151, 209, 240, 299],
+                       [100, 129, 151, 209, 240, 299],
+                       [1, 1, 3]],
+        
+        "diff-start-before_ref" : [[100, 129, 150, 209, 240, 299],
+                                   [100, 129, 180, 209],
+                                   [1, 1]],
+        
+        "diff-start-before_alt" : [[40, 69, 90, 149, 180, 239],
+                                   [100, 129, 180, 209],
+                                   [2, 1]],
+        
+        "diff-start-after_ref" : [[100, 129, 150, 209, 240, 299],
+                                  [160, 189, 240, 269],
+                                  [2, 1]],
+        
+        "diff-start-after_alt" : [[160, 189, 210, 269, 300, 359],
+                                  [160, 189, 240, 269],
+                                  [1, 1]],
+        
+        }
+    
+    print("\n*************Testing the get_reading_frame function*************")
+    
+    for test in test_dict:
+        
+        print(f"\n{test} file test")
+        
+        result = pc.get_reading_frame(test_dict[test][0], test_dict[test][1])
+        print(f"result : {result}\n")
+        print(test_dict[test][2])
+        assert result == test_dict[test][2]
+        
+        
 # test function for the 'annot_CSC.py' function 'annotation_sort' (locus list creation and sorting function)
 def test_annotation_sort():
     
     # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'annotation_sort' (locus list creation and sorting function)
     test_dict = {"overlapping-loci" : [
-                                {'chr2A_1000': annot_CSC.Locus(name='chr2A_1000', 
+                                {'chr2A_1000': locus.Locus(name='chr2A_1000', 
                                                      mRNAs={'chr2A_1000_mrna': [50, 149]}, 
                                                      start=50, 
                                                      end=149, 
                                                      direction='direct'), 
-                                'chr2A_2000': annot_CSC.Locus(name='chr2A_2000', 
+                                'chr2A_2000': locus.Locus(name='chr2A_2000', 
                                                      mRNAs={'chr2A_2000_mrna': [200, 349]}, 
                                                      start=200, 
                                                      end=349, 
                                                      direction='direct'), 
-                                'chr2A_3000': annot_CSC.Locus(name='chr2A_3000', 
+                                'chr2A_3000': locus.Locus(name='chr2A_3000', 
                                                      mRNAs={'chr2A_3000_mrna': [400, 549]}, 
                                                      start=400, 
                                                      end=549, 
                                                      direction='direct'),
-                                'chr2A_4000': annot_CSC.Locus(name='chr2A_4000', 
+                                'chr2A_4000': locus.Locus(name='chr2A_4000', 
                                                      mRNAs={'chr2A_4000_mrna': [650, 699]}, 
                                                      start=650, 
                                                      end=699, 
                                                      direction='direct'),
-                                'chr2A_5000': annot_CSC.Locus(name='chr2A_5000', 
+                                'chr2A_5000': locus.Locus(name='chr2A_5000', 
                                                      mRNAs={'chr2A_5000_mrna': [750, 799]}, 
                                                      start=750, 
                                                      end=799, 
                                                      direction='direct')},
                                                     
-                                {'chr2A_1000': annot_CSC.Locus(name='chr2A_1000', 
+                                {'chr2A_1000': locus.Locus(name='chr2A_1000', 
                                                      mRNAs={'chr2A_1000_mrna': [100, 249]}, 
                                                      start=100, 
                                                      end=249, 
                                                      direction='direct'), 
-                                'chr2A_2000': annot_CSC.Locus(name='chr2A_2000', 
+                                'chr2A_2000': locus.Locus(name='chr2A_2000', 
                                                      mRNAs={'chr2A_2000_mrna': [300, 449]}, 
                                                      start=300, 
                                                      end=449, 
                                                      direction='direct'), 
-                                'chr2A_3000': annot_CSC.Locus(name='chr2A_3000', 
+                                'chr2A_3000': locus.Locus(name='chr2A_3000', 
                                                      mRNAs={'chr2A_3000_mrna': [500, 599]}, 
                                                      start=500, 
                                                      end=599, 
                                                      direction='direct'),
-                                'chr2A_4000': annot_CSC.Locus(name='chr2A_4000', 
+                                'chr2A_4000': locus.Locus(name='chr2A_4000', 
                                                      mRNAs={'chr2A_4000_mrna': [650, 699]}, 
                                                      start=650, 
                                                      end=699, 
                                                      direction='direct'),
-                                'chr2A_5000': annot_CSC.Locus(name='chr2A_5000', 
+                                'chr2A_5000': locus.Locus(name='chr2A_5000', 
                                                      mRNAs={'chr2A_5000_mrna': [750, 779]}, 
                                                      start=750, 
                                                      end=779, 
                                                      direction='direct'),
-                                'chr2A_6000': annot_CSC.Locus(name='chr2A_6000', 
+                                'chr2A_6000': locus.Locus(name='chr2A_6000', 
                                                      mRNAs={'chr2A_6000_mrna': [790, 849]}, 
                                                      start=790, 
                                                      end=849, 
@@ -209,7 +501,7 @@ def test_annotation_sort():
         
         print(f"\n{test} file test")
         
-        result = annot_CSC.annotation_sort(test_dict[test][0], test_dict[test][1], False, False)
+        result = pc.annotation_sort(test_dict[test][0], test_dict[test][1], False, False)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
@@ -220,58 +512,58 @@ def test_construct_clusters():
     
     # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'construct_clusters' (overlapping loci grouping function)
     test_dict = {'simple' : [{
-        'chr2A_1000': annot_CSC.Locus(name='chr2A_1000', 
+        'chr2A_1000': locus.Locus(name='chr2A_1000', 
                                  mRNAs={'chr2A_1000_mrna': [50, 149]}, 
                                  start=50, 
                                  end=149, 
                                  direction='direct'), 
-        'chr2A_2000': annot_CSC.Locus(name='chr2A_2000', 
+        'chr2A_2000': locus.Locus(name='chr2A_2000', 
                                  mRNAs={'chr2A_2000_mrna': [200, 349]}, 
                                  start=200, 
                                  end=349, 
                                  direction='direct'), 
-        'chr2A_3000': annot_CSC.Locus(name='chr2A_3000', 
+        'chr2A_3000': locus.Locus(name='chr2A_3000', 
                                  mRNAs={'chr2A_3000_mrna': [400, 549]}, 
                                  start=400, 
                                  end=549, 
                                  direction='direct'),
-        'chr2A_4000': annot_CSC.Locus(name='chr2A_4000', 
+        'chr2A_4000': locus.Locus(name='chr2A_4000', 
                                  mRNAs={'chr2A_4000_mrna': [650, 699]}, 
                                  start=650, 
                                  end=699, 
                                  direction='direct'),
-        'chr2A_5000': annot_CSC.Locus(name='chr2A_5000', 
+        'chr2A_5000': locus.Locus(name='chr2A_5000', 
                                  mRNAs={'chr2A_5000_mrna': [750, 799]}, 
                                  start=750, 
                                  end=799, 
                                  direction='direct')},
                     
-        {'chr2A_1000': annot_CSC.Locus(name='chr2A_1000', 
+        {'chr2A_1000': locus.Locus(name='chr2A_1000', 
                              mRNAs={'chr2A_1000_mrna': [100, 249]}, 
                              start=100, 
                              end=249, 
                              direction='direct'), 
-        'chr2A_2000': annot_CSC.Locus(name='chr2A_2000', 
+        'chr2A_2000': locus.Locus(name='chr2A_2000', 
                              mRNAs={'chr2A_2000_mrna': [300, 449]}, 
                              start=300, 
                              end=449, 
                              direction='direct'), 
-        'chr2A_3000': annot_CSC.Locus(name='chr2A_3000', 
+        'chr2A_3000': locus.Locus(name='chr2A_3000', 
                              mRNAs={'chr2A_3000_mrna': [500, 599]}, 
                              start=500, 
                              end=599, 
                              direction='direct'),
-        'chr2A_4000': annot_CSC.Locus(name='chr2A_4000', 
+        'chr2A_4000': locus.Locus(name='chr2A_4000', 
                              mRNAs={'chr2A_4000_mrna': [650, 699]}, 
                              start=650, 
                              end=699, 
                              direction='direct'),
-        'chr2A_5000': annot_CSC.Locus(name='chr2A_5000', 
+        'chr2A_5000': locus.Locus(name='chr2A_5000', 
                              mRNAs={'chr2A_5000_mrna': [750, 779]}, 
                              start=750, 
                              end=779, 
                              direction='direct'),
-        'chr2A_6000': annot_CSC.Locus(name='chr2A_6000', 
+        'chr2A_6000': locus.Locus(name='chr2A_6000', 
                              mRNAs={'chr2A_6000_mrna': [790, 849]}, 
                              start=790, 
                              end=849, 
@@ -289,21 +581,17 @@ def test_construct_clusters():
        (750, 799, 'chr2A_5000', True,'direct'), 
        (790, 849, 'chr2A_6000', False,'direct')],
         
-        {'cluster 0':  [{'chr2A_1000_mrna': [50, 149]}, {'chr2A_2000_mrna': [200, 349]}, {'chr2A_3000_mrna': [400, 549]}], 
-          'cluster 6':  [{'chr2A_4000_mrna': [650, 699]}], 
-          'cluster 8':  [{'chr2A_5000_mrna': [750, 799]}]},
+        {'cluster 0': {'ref': [{'chr2A_1000_mrna': [50, 149]}, {'chr2A_2000_mrna': [200, 349]}, {'chr2A_3000_mrna': [400, 549]}], 'alt': [{'chr2A_1000_mrna': [100, 249]}, {'chr2A_2000_mrna': [300, 449]}, {'chr2A_3000_mrna': [500, 599]}]},
+         'cluster 6': {'ref': [{'chr2A_4000_mrna': [650, 699]}], 'alt': [{'chr2A_4000_mrna': [650, 699]}]},
+         'cluster 8': {'ref': [{'chr2A_5000_mrna': [750, 799]}], 'alt': [{'chr2A_5000_mrna': [750, 779]}, {'chr2A_6000_mrna': [790, 849]}]}}],
         
-        {'cluster 0':  [{'chr2A_1000_mrna': [100, 249]}, {'chr2A_2000_mrna': [300, 449]}, {'chr2A_3000_mrna': [500, 599]}], 
-          'cluster 6':  [{'chr2A_4000_mrna': [650, 699]}], 
-          'cluster 8':  [{'chr2A_5000_mrna': [750, 779]}, {'chr2A_6000_mrna': [790, 849]}]}],
-        
-                "reverse-basic" : [{"chr2A_00611930" : annot_CSC.Locus(name='chr2A_00611930', 
+                "reverse-basic" : [{"chr2A_00611930" : locus.Locus(name='chr2A_00611930', 
                                      mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                      start=100, 
                                      end=299, 
                                      direction='direct')},
             
-                                   {"chr2A_00611930" : annot_CSC.Locus(name='chr2A_00611930', 
+                                   {"chr2A_00611930" : locus.Locus(name='chr2A_00611930', 
                                      mRNAs={'chr2A_00611930_mrna': [299, 240, 209, 150, 129, 100]}, 
                                      start=299, 
                                      end=100, 
@@ -312,9 +600,8 @@ def test_construct_clusters():
                                    [(100, 299, 'chr2A_00611930', True,'direct'), 
                                   (299, 100, 'chr2A_00611930', False,'reverse')], 
             
-                                   {'cluster 0':  [{'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}]},
-                                   
-                                   {'cluster 1':  [{'chr2A_00611930_mrna': [299, 240, 209, 150, 129, 100]}]}]
+                                   {'cluster 0':  {'ref': [{'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}], 'alt': []},
+                                    'cluster 1':  {'ref': [], 'alt': [{'chr2A_00611930_mrna': [299, 240, 209, 150, 129, 100]}]}}]
         
     }
 
@@ -324,121 +611,12 @@ def test_construct_clusters():
         
         print(f"\n{test} test")
         
-        result = annot_CSC.construct_clusters(test_dict[test][0], test_dict[test][1], test_dict[test][2], False, False)
+        result = pc.construct_clusters(test_dict[test][0], test_dict[test][1], test_dict[test][2], False, False)
         for cluster_id, cluster in test_dict[test][3].items():
-            for mRNA in cluster:
-                result_mRNAs = result.get_mRNAs(cluster_id, "ref")
-                print(f"Expected mRNA = {mRNA}")
-                print(f"Result mRNAs = {result_mRNAs}")
-                assert mRNA in result_mRNAs
-        for cluster_id, cluster in test_dict[test][4].items():
-            for mRNA in cluster:
-                result_mRNAs = result.get_mRNAs(cluster_id, "alt")
-                print(f"Expected mRNA = {mRNA}")
-                print(f"Result mRNAs = {result_mRNAs}")
-                assert mRNA in result_mRNAs
-    
-
-# test function for the 'annot_CSC.py' function 'get_area_bounds' (CDS coordinates fusion function)
-def test_get_area_bounds():
-    
-    # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'get_area_bounds' (CDS coordinates fusion function)
-    test_dict = {
-        "identical" : [[100, 129, 150, 209, 240, 299], 
-                       [100, 129, 150, 209, 240, 299], 
-                       [100, 129, 150, 209, 240, 299]],
-        
-        "minus-CDS" : [[100, 129, 150, 209, 240, 299],
-                       [100, 129, 240, 299],
-                       [100, 129, 150, 209, 240, 299]],
-        
-        "fusion" : [[100, 129, 150, 209, 240, 299],
-                    [100, 209, 240, 299],
-                    [100, 129, 150, 209, 240, 299]],
-        
-        "shift" : [[100, 129, 150, 209, 240, 299],
-                   [100, 129, 151, 209, 240, 299],
-                   [100, 129, 150, 151, 209, 240, 299]],
-        
-        "diff-start-before" : [[100, 129, 150, 209, 240, 299],
-                               [40, 69, 90, 149, 180, 239],
-                               [40, 69, 90, 100, 129, 149, 150, 180, 209, 239, 240, 299]],
-        
-        "diff-start-after" : [[100, 129, 150, 209, 240, 299],
-                              [160, 189, 210, 269, 300, 359],
-                              [100, 129, 150, 160, 189, 209, 210, 240, 269, 299, 300, 359]],
-        
-        "basic-2-loci (second locus)" : [[600, 699, 800, 899],
-                                         [600, 699, 800, 899],
-                                         [600, 699, 800, 899]],
-        
-        "length_computation" : [[8, 13], 
-                       [1, 4, 12, 13], 
-                       [1, 4, 8, 12, 13]]
-        
-        }
-    
-    print("\n*************Testing the get_area_bounds function*************")
-    
-    for test in test_dict:
-        
-        print(f"\n{test} file test")
-        
-        result = annot_CSC.get_area_bounds(test_dict[test][0], test_dict[test][1], False, False)
-        print(f"result : {result}\n")
-        print(f"expected result : {test_dict[test][2]}\n")
-        assert result == test_dict[test][2]
-    
-
-# test function for the 'annot_CSC.py' function 'is_in_cds' (CDS inclusion in comparison area function)
-def test_is_in_cds():
-    
-    # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'is_in_cds' (CDS inclusion in comparison area function)
-    test_dict = {
-        "identical" : [[100, 129, 150, 209, 240, 299],
-                       [100, 129, 150, 209, 240, 299],
-                       [True, False, True, False, True]],
-        
-        "minus-CDS" : [[100, 129, 240, 299],
-                       [100, 129, 150, 209, 240, 299],
-                       [True, False, False, False, True]],
-        
-        "fusion" : [[100, 209, 240, 299],
-                    [100, 129, 150, 209, 240, 299],
-                    [True, True, True, False, True]],
-        
-        "shift" : [[100, 129, 151, 209, 240, 299],
-                   [100, 129, 150, 151, 209, 240, 299],
-                   [True, False, False, True, False, True]],
-        
-        "diff-start-before" : [[40, 69, 90, 149, 180, 239],
-                               [40, 69, 90, 100, 130, 149, 180, 210, 239, 299],
-                               [True, False, True, True, True, False, True, True, False]],
-        
-        "diff-start-after" : [[160, 189, 210, 269, 300, 359],
-                              [100, 129, 150, 160, 189, 210, 239, 269, 299, 359],
-                              [False, False, False, True, False, True, True, False, False]],
-        
-        "basic-2-loci (second locus)" : [[600, 699, 800, 899],
-                                         [600, 699, 800, 899],
-                                         [True, False, True]],
-        
-        "length_computation" : [[8, 13],
-                       [1, 4, 12, 13],
-                       [False, False, True]],
-        
-        }
-    
-    print("\n*************Testing the is_in_cds function*************")
-    
-    for test in test_dict:
-        
-        print(f"\n{test} file test")
-        
-        result = annot_CSC.is_in_cds(test_dict[test][0], test_dict[test][1], False, False)
-        print(f"result : {result}\n")
-        print(f"expected result : {test_dict[test][2]}\n")
-        assert result == test_dict[test][2]
+            result_details = result[cluster_id].get_details()
+            print(f"expected mRNAs: {test_dict[test][3][cluster_id]}")
+            print(f"result mRNAs: {result_details}")
+            assert result_details == cluster
 
 
 # test function for the 'annot_CSC.py' function 'compare_loci' (new locus comparison function)
@@ -446,126 +624,126 @@ def test_compare_loci():
     
     # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'compare_loci' (new locus comparison function)
     test_dict = {
-        "identical" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "identical" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
                                  end=299, 
                                  direction='direct'), 
-                       annot_CSC.Locus(name='chr2A_00611930', 
+                       locus.Locus(name='chr2A_00611930', 
                                     mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                     start=100, 
                                     end=299, 
                                     direction='direct'),
-                       ([0, 150], 100.0, [], 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                       ([150, 0, 0], 100.0, ([], []), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "minus-CDS" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "minus-CDS" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
                                  end=299, 
                                  direction='direct'),
-                       annot_CSC.Locus(name='chr2A_00611930', 
+                       locus.Locus(name='chr2A_00611930', 
                                     mRNAs={'chr2A_00611930_mrna': [100, 129, 240, 299]}, 
                                     start=100, 
                                     end=299, 
                                     direction='direct'),
-                       ([60, 90], 60.0, ['150-209'], 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                       ([90, 60, 0], 60.0, ([150, 210], []), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "fusion" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "fusion" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
                                  end=299, 
                                  direction='direct'),
-                    annot_CSC.Locus(name='chr2A_00611930', 
+                    locus.Locus(name='chr2A_00611930', 
                                 mRNAs={'chr2A_00611930_mrna': [100, 209, 240, 299]}, 
                                 start=100, 
                                 end=299, 
                                 direction='direct'),
-                    ([141, 29], 17.1, ['129-150', '150-209', '240-299'], 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                    ([30, 20, 120], 17.6, ([130, 150], [[150, 209], [240, 299]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "shift" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "shift" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
                                  end=299, 
                                  direction='direct'),
-                   annot_CSC.Locus(name='chr2A_00611930', 
+                   locus.Locus(name='chr2A_00611930', 
                                 mRNAs={'chr2A_00611930_mrna': [100, 129, 151, 209, 240, 299]}, 
                                 start=100, 
                                 end=299, 
                                 direction='direct'),
-                   ([120, 30], 20.0, ['150-151', '151-209', '240-299'], 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                   ([30, 1, 119], 20.0, ([150, 151], [[151, 209], [240, 299]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "reverse-basic" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "reverse-basic" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
                                  end=299, 
                                  direction='direct'),
-                     annot_CSC.Locus(name='chr2A_00611930', 
+                     locus.Locus(name='chr2A_00611930', 
                                 mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                 start=100, 
                                 end=299, 
                                 direction='reverse'),
                      ('_', 0.0, '_', '_', '_')],
         
-        "diff-start-before" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "diff-start-before" : [locus.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                             start=100, 
                                             end=299, 
                                             direction='direct'),
-                               annot_CSC.Locus(name='chr2A_00611930', 
+                               locus.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [40, 69, 90, 149, 180, 239]}, 
                                             start=40, 
                                             end=239, 
                                             direction='direct'),
-                               ([211, 29], 12.1, ['40-69', '90-100', '100-129', '129-149', '150-180', '209-239', '240-299'], 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                               ([30, 180, 30], 12.5, ([40, 70, 90, 100, 130, 180, 210, 300], [[100, 129]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "diff-start-after" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "diff-start-after" : [locus.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                             start=100, 
                                             end=299, 
                                             direction='direct'),
-                              annot_CSC.Locus(name='chr2A_00611930', 
+                              locus.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [160, 189, 210, 269, 300, 359]}, 
                                             start=160, 
                                             end=359, 
                                             direction='direct'),
-                              ([211, 29], 12.1, ['100-129', '150-160', '160-189', '189-209', '210-240', '269-299', '300-359'], 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                              ([30, 180, 30], 12.5, ([100, 130, 150, 160, 190, 240, 270, 360], [[160, 189]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "multiple_mRNAs" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "multiple_mRNAs" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
                                  end=299, 
                                  direction='direct'), 
-                       annot_CSC.Locus(name='chr2A_00611930', 
+                       locus.Locus(name='chr2A_00611930', 
                                     mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 179, 240, 299],
                                            'chr2A_00611930_mrna.2': [100, 129, 240, 299]}, 
                                     start=100, 
                                     end=299, 
                                     direction='direct'),
-                       ([31, 119], 79.3, ['179-209'], 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                       ([120, 30, 0], 80.0, ([180, 210], []), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "basic-2-loci (second locus)" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "basic-2-loci (second locus)" : [locus.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [600, 699, 800, 899]}, 
                                             start=600, 
                                             end=899, 
                                             direction='direct'),
-                                         annot_CSC.Locus(name='chr2A_00611930', 
+                                         locus.Locus(name='chr2A_00611930', 
                                                     mRNAs={'chr2A_00611930_mrna': [600, 699, 800, 899]}, 
                                                     start=600, 
                                                     end=899, 
                                                     direction='direct'),
-                                         ([0, 200], 100.0, [], 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                                         ([200, 0, 0], 100.0, ([], []), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "length_computation" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "length_computation" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [8, 13]}, 
                                  start=8, 
                                  end=13, 
                                  direction='direct'), 
-                       annot_CSC.Locus(name='chr2A_00611930', 
+                       locus.Locus(name='chr2A_00611930', 
                                     mRNAs={'chr2A_00611930_mrna': [1, 4, 12, 13]}, 
                                     start=1, 
                                     end=13, 
                                     direction='direct'),
-                       ([8, 2], 20.0, ['1-4', '8-12'], 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')]
+                       ([2, 8, 0], 20.0, ([1, 5, 8, 12], []), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')]
         
         }
     
@@ -575,7 +753,7 @@ def test_compare_loci():
         
         print(f"\n{test} file test")
         
-        result = annot_CSC.compare_loci(test_dict[test][0], test_dict[test][1], False, False)
+        result = comp.compare_loci(test_dict[test][0], test_dict[test][1], False, False)
         print(f"Expected result = {test_dict[test][2]}")
         print(f"Result = {result}")
         assert result == test_dict[test][2]
@@ -624,7 +802,7 @@ def test_create_vectors():
         
         print(f"\n{test} file test")
         
-        result = annot_CSC.create_vectors(test_dict[test][0], False, False)
+        result = pc.create_vectors(test_dict[test][0], False, False)
         print(f"result : {result}\n")
         print(test_dict[test][1])
         assert result == test_dict[test][1]
@@ -635,162 +813,162 @@ def test_old_compare_loci():
     
     # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'old_compare_loci' (old locus comparison function)
     test_dict = {
-        "identical" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "identical" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
                                  end=299, 
                                  direction='direct'), 
-                       annot_CSC.Locus(name='chr2A_00611930', 
+                       locus.Locus(name='chr2A_00611930', 
                                     mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                     start=100, 
                                     end=299, 
                                     direction='direct'),
-                       ([0, 150], 100.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                       ([150, 0, 0], 100.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "minus-CDS" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "minus-CDS" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
                                  end=299, 
                                  direction='direct'),
-                       annot_CSC.Locus(name='chr2A_00611930', 
+                       locus.Locus(name='chr2A_00611930', 
                                     mRNAs={'chr2A_00611930_mrna': [100, 129, 240, 299]}, 
                                     start=100, 
                                     end=299, 
                                     direction='direct'),
-                       ([60, 90], 60.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                       ([90, 60, 0], 60.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "fusion" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "fusion" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
                                  end=299, 
                                  direction='direct'),
-                    annot_CSC.Locus(name='chr2A_00611930', 
+                    locus.Locus(name='chr2A_00611930', 
                                 mRNAs={'chr2A_00611930_mrna': [100, 209, 240, 299]}, 
                                 start=100, 
                                 end=299, 
                                 direction='direct'),
-                    ([140, 30], 17.6, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                    ([30, 20, 120], 17.6, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "shift" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "shift" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
                                  end=299, 
                                  direction='direct'),
-                   annot_CSC.Locus(name='chr2A_00611930', 
+                   locus.Locus(name='chr2A_00611930', 
                                 mRNAs={'chr2A_00611930_mrna': [100, 129, 151, 209, 240, 299]}, 
                                 start=100, 
                                 end=299, 
                                 direction='direct'),
-                   ([120, 30], 20.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                   ([30, 1, 119], 20.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
 
-        "reverse-basic" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "reverse-basic" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
                                  end=299, 
                                  direction='direct'),
-                     annot_CSC.Locus(name='chr2A_00611930', 
+                     locus.Locus(name='chr2A_00611930', 
                                 mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                 start=100, 
                                 end=299, 
                                 direction='reverse'),
                      ('_', 0.0, '_', '_')],
         
-        "reverse-reverse" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "reverse-reverse" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
                                  end=299, 
                                  direction='reverse'),
-                     annot_CSC.Locus(name='chr2A_00611930', 
+                     locus.Locus(name='chr2A_00611930', 
                                 mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                 start=100, 
                                 end=299, 
                                 direction='reverse'),
-                     ([0, 150], 100.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                     ([150, 0, 0], 100.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "diff-start-before" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "diff-start-before" : [locus.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                             start=100, 
                                             end=299, 
                                             direction='direct'),
-                               annot_CSC.Locus(name='chr2A_00611930', 
+                               locus.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [40, 69, 90, 149, 180, 239]}, 
                                             start=40, 
                                             end=239, 
                                             direction='direct'),
-                               ([210, 30], 12.5, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                               ([30, 180, 30], 12.5, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "diff-start-after" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "diff-start-after" : [locus.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                             start=100, 
                                             end=299, 
                                             direction='direct'),
-                              annot_CSC.Locus(name='chr2A_00611930', 
+                              locus.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [160, 189, 210, 269, 300, 359]}, 
                                             start=160, 
                                             end=359, 
                                             direction='direct'),
-                              ([210, 30], 12.5, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                              ([30, 180, 30], 12.5, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "multiple_mRNAs" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "multiple_mRNAs" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
                                  end=299, 
                                  direction='direct'), 
-                       annot_CSC.Locus(name='chr2A_00611930', 
+                       locus.Locus(name='chr2A_00611930', 
                                     mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 179, 240, 299],
                                            'chr2A_00611930_mrna.2': [100, 129, 240, 299]}, 
                                     start=100, 
                                     end=299, 
                                     direction='direct'),
-                       ([30, 120], 80.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                       ([120, 30, 0], 80.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        "basic-2-loci (second locus)" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "basic-2-loci (second locus)" : [locus.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [600, 699, 800, 899]}, 
                                             start=600, 
                                             end=899, 
                                             direction='direct'),
-                                         annot_CSC.Locus(name='chr2A_00611930', 
+                                         locus.Locus(name='chr2A_00611930', 
                                                     mRNAs={'chr2A_00611930_mrna': [600, 699, 800, 899]}, 
                                                     start=600, 
                                                     end=899, 
                                                     direction='direct'),
-                                         ([0, 200], 100.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                                         ([200, 0, 0], 100.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
-        'overlapping-loci (first cluster/locus)' : [annot_CSC.Locus(name='chr2A_1000', 
+        'overlapping-loci (first cluster/locus)' : [locus.Locus(name='chr2A_1000', 
                                                              mRNAs={'chr2A_1000_mrna': [50, 149]}, 
                                                              start=50, 
                                                              end=149, 
                                                              direction='direct'),
-                                                    annot_CSC.Locus(name='chr2A_1000', 
+                                                    locus.Locus(name='chr2A_1000', 
                                                               mRNAs={'chr2A_1000_mrna': [100, 249]}, 
                                                               start=100, 
                                                               end=249, 
                                                               direction='direct'),
-                                                    ([200, 0], 0.0, "chr2A_1000_mrna", "chr2A_1000_mrna")],
+                                                    ([0, 150, 50], 0.0, 'chr2A_1000_mrna', 'chr2A_1000_mrna')],
         
-        'overlapping-loci (first cluster / 2nd locus)' : [annot_CSC.Locus(name='chr2A_2000', 
+        'overlapping-loci (first cluster / 2nd locus)' : [locus.Locus(name='chr2A_2000', 
                                                              mRNAs={'chr2A_2000_mrna': [200, 349]}, 
                                                              start=200, 
                                                              end=349, 
                                                              direction='direct'),
-                                                          annot_CSC.Locus(name='chr2A_2000', 
+                                                          locus.Locus(name='chr2A_2000', 
                                                               mRNAs={'chr2A_2000_mrna': [300, 449]}, 
                                                               start=300, 
                                                               end=449, 
                                                               direction='direct'),
-                                                          ([250, 0], 0.0, "chr2A_2000_mrna", "chr2A_2000_mrna")],
+                                                          ([0, 200, 50], 0.0, 'chr2A_2000_mrna', 'chr2A_2000_mrna')],
                          
-        "length_computation" : [annot_CSC.Locus(name='chr2A_00611930', 
+        "length_computation" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [8, 13]}, 
                                  start=8, 
                                  end=13, 
                                  direction='direct'), 
-                       annot_CSC.Locus(name='chr2A_00611930', 
+                       locus.Locus(name='chr2A_00611930', 
                                     mRNAs={'chr2A_00611930_mrna': [1, 4, 12, 13]}, 
                                     start=1, 
                                     end=13, 
                                     direction='direct'),
-                       ([8, 2], 20.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')]
+                       ([2, 8, 0], 20.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')]
         }
     
     print("\n*************Testing the old_compare_loci function*************")
@@ -799,7 +977,7 @@ def test_old_compare_loci():
         
         print(f"\n{test} file test")
         
-        result = annot_CSC.old_compare_loci(test_dict[test][0], test_dict[test][1], False, False)
+        result = comp.old_compare_loci(test_dict[test][0], test_dict[test][1], False, False)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
@@ -809,17 +987,17 @@ def test_old_compare_loci():
 def test_new_annotation_match():
     
     # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'annotation_match' (main annotation comparison function)
-    test_dict = {'basic' : [[annot_CSC.Locus(name='chr2A_00611930', 
-                                 mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
-                                 start=100, 
-                                 end=299, 
-                                 direction='direct')],
-                             [annot_CSC.Locus(name='chr2A_00611930', 
-                                                mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
-                                                start=100, 
-                                                end=299, 
-                                                direction='direct')],
-                             "cluster 0",
+    test_dict = {'basic' : [cl.Cluster(name="cluster 0",
+                                       loci={'ref': [locus.Locus(name='chr2A_00611930', 
+                                                                    mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
+                                                                    start=100, 
+                                                                    end=299, 
+                                                                    direction='direct')],
+                                             'alt': [locus.Locus(name='chr2A_00611930', 
+                                                                          mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
+                                                                          start=100, 
+                                                                          end=299, 
+                                                                          direction='direct')]}),
                              [{"reference" : 'chr2A_00611930',
                                 "reference start" : 100,
                                 "reference end" : 299,
@@ -828,24 +1006,24 @@ def test_new_annotation_match():
                                 "alternative end" : 299,
                                 "reference mRNA" : 'chr2A_00611930_mrna',
                                 "alternative mRNA" : 'chr2A_00611930_mrna',
-                                "mismatch/match" : [0, 150],
+                                "mismatch/match" : [150, 0, 0],
                                 "identity" : 100.0,
-                                "mismatch zones" : [],
+                                "mismatch zones" : ([], []),
                                 "cluster name" : "cluster 0",
                                 "reference mRNA number" : 1,
                                 "alternative mRNA number" : 1}]],
                  
-                 'shift' : [[annot_CSC.Locus(name='chr2A_00611930', 
-                                              mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
-                                              start=100, 
-                                              end=299, 
-                                              direction='direct')],
-                            [annot_CSC.Locus(name='chr2A_00611930', 
-                                                mRNAs={'chr2A_00611930_mrna': [100, 129, 151, 209, 240, 299]}, 
-                                                start=100, 
-                                                end=299, 
-                                                direction='direct')],
-                            "cluster 0",
+                 'shift' : [cl.Cluster(name="cluster 0",
+                                                    loci={'ref': [locus.Locus(name='chr2A_00611930', 
+                                                                                 mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
+                                                                                 start=100, 
+                                                                                 end=299, 
+                                                                                 direction='direct')],
+                                                          'alt': [locus.Locus(name='chr2A_00611930', 
+                                                                                       mRNAs={'chr2A_00611930_mrna': [100, 129, 151, 209, 240, 299]}, 
+                                                                                       start=100, 
+                                                                                       end=299, 
+                                                                                       direction='direct')]}),
                             [{"reference" : 'chr2A_00611930',
                             "reference start" : 100,
                             "reference end" : 299,
@@ -854,25 +1032,25 @@ def test_new_annotation_match():
                             "alternative end" : 299,
                             "reference mRNA" : 'chr2A_00611930_mrna',
                             "alternative mRNA" : 'chr2A_00611930_mrna',
-                            "mismatch/match" : [120, 30],
+                            "mismatch/match" : [30, 1, 119],
                             "identity" : 20.0,
-                            "mismatch zones" : ['150-151', '151-209', '240-299'],
+                            "mismatch zones" : ([150, 151], [[151, 209], [240, 299]]),
                             "cluster name" : "cluster 0",
                             "reference mRNA number" : 1,
                             "alternative mRNA number" : 1}]],
                  
-                 'multiple_mRNAs' : [[annot_CSC.Locus(name='chr2A_00611930', 
-                                              mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
-                                              start=100, 
-                                              end=299, 
-                                              direction='direct')],
-                                          [annot_CSC.Locus(name='chr2A_00611930', 
-                                                             mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 179, 240, 299],
-                                                                    'chr2A_00611930_mrna.2': [100, 129, 240, 299]}, 
-                                                             start=100, 
-                                                             end=299, 
-                                                             direction='direct')],
-                                          "cluster 0",
+                 'multiple_mRNAs' : [cl.Cluster(name="cluster 0",
+                                                loci={'ref': [locus.Locus(name='chr2A_00611930', 
+                                                                         mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
+                                                                         start=100, 
+                                                                         end=299, 
+                                                                         direction='direct')],
+                                                      'alt': [locus.Locus(name='chr2A_00611930', 
+                                                                         mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 179, 240, 299],
+                                                                                'chr2A_00611930_mrna.2': [100, 129, 240, 299]}, 
+                                                                         start=100, 
+                                                                         end=299, 
+                                                                         direction='direct')]}),
                                           [{"reference" : 'chr2A_00611930',
                                              "reference start" : 100,
                                              "reference end" : 299,
@@ -881,45 +1059,44 @@ def test_new_annotation_match():
                                              "alternative end" : 299,
                                              "reference mRNA" : 'chr2A_00611930_mrna',
                                              "alternative mRNA" : 'chr2A_00611930_mrna',
-                                             "mismatch/match" : [31, 119],
-                                             "identity" : 79.3,
-                                             "mismatch zones" : ['179-209'],
+                                             "mismatch/match" : [120, 30, 0],
+                                             "identity" : 80.0,
+                                             "mismatch zones" : ([180, 210], []),
                                              "cluster name" : "cluster 0",
                                              "reference mRNA number" : 1,
                                              "alternative mRNA number" : 2}]],
                  
-                 'overlapping-loci (first cluster)' : [[annot_CSC.Locus(name='chr2A_1000', 
+                 'overlapping-loci (first cluster)' : [cl.Cluster(name="cluster 0",
+                                                                  loci={'ref': [locus.Locus(name='chr2A_1000', 
                                               mRNAs={'chr2A_1000_mrna': [50, 149]}, 
                                               start=50, 
                                               end=149, 
                                               direction='direct'), 
-                                        annot_CSC.Locus(name='chr2A_2000', 
+                                        locus.Locus(name='chr2A_2000', 
                                               mRNAs={'chr2A_2000_mrna': [200, 349]}, 
                                               start=200, 
                                               end=349, 
                                               direction='direct'), 
-                                        annot_CSC.Locus(name='chr2A_3000', 
+                                        locus.Locus(name='chr2A_3000', 
                                               mRNAs={'chr2A_3000_mrna': [400, 549]}, 
                                               start=400, 
                                               end=549, 
                                               direction='direct')],
-                                 
-                                       [annot_CSC.Locus(name='chr2A_1000', 
+                                                                        'alt': [locus.Locus(name='chr2A_1000', 
                                           mRNAs={'chr2A_1000_mrna': [100, 249]}, 
                                           start=100, 
                                           end=249, 
                                           direction='direct'), 
-                                        annot_CSC.Locus(name='chr2A_2000', 
+                                        locus.Locus(name='chr2A_2000', 
                                           mRNAs={'chr2A_2000_mrna': [300, 449]}, 
                                           start=300, 
                                           end=449, 
                                           direction='direct'), 
-                                        annot_CSC.Locus(name='chr2A_3000', 
+                                        locus.Locus(name='chr2A_3000', 
                                           mRNAs={'chr2A_3000_mrna': [500, 599]}, 
                                           start=500, 
                                           end=599, 
-                                          direction='direct')],
-                                       "cluster 0",
+                                          direction='direct')]}),
                                     [{"reference" : 'chr2A_1000',
                                    "reference start" : 50,
                                    "reference end" : 149,
@@ -928,9 +1105,9 @@ def test_new_annotation_match():
                                    "alternative end" : 249,
                                    "reference mRNA" : 'chr2A_1000_mrna',
                                    "alternative mRNA" : 'chr2A_1000_mrna',
-                                   "mismatch/match" : [200, 0],
+                                   "mismatch/match" : [0, 150, 50],
                                    "identity" : 0.0,
-                                   "mismatch zones" : ['50-100', '100-149', '149-249'],
+                                   "mismatch zones" : ([50, 100, 150, 250], [[100, 149]]),
                                    "cluster name" : "cluster 0",
                                    "reference mRNA number" : 1,
                                    "alternative mRNA number" : 1},
@@ -942,9 +1119,9 @@ def test_new_annotation_match():
                                     "alternative end" : 449,
                                     "reference mRNA" : 'chr2A_2000_mrna',
                                     "alternative mRNA" : 'chr2A_2000_mrna',
-                                    "mismatch/match" : [250, 0],
+                                    "mismatch/match" : [0, 200, 50],
                                     "identity" : 0.0,
-                                    "mismatch zones" : ['200-300', '300-349', '349-449'],
+                                    "mismatch zones" : ([200, 300, 350, 450], [[300, 349]]),
                                     "cluster name" : "cluster 0",
                                     "reference mRNA number" : 1,
                                     "alternative mRNA number" : 1},
@@ -956,24 +1133,24 @@ def test_new_annotation_match():
                                      "alternative end" : 599,
                                      "reference mRNA" : 'chr2A_3000_mrna',
                                      "alternative mRNA" : 'chr2A_3000_mrna',
-                                     "mismatch/match" : [200, 0],
+                                     "mismatch/match" : [0, 150, 50],
                                      "identity" : 0.0,
-                                     "mismatch zones" : ['400-500', '500-549', '549-599'],
+                                     "mismatch zones" : ([400, 500, 550, 600], [[500, 549]]),
                                      "cluster name" : "cluster 0",
                                      "reference mRNA number" : 1,
                                      "alternative mRNA number" : 1}]],
                  
-                 'length_computation' : [[annot_CSC.Locus(name='chr2A_00611930', 
+                 'length_computation' : [cl.Cluster(name="cluster 0",
+                                                    loci={'ref': [locus.Locus(name='chr2A_00611930', 
                                           mRNAs={'chr2A_00611930_mrna': [8, 13]}, 
                                           start=8, 
                                           end=13, 
                                           direction='direct')], 
-                                         [annot_CSC.Locus(name='chr2A_00611930', 
+                                                          'alt': [locus.Locus(name='chr2A_00611930', 
                                              mRNAs={'chr2A_00611930_mrna': [1, 4, 12, 13]}, 
                                              start=1, 
                                              end=13, 
-                                             direction='direct')],
-                                          "cluster 0",
+                                             direction='direct')]}),
                                           [{"reference" : 'chr2A_00611930',
                                              "reference start" : 8,
                                              "reference end" : 13,
@@ -982,9 +1159,9 @@ def test_new_annotation_match():
                                              "alternative end" : 13,
                                              "reference mRNA" : 'chr2A_00611930_mrna',
                                              "alternative mRNA" : 'chr2A_00611930_mrna',
-                                             "mismatch/match" : [8, 2],
+                                             "mismatch/match" : [2, 8, 0],
                                              "identity" : 20.0,
-                                             "mismatch zones" : ['1-4', '8-12'],
+                                             "mismatch zones" : ([1, 5, 8, 12], []),
                                              "cluster name" : "cluster 0",
                                              "reference mRNA number" : 1,
                                              "alternative mRNA number" : 1}]]
@@ -996,27 +1173,27 @@ def test_new_annotation_match():
         
         print(f"\n{test} test")
         
-        result = annot_CSC.annotation_match(test_dict[test][0], test_dict[test][1], test_dict[test][2], False, False, False)
+        result = comp.annotation_match(test_dict[test][0], False, False, False)
         print(f"result : {result}\n")
-        print(f"expected result : {test_dict[test][3]}\n")
-        assert result == test_dict[test][3]
+        print(f"expected result : {test_dict[test][1]}\n")
+        assert result == test_dict[test][1]
         
         
 # test function for the 'annot_CSC.py' function 'annotation_match' (main annotation comparison function) with the 'create_strings' parameter as 'True' (uses old program version)
 def test_old_annotation_match():
     
     # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'annotation_match' (main annotation comparison function)
-    test_dict = {'basic' : [[annot_CSC.Locus(name='chr2A_00611930', 
-                                 mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
-                                 start=100, 
-                                 end=299, 
-                                 direction='direct')],
-                             [annot_CSC.Locus(name='chr2A_00611930', 
-                                                mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
-                                                start=100, 
-                                                end=299, 
-                                                direction='direct')],
-                             "cluster 0",
+    test_dict = {'basic' : [cl.Cluster(name="cluster 0",
+                                       loci={'ref': [locus.Locus(name='chr2A_00611930', 
+                                                                    mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
+                                                                    start=100, 
+                                                                    end=299, 
+                                                                    direction='direct')],
+                                             'alt': [locus.Locus(name='chr2A_00611930', 
+                                                                          mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
+                                                                          start=100, 
+                                                                          end=299, 
+                                                                          direction='direct')]}),
                              [{"reference" : 'chr2A_00611930',
                                 "reference start" : 100,
                                 "reference end" : 299,
@@ -1025,24 +1202,24 @@ def test_old_annotation_match():
                                 "alternative end" : 299,
                                 "reference mRNA" : 'chr2A_00611930_mrna',
                                 "alternative mRNA" : 'chr2A_00611930_mrna',
-                                "mismatch/match" : [0, 150],
+                                "mismatch/match" : [150, 0, 0],
                                 "identity" : 100.0,
                                 "mismatch zones" : '?',
                                 "cluster name" : "cluster 0",
                                 "reference mRNA number" : 1,
                                 "alternative mRNA number" : 1}]],
                  
-                 'shift' : [[annot_CSC.Locus(name='chr2A_00611930', 
-                                              mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
-                                              start=100, 
-                                              end=299, 
-                                              direction='direct')],
-                            [annot_CSC.Locus(name='chr2A_00611930', 
-                                                mRNAs={'chr2A_00611930_mrna': [100, 129, 151, 209, 240, 299]}, 
-                                                start=100, 
-                                                end=299, 
-                                                direction='direct')],
-                            "cluster 0",
+                 'shift' : [cl.Cluster(name="cluster 0",
+                                                    loci={'ref': [locus.Locus(name='chr2A_00611930', 
+                                                                                 mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
+                                                                                 start=100, 
+                                                                                 end=299, 
+                                                                                 direction='direct')],
+                                                          'alt': [locus.Locus(name='chr2A_00611930', 
+                                                                                       mRNAs={'chr2A_00611930_mrna': [100, 129, 151, 209, 240, 299]}, 
+                                                                                       start=100, 
+                                                                                       end=299, 
+                                                                                       direction='direct')]}),
                             [{"reference" : 'chr2A_00611930',
                             "reference start" : 100,
                             "reference end" : 299,
@@ -1051,25 +1228,25 @@ def test_old_annotation_match():
                             "alternative end" : 299,
                             "reference mRNA" : 'chr2A_00611930_mrna',
                             "alternative mRNA" : 'chr2A_00611930_mrna',
-                            "mismatch/match" : [120, 30],
+                            "mismatch/match" : [30, 1, 119],
                             "identity" : 20.0,
                             "mismatch zones" : '?',
                             "cluster name" : "cluster 0",
                             "reference mRNA number" : 1,
                             "alternative mRNA number" : 1}]],
                  
-                 'multiple_mRNAs' : [[annot_CSC.Locus(name='chr2A_00611930', 
-                                              mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
-                                              start=100, 
-                                              end=299, 
-                                              direction='direct')],
-                                          [annot_CSC.Locus(name='chr2A_00611930', 
-                                                             mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 179, 240, 299],
-                                                                    'chr2A_00611930_mrna.2': [100, 129, 240, 299]}, 
-                                                             start=100, 
-                                                             end=299, 
-                                                             direction='direct')],
-                                          "cluster 0",
+                 'multiple_mRNAs' : [cl.Cluster(name="cluster 0",
+                                                loci={'ref': [locus.Locus(name='chr2A_00611930', 
+                                                                         mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
+                                                                         start=100, 
+                                                                         end=299, 
+                                                                         direction='direct')],
+                                                      'alt': [locus.Locus(name='chr2A_00611930', 
+                                                                         mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 179, 240, 299],
+                                                                                'chr2A_00611930_mrna.2': [100, 129, 240, 299]}, 
+                                                                         start=100, 
+                                                                         end=299, 
+                                                                         direction='direct')]}),
                                           [{"reference" : 'chr2A_00611930',
                                              "reference start" : 100,
                                              "reference end" : 299,
@@ -1078,47 +1255,44 @@ def test_old_annotation_match():
                                              "alternative end" : 299,
                                              "reference mRNA" : 'chr2A_00611930_mrna',
                                              "alternative mRNA" : 'chr2A_00611930_mrna',
-                                             "mismatch/match" : [30, 120],
+                                             "mismatch/match" : [120, 30, 0],
                                              "identity" : 80.0,
                                              "mismatch zones" : '?',
                                              "cluster name" : "cluster 0",
                                              "reference mRNA number" : 1,
                                              "alternative mRNA number" : 2}]],
                  
-                 'overlapping-loci (first cluster)' : [[annot_CSC.Locus(name='chr2A_1000', 
+                 'overlapping-loci (first cluster)' : [cl.Cluster(name="cluster 0",
+                                                                  loci={'ref': [locus.Locus(name='chr2A_1000', 
                                               mRNAs={'chr2A_1000_mrna': [50, 149]}, 
                                               start=50, 
                                               end=149, 
                                               direction='direct'), 
-                                        annot_CSC.Locus(name='chr2A_2000', 
+                                        locus.Locus(name='chr2A_2000', 
                                               mRNAs={'chr2A_2000_mrna': [200, 349]}, 
                                               start=200, 
                                               end=349, 
                                               direction='direct'), 
-                                        annot_CSC.Locus(name='chr2A_3000', 
+                                        locus.Locus(name='chr2A_3000', 
                                               mRNAs={'chr2A_3000_mrna': [400, 549]}, 
                                               start=400, 
                                               end=549, 
                                               direction='direct')],
-                                 
-                                       [annot_CSC.Locus(name='chr2A_1000', 
+                                                                        'alt': [locus.Locus(name='chr2A_1000', 
                                           mRNAs={'chr2A_1000_mrna': [100, 249]}, 
                                           start=100, 
                                           end=249, 
                                           direction='direct'), 
-                                        annot_CSC.Locus(name='chr2A_2000', 
+                                        locus.Locus(name='chr2A_2000', 
                                           mRNAs={'chr2A_2000_mrna': [300, 449]}, 
                                           start=300, 
                                           end=449, 
                                           direction='direct'), 
-                                        annot_CSC.Locus(name='chr2A_3000', 
+                                        locus.Locus(name='chr2A_3000', 
                                           mRNAs={'chr2A_3000_mrna': [500, 599]}, 
                                           start=500, 
                                           end=599, 
-                                          direction='direct')],
-                                       
-                                       "cluster 0",
-                                       
+                                          direction='direct')]}),
                                     [{"reference" : 'chr2A_1000',
                                    "reference start" : 50,
                                    "reference end" : 149,
@@ -1127,7 +1301,7 @@ def test_old_annotation_match():
                                    "alternative end" : 249,
                                    "reference mRNA" : 'chr2A_1000_mrna',
                                    "alternative mRNA" : 'chr2A_1000_mrna',
-                                   "mismatch/match" : [200, 0],
+                                   "mismatch/match" : [0, 150, 50],
                                    "identity" : 0.0,
                                    "mismatch zones" : '?',
                                    "cluster name" : "cluster 0",
@@ -1141,7 +1315,7 @@ def test_old_annotation_match():
                                     "alternative end" : 449,
                                     "reference mRNA" : 'chr2A_2000_mrna',
                                     "alternative mRNA" : 'chr2A_2000_mrna',
-                                    "mismatch/match" : [250, 0],
+                                    "mismatch/match" : [0, 200, 50],
                                     "identity" : 0.0,
                                     "mismatch zones" : '?',
                                     "cluster name" : "cluster 0",
@@ -1155,24 +1329,24 @@ def test_old_annotation_match():
                                      "alternative end" : 599,
                                      "reference mRNA" : 'chr2A_3000_mrna',
                                      "alternative mRNA" : 'chr2A_3000_mrna',
-                                     "mismatch/match" : [200, 0],
+                                     "mismatch/match" : [0, 150, 50],
                                      "identity" : 0.0,
                                      "mismatch zones" : '?',
                                      "cluster name" : "cluster 0",
                                      "reference mRNA number" : 1,
                                      "alternative mRNA number" : 1}]],
                  
-                 'length_computation' : [[annot_CSC.Locus(name='chr2A_00611930', 
+                 'length_computation' : [cl.Cluster(name="cluster 0",
+                                                    loci={'ref': [locus.Locus(name='chr2A_00611930', 
                                           mRNAs={'chr2A_00611930_mrna': [8, 13]}, 
                                           start=8, 
                                           end=13, 
                                           direction='direct')], 
-                                         [annot_CSC.Locus(name='chr2A_00611930', 
+                                                          'alt': [locus.Locus(name='chr2A_00611930', 
                                              mRNAs={'chr2A_00611930_mrna': [1, 4, 12, 13]}, 
                                              start=1, 
                                              end=13, 
-                                             direction='direct')],
-                                          "cluster 0",
+                                             direction='direct')]}),
                                           [{"reference" : 'chr2A_00611930',
                                              "reference start" : 8,
                                              "reference end" : 13,
@@ -1181,7 +1355,7 @@ def test_old_annotation_match():
                                              "alternative end" : 13,
                                              "reference mRNA" : 'chr2A_00611930_mrna',
                                              "alternative mRNA" : 'chr2A_00611930_mrna',
-                                             "mismatch/match" : [8, 2],
+                                             "mismatch/match" : [2, 8, 0],
                                              "identity" : 20.0,
                                              "mismatch zones" : '?',
                                              "cluster name" : "cluster 0",
@@ -1195,10 +1369,10 @@ def test_old_annotation_match():
         
         print(f"\n{test} test")
         
-        result = annot_CSC.annotation_match(test_dict[test][0], test_dict[test][1], test_dict[test][2], True, False, False)
+        result = comp.annotation_match(test_dict[test][0], True, False, False)
         print(f"result : {result}\n")
-        print(f"expected result : {test_dict[test][3]}\n")
-        assert result == test_dict[test][3]
+        print(f"expected result : {test_dict[test][1]}\n")
+        assert result == test_dict[test][1]
 
 
 # test function for the 'annot_CSC.py' function 'annotation_comparison' ('main' function of the program) with the 'create_strings' parameter as 'False' (uses new program version)

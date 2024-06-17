@@ -19,9 +19,11 @@ Created on Sat Jun 15 21:04:24 2024
 class Cluster:
     
     ## This method initialises the class with an empty dictionary
-    def __init__(self, name):
+    def __init__(self, name, loci=None):
         self.name = name
-        self.loci = {"ref": [], "alt": []}
+        if not loci:
+            loci = {"ref": [], "alt": []}
+        self.loci = loci.copy()
         
     ## This method is used to retrieve the 'clusters' attribute of an instance
     #
@@ -59,3 +61,15 @@ class Cluster:
         for loc in self.clusters[loc_id][ref]:
             list_mRNAs.append(loc.mRNAs)
         return list_mRNAs
+    
+    def get_details(self):
+        result = {'ref': [], 'alt': []}
+        for loc in self.get_loci()['ref']:
+            result['ref'].append(loc.mRNAs)
+        for loc in self.get_loci()['alt']:
+            result['alt'].append(loc.mRNAs)
+        return result
+        
+        
+        
+        

@@ -210,18 +210,25 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                 j += 1
                          
         # assign the end coordinate value to the cluster
-        ref_end = cluster.get_loci()["ref"][-1].end
-        alt_end = cluster.get_loci()["alt"][-1].end
+        try:
+            ref_end = cluster.get_loci()["ref"][-1].end
+        except IndexError:
+            ref_end = -1
+        try:
+            alt_end = cluster.get_loci()["alt"][-1].end
+        except IndexError:
+            alt_end = -1
         cluster.set_end(max(ref_end, alt_end))
         
         if debug:
             print(f"cluster name = {cluster_name}")
-            print(cluster.get_loci()["ref"])
-            print(cluster.get_loci()["alt"])
-            print(cluster.get_end())
+            print(f"reference loci = {cluster.get_loci()['ref']}")
+            print(f"alternative loci = {cluster.get_loci()['alt']}")
+            print(f"end of cluster = {cluster.get_end()}")
     
     return cluster_list
 
+#TODO docu
 def get_reading_frame(cds_bounds, area_bounds, debug=False, verbose=False):
     nb_nt = 0;
     nb_nt_in_cds=0;

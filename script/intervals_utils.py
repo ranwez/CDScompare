@@ -1,17 +1,21 @@
+
+##TODO docu (récupérer depuis lien stackoverflow)
 class OrderedIntervals:
-    def __init__(self, intervals, include_ub=False):
+    def __init__(self, intervals, include_ub=False, debug=False):
         if include_ub:
-            self.intervals = OrderedIntervals.transform_intervals_to_exclude_ub(intervals)
+            self.intervals = OrderedIntervals.transform_intervals_to_exclude_ub(intervals, debug)
         else:
             self.intervals = intervals
     
     @staticmethod
-    def transform_intervals_to_exclude_ub(intervals):
+    def transform_intervals_to_exclude_ub(intervals, debug=False):
+        if debug: print(f"intervals before upper bound exclusion: {intervals}")
         transformed_intervals = []
         for i in range(0, len(intervals), 2):
             lower_bound = intervals[i]
             upper_bound = intervals[i + 1] + 1
             transformed_intervals.extend([lower_bound, upper_bound])
+            if debug: print(f"intervals after upper bound exclusion: {transformed_intervals}")
         return(transformed_intervals)
 
    
