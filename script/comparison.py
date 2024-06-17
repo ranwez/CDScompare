@@ -7,16 +7,24 @@ Created on Mon Jun 17 09:38:04 2024
 """
 
 import intervals_utils as iu
-import read_files as rf
 import pre_comparison as pc
 
 
 #TODO docu (et remettre à un autre endroit)
-def reverse_coord(cds_list, cluster_end):
-    new_list = []
-    new_list.append(abs(cds_list[1]-cluster_end))
-    new_list.append(abs(cds_list[0]-cluster_end))
-    return new_list
+def reverse_coord(mismatch_zones, cluster_end, debug):
+    new_list_EI = []
+    new_list_RF = []
+    
+    if mismatch_zones[0] != []:
+        for i in range(len(mismatch_zones[0])-1, -1, -1):
+            print(i)
+            new_list_EI.append(abs(mismatch_zones[0][i]-cluster_end))
+            
+    if mismatch_zones[1] != [[]]:
+        for i in range(len(mismatch_zones[1])-1, -1, -1):
+            print(i)
+            new_list_RF.append([abs(mismatch_zones[1][i][1]-cluster_end), abs(mismatch_zones[1][i][0]-cluster_end)])
+    return (new_list_EI, new_list_RF)
 
 ## This function compares two annotations' loci returned by the function 
 # get_gff_borders and creates for each pair of reference-alternative mRNAs 
@@ -63,7 +71,7 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
         if debug:
             print(f"{ref_locus.name} and {alt_locus.name} do not overlap, returning 0% identity")
         return('_', 0.0, '_', '_', '_')
-        
+    
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
         intervals_ref = iu.OrderedIntervals(mRNA_ref, True, debug);
     
@@ -99,6 +107,9 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
 
 #TODO docu
 def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, verbose):
+    print(f"***********************{mRNA_ref}")
+    print(f"***********************{mRNA_alt}")
+    print(f"***********************{intervals_ref.intervals}")
     if debug: print(f"reference CDS list = {mRNA_ref}\nalternative CDS list = {mRNA_alt}")
     matches=0    
     intervals_alt = iu.OrderedIntervals(mRNA_alt, True, debug);
@@ -127,7 +138,9 @@ def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, v
         else:
             if debug: print(f"identical reading frames for reference and alternative: adding length ({interval_lg}) to matches")
             matches+=interval_lg
-            
+    if diff_RF == []:
+        diff_RF = [[]]
+    print((matches, mismatches_EI, mismatches_RF, diff_EI.intervals, diff_RF))
     return (matches, mismatches_EI, mismatches_RF, diff_EI.intervals, diff_RF)
 
 
@@ -313,7 +326,15 @@ def annotation_match(cluster, create_strings=False, debug=False, verbose=False):
     
     # if the loci stored in the cluster are on the reverse strand, reverse 
     # their mRNA's cds lists
-    if cluster_ref[0].direction == "reverse":
+    try:
+        ref_is_rev = cluster_ref[0].direction == "reverse" 
+    except IndexError:
+        ref_is_rev = False
+    try:
+        alt_is_rev = cluster_alt[0].direction == "reverse" 
+    except IndexError:
+        alt_is_rev = False
+    if ref_is_rev == True and alt_is_rev == True:
         cluster_end = cluster.get_end()
         for loc in cluster_ref:
             loc.reverse(cluster_end)
@@ -368,11 +389,7 @@ def annotation_match(cluster, create_strings=False, debug=False, verbose=False):
             comparison, identity, mismatch_zones, ref_mRNA, alt_mRNA = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
             if debug: print(f"mismatch zones = {EI_RF_mismatch_zones}")
             if cluster_ref[0].direction == "reverse":
-                new_mismatch_zones = []
-                new_mismatch_zones.append(reverse_coord(mismatch_zones[0], cluster_end))
-                for k in range(len(mismatch_zones[1])-1, -1, -1):
-                    new_mismatch_zones.append(reverse_coord(mismatch_zones[1][k], cluster_end))
-                mismatch_zones = new_mismatch_zones
+                mismatch_zones = reverse_coord(mismatch_zones, cluster_end, debug)
                 if debug: print(f"new mismatch zones = {mismatch_zones}")
         if debug:
             print(f"top value : {dyn_prog_matrix[i-1][j]}, \nleft value : {dyn_prog_matrix[i][j-1]}, \ndiagonal value : {dyn_prog_matrix[i-1][j-1]} + {identity}")

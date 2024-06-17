@@ -51,7 +51,7 @@ def write_results(results, debug=False, verbose=False):
         os.mkdir("./results/") # create 'results' subdirectory
         results_file = open("./results/results.csv", "w")
     
-    results_file.write("Cluster name, Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start, Reference end, Alternative start, Alternative end, Reference mRNA, Alternative mRNA, non-correspondance zones, reference mRNA number, alternative mRNA number\n")
+    results_file.write("Cluster name, Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start, Reference end, Alternative start, Alternative end, Reference mRNA, Alternative mRNA, Exon_intron (EI) non-correspondance zones, Reading frame (RF) non-correspondance zones, reference mRNA number, alternative mRNA number\n")
         
     # annotation origin of each locus in the results
     # (first value : both,  second value : reference,  third value : alternative)
@@ -59,15 +59,23 @@ def write_results(results, debug=False, verbose=False):
     
     for cluster in results:
         for loc in cluster:
-            # convert the mismatch zones so that commas don't modify 
-            # the csv structure
-            mismatch_zones = ""
+            if loc['mismatch zones'] not in ["_", "?"]:
+                # convert mismatch zones so commas don't modify the CSV output
+                mismatch_EI = ""
+                mismatch_RF = ""
+                for i in range(0, len(loc['mismatch zones'][0]), 2):
+                    mismatch_EI += "[" + str(loc['mismatch zones'][0][i]) + "//" + str(loc['mismatch zones'][0][i+1]) + "] "
+                if loc['mismatch zones'][1] != [[]]:
+                    for coord in loc['mismatch zones'][1]:
+                        mismatch_RF += "[" + str(coord[0]) + "//" + str(coord[1]) + "] "
+                if mismatch_EI == "":
+                    mismatch_EI = "_"
+                if mismatch_RF == "":
+                    mismatch_RF = "_"
+            else:
+                mismatch_EI = loc['mismatch zones']
+                mismatch_RF = loc['mismatch zones']
             
-            if loc["mismatch zones"][0] not in ["_", "?"]:
-                if debug: print(f"mismatch zones = {loc['mismatch zones']}")
-                for coords in loc["mismatch zones"]:
-                    mismatch_zones += "[" + str(coords[0]) + "//" + str(coords[1]) + "] "
-                            
             # if no comparison was done for the loci, write '~' instead of 
             # the comparison values
             if loc['mismatch/match'] == []:
@@ -79,7 +87,7 @@ def write_results(results, debug=False, verbose=False):
                     locus_initial_annot[1] += 1
             else:
                 print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t{loc['mismatch/match']}\t\t\t\t{loc['identity']}%")
-                results_file.write(f"{loc['cluster name']},{loc['reference']},{loc['alternative']},{loc['mismatch/match'][1]},{loc['mismatch/match'][0]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {loc['reference mRNA']}, {loc['alternative mRNA']}, {mismatch_zones}, {loc['reference mRNA number']}, {loc['alternative mRNA number']}\n")
+                results_file.write(f"{loc['cluster name']},{loc['reference']},{loc['alternative']},{loc['mismatch/match'][0]},{loc['mismatch/match'][1]+loc['mismatch/match'][2]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {loc['reference mRNA']}, {loc['alternative mRNA']}, {mismatch_EI}, {mismatch_RF}, {loc['reference mRNA number']}, {loc['alternative mRNA number']}\n")
                 locus_initial_annot[0] += 2
                 
     print(f"\nNumber of loci:\n- found in both annotations : {locus_initial_annot[0]}\n- found only in the reference : {locus_initial_annot[1]}\n- found only in the alternative : {locus_initial_annot[2]}\n")
