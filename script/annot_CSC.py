@@ -40,56 +40,65 @@ import comparison as comp
 # Default is 'False'
 #
 # @remark Results are written in CSV ('Comma-Separated Values') format
-def write_results(results, debug=False, verbose=False):
+def write_results(all_results, debug=False, verbose=False):
+    # annotation origin of each locus in the results for all chromosomes
+    # (first value : both,  second value : reference,  third value : alternative)
+    final_locus_annot = [0, 0, 0]
     
-    # try to open the results dumping file
+    # try to open the results file
     try:
         results_file = open("./results/results.csv", "w")
     except FileNotFoundError:
         os.mkdir("./results/") # create 'results' subdirectory
         results_file = open("./results/results.csv", "w")
     
-    results_file.write("Cluster name, Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start, Reference end, Alternative start, Alternative end, Reference mRNA, Alternative mRNA, Exon_intron (EI) non-correspondance zones, Reading frame (RF) non-correspondance zones, reference mRNA number, alternative mRNA number\n")
+    for dna_mol, results in all_results.items():
+        print(f"\n**************** Results for chromosome {dna_mol} ****************\n")
         
-    # annotation origin of each locus in the results
-    # (first value : both,  second value : reference,  third value : alternative)
-    locus_initial_annot = [0,0,0]    
-    
-    for cluster in results:
-        for loc in cluster:
-            if loc['mismatch zones'] not in ["_", "?"]:
-                # convert mismatch zones so commas don't modify the CSV output
-                mismatch_EI = ""
-                mismatch_RF = ""
-                for i in range(0, len(loc['mismatch zones'][0]), 2):
-                    mismatch_EI += "[" + str(loc['mismatch zones'][0][i]) + "//" + str(loc['mismatch zones'][0][i+1]) + "] "
-                if loc['mismatch zones'][1] != [[]]:
-                    for coord in loc['mismatch zones'][1]:
-                        mismatch_RF += "[" + str(coord[0]) + "//" + str(coord[1]) + "] "
-                if mismatch_EI == "":
-                    mismatch_EI = "_"
-                if mismatch_RF == "":
-                    mismatch_RF = "_"
-            else:
-                mismatch_EI = loc['mismatch zones']
-                mismatch_RF = loc['mismatch zones']
+        results_file.write("Chromosome, Cluster name, Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start, Reference end, Alternative start, Alternative end, Reference mRNA, Alternative mRNA, Exon_intron (EI) non-correspondance zones, Reading frame (RF) non-correspondance zones, reference mRNA number, alternative mRNA number\n")
             
-            # if no comparison was done for the loci, write '~' instead of 
-            # the comparison values
-            if loc['mismatch/match'] == []:
-                print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t_\t\t\t\t_")
-                results_file.write(f"{loc['cluster name']},{loc['reference']},{loc['alternative']},_,_,{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {loc['reference mRNA']}, {loc['alternative mRNA']}, _, {loc['reference mRNA number']}, {loc['alternative mRNA number']}\n")       
-                if loc['reference'] == '~':
-                    locus_initial_annot[2] += 1
-                else:                       
-                    locus_initial_annot[1] += 1
-            else:
-                print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t{loc['mismatch/match']}\t\t\t\t{loc['identity']}%")
-                results_file.write(f"{loc['cluster name']},{loc['reference']},{loc['alternative']},{loc['mismatch/match'][0]},{loc['mismatch/match'][1]+loc['mismatch/match'][2]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {loc['reference mRNA']}, {loc['alternative mRNA']}, {mismatch_EI}, {mismatch_RF}, {loc['reference mRNA number']}, {loc['alternative mRNA number']}\n")
-                locus_initial_annot[0] += 2
+        # annotation origin of each locus in the results
+        # (first value : both,  second value : reference,  third value : alternative)
+        locus_initial_annot = [0,0,0]    
+        
+        for cluster in results:
+            for loc in cluster:
+                if loc['mismatch zones'] not in ["_", "?"]:
+                    # convert mismatch zones so commas don't modify the CSV output
+                    mismatch_EI = ""
+                    mismatch_RF = ""
+                    for i in range(0, len(loc['mismatch zones'][0]), 2):
+                        mismatch_EI += "[" + str(loc['mismatch zones'][0][i]) + "//" + str(loc['mismatch zones'][0][i+1]) + "] "
+                    if loc['mismatch zones'][1] != [[]]:
+                        for coord in loc['mismatch zones'][1]:
+                            mismatch_RF += "[" + str(coord[0]) + "//" + str(coord[1]) + "] "
+                    if mismatch_EI == "":
+                        mismatch_EI = "_"
+                    if mismatch_RF == "":
+                        mismatch_RF = "_"
+                else:
+                    mismatch_EI = loc['mismatch zones']
+                    mismatch_RF = loc['mismatch zones']
                 
-    print(f"\nNumber of loci:\n- found in both annotations : {locus_initial_annot[0]}\n- found only in the reference : {locus_initial_annot[1]}\n- found only in the alternative : {locus_initial_annot[2]}\n")
+                # if no comparison was done for the loci, write '~' instead of 
+                # the comparison values
+                if loc['mismatch/match'] == []:
+                    print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t_\t\t\t\t_")
+                    results_file.write(f"{dna_mol}, {loc['cluster name']},{loc['reference']},{loc['alternative']},_,_,{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {loc['reference mRNA']}, {loc['alternative mRNA']}, _, _, {loc['reference mRNA number']}, {loc['alternative mRNA number']}\n")       
+                    if loc['reference'] == '~':
+                        locus_initial_annot[2] += 1
+                    else:                       
+                        locus_initial_annot[1] += 1
+                else:
+                    print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t{loc['mismatch/match']}\t\t\t\t{loc['identity']}%")
+                    results_file.write(f"{dna_mol}, {loc['cluster name']},{loc['reference']},{loc['alternative']},{loc['mismatch/match'][0]},{loc['mismatch/match'][1]+loc['mismatch/match'][2]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {loc['reference mRNA']}, {loc['alternative mRNA']}, {mismatch_EI}, {mismatch_RF}, {loc['reference mRNA number']}, {loc['alternative mRNA number']}\n")
+                    locus_initial_annot[0] += 2
+                    
+        print(f"\nNumber of loci of chromosome {dna_mol}:\n- found in both annotations : {locus_initial_annot[0]}\n- found only in the reference : {locus_initial_annot[1]}\n- found only in the alternative : {locus_initial_annot[2]}\n")
+        final_locus_annot = [sum(x) for x in zip(final_locus_annot, locus_initial_annot)]
+        
     results_file.close()
+    print(f"\nNumber of loci (whole data):\n- found in both annotations : {final_locus_annot[0]}\n- found only in the reference : {final_locus_annot[1]}\n- found only in the alternative : {final_locus_annot[2]}\n")
     
 
 ## Main function of this program. Given a reference and alternative path, 
@@ -119,17 +128,26 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     alt_annotations = rf.get_gff_borders(alt_path, debug, verbose, exon_mode)
     
     # get the order of the loci of both annotations
-    locus_order = pc.annotation_sort(ref_annotations, alt_annotations, debug, verbose)
+    all_locus_order = {}
+    for dna_mol in ref_annotations.keys():
+        locus_order = pc.annotation_sort(ref_annotations[dna_mol], alt_annotations[dna_mol], debug, verbose)
+        all_locus_order[dna_mol] = locus_order
     
     # construct clusters of overlapping loci
-    cluster_list = pc.construct_clusters(ref_annotations, alt_annotations, locus_order, debug, verbose)
+    all_cluster_list = {}
+    for dna_mol in all_locus_order.keys():
+        cluster_list = pc.construct_clusters(ref_annotations[dna_mol], alt_annotations[dna_mol], all_locus_order[dna_mol], debug, verbose)
+        all_cluster_list[dna_mol] = cluster_list
     
-    results = []
-    for cluster_id, cluster in cluster_list.items():
-        results.append(comp.annotation_match(cluster, create_strings, debug, verbose))
+    all_results = {}
+    for dna_mol in all_cluster_list.keys():
+        results = []
+        for cluster_id, cluster in all_cluster_list[dna_mol].items():
+            results.append(comp.annotation_match(cluster, create_strings, debug, verbose))
+        all_results[dna_mol] = results
         
     print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[match/mismatch_EI/mismatch_RF]\t\tIdentity_Score\n")
-    write_results(results, debug, verbose)
+    write_results(all_results, debug, verbose)
     
     return results
     

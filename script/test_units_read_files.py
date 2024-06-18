@@ -51,42 +51,54 @@ def test_get_gff_borders():
     # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'get_gff_borders' (CDS coordinates acquisition function)
     test_dict = {
         "basic" : ["./data/tests/basic_test.gff3", 
+                   "chr2A_direct",
                         {"chr2A_00611930" : {'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}}],
         
         "identical" : ["./data/tests/identical_test.gff3",
+                       "chr2A_direct",
                             {"chr2A_00611930" : {'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}}],
         
         "minus-CDS" : ["./data/tests/minus-CDS_test.gff3",
+                       "chr2A_direct",
                        {"chr2A_00611930" : {'chr2A_00611930_mrna': [100, 129, 240, 299]}}],
         
         "fusion" : ["./data/tests/fusion_test.gff3",
+                    "chr2A_direct",
                     {"chr2A_00611930" : {'chr2A_00611930_mrna': [100, 209, 240, 299]}}],
         
         "shift" : ["./data/tests/shift_test.gff3",
+                   "chr2A_direct",
                    {"chr2A_00611930" : {'chr2A_00611930_mrna': [100, 129, 151, 209, 240, 299]}}],
         
         "reverse" : ["./data/tests/reverse_test.gff3",
+                     "chr2A_reverse",
                      {"chr2A_00611930" : {'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}}],
         
         "diff-start-before" : ["./data/tests/diff-start-before_test.gff3",
+                               "chr2A_direct",
                                {"chr2A_00611930" : {'chr2A_00611930_mrna': [40, 69, 90, 149, 180, 239]}}],
         
         "diff-start-after" : ["./data/tests/diff-start-after_test.gff3",
+                              "chr2A_direct",
                               {"chr2A_00611930" : {'chr2A_00611930_mrna': [160, 189, 210, 269, 300, 359]}}],
         
         "multiple mRNAs" : ["./data/tests/multiple_mRNAs_test.gff3",
+                            "chr2A_direct",
                             {"chr2A_00611930" : {'chr2A_00611930_mrna': [100, 129, 150, 179, 240, 299],
                                                  'chr2A_00611930_mrna.2' : [100, 129, 240, 299]}}],
         
         "basic-2-loci" : ["./data/tests/basic-2-loci_test.gff3",
+                          "chr2A_direct",
                               {"chr2A_00611930" : {'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]},
                                "chr2A_00620000" : {'chr2A_00620000_mrna': [600, 699, 800, 899]}}],
         
         "identical-2-loci" : ["./data/tests/identical-2-loci_test.gff3",
+                              "chr2A_direct",
                               {"chr2A_00611930" : {'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]},
                                "chr2A_00620000" : {'chr2A_00620000_mrna': [600, 699, 800, 899]}}],
         
         "overlapping-loci" : ["./data/tests/overlapping-loci_test.gff3",
+                              "chr2A_direct",
                               {"chr2A_1000" : {'chr2A_1000_mrna' : [50, 149]},
                                "chr2A_2000" : {'chr2A_2000_mrna' : [200, 349]},
                                "chr2A_3000" : {'chr2A_3000_mrna' : [400, 549]},
@@ -94,6 +106,7 @@ def test_get_gff_borders():
                               "chr2A_5000" : {'chr2A_5000_mrna' : [750, 799]}}],
         
         "overlapping-loci-alt" : ["./data/tests/overlapping-loci-alt_test.gff3",
+                                  "chr2A_direct",
                                   {"chr2A_1000" : {'chr2A_1000_mrna' : [100, 249]},
                                    "chr2A_2000" : {'chr2A_2000_mrna' : [300, 449]},
                                    "chr2A_3000" : {'chr2A_3000_mrna' : [500, 599]},
@@ -102,9 +115,11 @@ def test_get_gff_borders():
                                    "chr2A_6000" : {'chr2A_6000_mrna' : [790, 849]}}],
         
         "length_computation_ref" : ["./data/tests/length_computation_ref_test.gff3", 
+                                    "chr2A_direct",
                         {"chr2A_00611930" : {'chr2A_00611930_mrna': [8, 13]}}],
         
         "length_computation_alt" : ["./data/tests/length_computation_alt_test.gff3", 
+                                    "chr2A_direct",
                         {"chr2A_00611930" : {'chr2A_00611930_mrna': [1, 4, 12, 13]}}]
         
         }
@@ -116,11 +131,12 @@ def test_get_gff_borders():
         result = rf.get_gff_borders(test_dict[test][0], False, False)
         
         # verify presence of expected mRNAs
-        for loc_id, loc in test_dict[test][1].items():
-            print(f"Result keys : {result.keys()}")
+        dna_mol = test_dict[test][1]
+        for loc_id, loc in test_dict[test][2].items():
+            print(f"Result keys : {result[dna_mol].keys()}")
             print(f"Expected key : {loc_id}")
-            assert loc_id in result
-            expected_mRNA = test_dict[test][1][loc_id]
-            print(f"Result mRNAs : {result[loc_id].mRNAs}")
-            print(f"Expected mRNA : {test_dict[test][1][loc_id]}")
-            assert result[loc_id].contain_mrnas(**expected_mRNA)
+            assert loc_id in result[dna_mol]
+            expected_mRNA = test_dict[test][2][loc_id]
+            print(f"Result mRNAs : {result[dna_mol][loc_id].mRNAs}")
+            print(f"Expected mRNA : {test_dict[test][2][loc_id]}")
+            assert result[dna_mol][loc_id].contain_mrnas(**expected_mRNA)

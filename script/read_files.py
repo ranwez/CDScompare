@@ -157,15 +157,24 @@ def get_gff_borders(path, debug=False, verbose=False, exon_mode=False):
         os.mkdir("./results/") # create 'results' subdirectory
         log = open("./results/log.txt", "w")
         
-    loci = {} # return dictionary
+    all_loci = {} # return dictionary
     locus_id = "" # the current gene being analyzed
     mRNA_id = "" # the current mRNA being analyzed
     line_index = 1 # number of the file line currently read
     locus = lc.Locus() # Initialisation of the Locus class instance to construct
     
     for line in file:
-        
+    
         parsed_line = line.split("\t")
+        chrm = parsed_line[0]
+        if chrm == "contig":
+            continue
+        strand = "_direct" if parsed_line[6] == "+" else "_reverse" 
+        try:
+            loci = all_loci[chrm+strand]
+        except KeyError:
+            all_loci[chrm+strand] = {}
+            loci = all_loci[chrm+strand]
         
         # if we encounter a new gene which is not from a contig, 
         # we get its information and create an instance in 'loci'
@@ -186,7 +195,7 @@ def get_gff_borders(path, debug=False, verbose=False, exon_mode=False):
             del locus
             locus = lc.Locus()
             
-            strand = str(parsed_line[6])
+            strand = parsed_line[6]
             if debug:
                 print(f"strand = {strand}")
             if strand == "-":
@@ -249,5 +258,5 @@ def get_gff_borders(path, debug=False, verbose=False, exon_mode=False):
     log.close()
     loci[locus_id] = locus # add the last locus to the return dictionary
     
-    # we return the entire dictionary with all loci
-    return loci
+    # we return the entire dictionary with all loci (of all chromosomes)
+    return all_loci
