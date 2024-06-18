@@ -11,19 +11,20 @@ import pre_comparison as pc
 
 
 #TODO docu (et remettre à un autre endroit)
-def reverse_coord(mismatch_zones, cluster_end, debug):
+def reverse_coord(mismatch_zones, cluster_end, debug=False):
+    if debug: print(f"mismatch_zones before re-reversing: {mismatch_zones}")
+    if debug: print(f"cluster end position: {cluster_end}")
     new_list_EI = []
     new_list_RF = []
     
     if mismatch_zones[0] != []:
         for i in range(len(mismatch_zones[0])-1, -1, -1):
-            print(i)
             new_list_EI.append(abs(mismatch_zones[0][i]-cluster_end))
             
     if mismatch_zones[1] != [[]]:
         for i in range(len(mismatch_zones[1])-1, -1, -1):
-            print(i)
             new_list_RF.append([abs(mismatch_zones[1][i][1]-cluster_end), abs(mismatch_zones[1][i][0]-cluster_end)])
+    if debug: print(f"mismatch_zones after re-reversing: {(new_list_EI, new_list_RF)}")
     return (new_list_EI, new_list_RF)
 
 ## This function compares two annotations' loci returned by the function 
@@ -107,9 +108,6 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
 
 #TODO docu
 def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, verbose):
-    print(f"***********************{mRNA_ref}")
-    print(f"***********************{mRNA_alt}")
-    print(f"***********************{intervals_ref.intervals}")
     if debug: print(f"reference CDS list = {mRNA_ref}\nalternative CDS list = {mRNA_alt}")
     matches=0    
     intervals_alt = iu.OrderedIntervals(mRNA_alt, True, debug);
@@ -140,7 +138,6 @@ def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, v
             matches+=interval_lg
     if diff_RF == []:
         diff_RF = [[]]
-    print((matches, mismatches_EI, mismatches_RF, diff_EI.intervals, diff_RF))
     return (matches, mismatches_EI, mismatches_RF, diff_EI.intervals, diff_RF)
 
 

@@ -15,7 +15,7 @@ class OrderedIntervals:
             lower_bound = intervals[i]
             upper_bound = intervals[i + 1] + 1
             transformed_intervals.extend([lower_bound, upper_bound])
-            if debug: print(f"intervals after upper bound exclusion: {transformed_intervals}")
+        if debug: print(f"intervals after upper bound exclusion: {transformed_intervals}")
         return(transformed_intervals)
 
    

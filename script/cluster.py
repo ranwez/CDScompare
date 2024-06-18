@@ -19,11 +19,12 @@ Created on Sat Jun 15 21:04:24 2024
 class Cluster:
     
     ## This method initialises the class with an empty dictionary
-    def __init__(self, name, loci=None):
+    def __init__(self, name, loci=None, end=-1):
         self.name = name
         if not loci:
             loci = {"ref": [], "alt": []}
         self.loci = loci.copy()
+        self.end = end
         
     ## This method is used to retrieve the 'clusters' attribute of an instance
     #

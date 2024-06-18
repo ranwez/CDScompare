@@ -154,6 +154,9 @@ def test_transform_intervals_to_exclude_ub():
         "shift" : [[100, 129, 151, 209, 240, 299], 
                    [100, 130, 151, 210, 240, 300]],
         
+        "reverse": [[0, 59, 90, 149, 170, 199],
+                    [0, 60, 90, 150, 170, 200]],
+        
         "diff-start-before" : [[40, 69, 90, 149, 180, 239], 
                                [40, 70, 90, 150, 180, 240]],
         
@@ -203,6 +206,9 @@ def test_total_length():
         
         "shift" : [[100, 129, 151, 209, 240, 299],
                    149],
+        
+        "reverse" : [[0, 59, 90, 149, 170, 199],
+                     150],
         
         "diff-start-before" : [[40, 69, 90, 149, 180, 239],
                                150],
@@ -256,6 +262,14 @@ def test_intersection():
                    [100, 129, 151, 209, 240, 299],
                    [100, 129, 151, 209, 240, 299]],
         
+        "reverse" : [[0, 59, 90, 149, 170, 199],
+                     [0, 59, 90, 149, 170, 199],
+                     [0, 59, 90, 149, 170, 199]],
+        
+        "reverse-modified" : [[0, 59, 90, 149, 170, 199],
+                              [0, 59, 80, 149, 170, 199],
+                              [0, 59, 90, 149, 170, 199]],
+        
         "diff-start-before" : [[100, 129, 150, 209, 240, 299],
                                [40, 69, 90, 149, 180, 239],
                                [100, 129, 180, 209]],
@@ -302,6 +316,14 @@ def test_union():
                    [100, 129, 151, 209, 240, 299],
                    [100, 129, 150, 209, 240, 299]],
         
+        "reverse" : [[0, 59, 90, 149, 170, 199],
+                     [0, 59, 90, 149, 170, 199],
+                     [0, 59, 90, 149, 170, 199]],
+        
+        "reverse-modified" : [[0, 59, 90, 149, 170, 199],
+                              [0, 59, 80, 149, 170, 199],
+                              [0, 59, 80, 149, 170, 199]],
+        
         "diff-start-before" : [[100, 129, 150, 209, 240, 299],
                                [40, 69, 90, 149, 180, 239],
                                [40, 69, 90, 299]],
@@ -326,7 +348,7 @@ def test_union():
         assert result == test_dict[test][2]
         
         
-# test function for the 'locus.py' class method 'reverse'
+# test function for the 'locus.py' class method 'reverse' (locus mRNAs inversion method)
 def test_reverse():
     
     # dictionary of inputs and expected ouputs for the method
@@ -336,9 +358,9 @@ def test_reverse():
                    300,
                    {"test_mRNA": [1, 60, 91, 150, 171, 200]}],
         
-        "diff_cluster" : [[100, 129, 150, 209, 240, 299],
-                          400,
-                          {"test_mRNA": [101, 160, 191, 250, 271, 300]}]
+        "diff_cluster_end" : [[100, 129, 150, 209, 240, 299],
+                              400,
+                              {"test_mRNA": [101, 160, 191, 250, 271, 300]}]
         
         }
     
@@ -351,6 +373,34 @@ def test_reverse():
         loc = locus.Locus(mRNAs = {"test_mRNA": test_dict[test][0]})
         loc.reverse(test_dict[test][1])
         result = loc.mRNAs
+        print(f"result : {result}\n")
+        print(test_dict[test][2])
+        assert result == test_dict[test][2]
+        
+
+# test function for the 'comparison.py' class function 'reverse_coord' (comparison mismatch zones inversion function)
+def test_reverse_coord():
+    
+    # dictionary of inputs and expected ouputs for the method
+    test_dict = {
+        
+        "reverse-reverse" : [([], [[]]),
+                             299,
+                             ([], [])],
+        
+        "reverse-reverse-modified" : [([80, 90], [[90, 149], [170, 199]]),
+                                      299,
+                                      ([209, 219], [[100, 129], [150, 209]])]
+        
+        }
+    
+    print("\n*************Testing the reverse_coord function*************")
+    
+    for test in test_dict:
+        
+        print(f"\n{test} file test")
+        
+        result = comp.reverse_coord(test_dict[test][0], test_dict[test][1])
         print(f"result : {result}\n")
         print(test_dict[test][2])
         assert result == test_dict[test][2]
@@ -389,6 +439,10 @@ def test_get_reading_frame():
         "shift_alt" : [[100, 129, 151, 209, 240, 299],
                        [100, 129, 151, 209, 240, 299],
                        [1, 1, 3]],
+        
+        "reverse" : [[0, 59, 90, 149, 170, 199],
+                     [0, 59, 90, 149, 170, 199],
+                     [1, 1, 1]],
         
         "diff-start-before_ref" : [[100, 129, 150, 209, 240, 299],
                                    [100, 129, 180, 209],
@@ -672,6 +726,30 @@ def test_compare_loci():
                                 direction='direct'),
                    ([30, 1, 119], 20.0, ([150, 151], [[151, 209], [240, 299]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
+        "reverse" : [locus.Locus(name='chr2A_00611930', 
+                                 mRNAs={'chr2A_00611930_mrna': [0, 59, 90, 149, 170, 199]}, 
+                                 start=100, 
+                                 end=299, 
+                                 direction='reverse'),
+                     locus.Locus(name='chr2A_00611930', 
+                                 mRNAs={'chr2A_00611930_mrna': [0, 59, 90, 149, 170, 199]}, 
+                                 start=100, 
+                                 end=299, 
+                                 direction='reverse'),
+                     ([150, 0, 0], 100.0, ([], [[]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+        
+        "reverse-modified" : [locus.Locus(name='chr2A_00611930', 
+                                          mRNAs={'chr2A_00611930_mrna': [0, 59, 90, 149, 170, 199]}, 
+                                          start=100, 
+                                          end=299, 
+                                          direction='reverse'),
+                              locus.Locus(name='chr2A_00611930', 
+                                          mRNAs={'chr2A_00611930_mrna': [0, 59, 80, 149, 170, 199]}, 
+                                          start=100, 
+                                          end=299, 
+                                          direction='reverse'),
+                              ([60, 10, 90], 37.5, ([80, 90], [[90, 149], [170, 199]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+        
         "reverse-basic" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                  start=100, 
@@ -860,6 +938,30 @@ def test_old_compare_loci():
                                 end=299, 
                                 direction='direct'),
                    ([30, 1, 119], 20.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+        
+        "reverse" : [locus.Locus(name='chr2A_00611930', 
+                                 mRNAs={'chr2A_00611930_mrna': [0, 59, 90, 149, 170, 199]}, 
+                                 start=100, 
+                                 end=299, 
+                                 direction='reverse'),
+                     locus.Locus(name='chr2A_00611930', 
+                                 mRNAs={'chr2A_00611930_mrna': [0, 59, 90, 149, 170, 199]}, 
+                                 start=100, 
+                                 end=299, 
+                                 direction='reverse'),
+                     ([150, 0, 0], 100.0, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+        
+        "reverse-modified" : [locus.Locus(name='chr2A_00611930', 
+                                          mRNAs={'chr2A_00611930_mrna': [0, 59, 90, 149, 170, 199]}, 
+                                          start=100, 
+                                          end=299, 
+                                          direction='reverse'),
+                              locus.Locus(name='chr2A_00611930', 
+                                          mRNAs={'chr2A_00611930_mrna': [0, 59, 80, 149, 170, 199]}, 
+                                          start=100, 
+                                          end=299, 
+                                          direction='reverse'),
+                              ([60, 10, 90], 37.5, 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
 
         "reverse-basic" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
@@ -1039,6 +1141,60 @@ def test_new_annotation_match():
                             "reference mRNA number" : 1,
                             "alternative mRNA number" : 1}]],
                  
+                 'reverse' : [cl.Cluster(name="cluster 0",
+                                         end=299,
+                                                    loci={'ref': [locus.Locus(name='chr2A_00611930', 
+                                                                             mRNAs={'chr2A_00611930_mrna': [0, 59, 90, 149, 170, 199]}, 
+                                                                             start=100, 
+                                                                             end=299, 
+                                                                             direction='reverse')],
+                                                          'alt': [locus.Locus(name='chr2A_00611930', 
+                                                                                   mRNAs={'chr2A_00611930_mrna': [0, 59, 90, 149, 170, 199]}, 
+                                                                                   start=100, 
+                                                                                   end=299, 
+                                                                                   direction='reverse')]}),
+                                          [{"reference" : 'chr2A_00611930',
+                                             "reference start" : 100,
+                                             "reference end" : 299,
+                                             "alternative" : 'chr2A_00611930',
+                                             "alternative start" : 100,
+                                             "alternative end" : 299,
+                                             "reference mRNA" : 'chr2A_00611930_mrna',
+                                             "alternative mRNA" : 'chr2A_00611930_mrna',
+                                             "mismatch/match" : [150, 0, 0],
+                                             "identity" : 100.0,
+                                             "mismatch zones" : ([], []),
+                                             "cluster name" : "cluster 0",
+                                             "reference mRNA number" : 1,
+                                             "alternative mRNA number" : 1}]],
+                 
+                 'reverse-modified' : [cl.Cluster(name="cluster 0",
+                                                  end=299,
+                                                    loci={'ref': [locus.Locus(name='chr2A_00611930', 
+                                                                             mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
+                                                                             start=100, 
+                                                                             end=299, 
+                                                                             direction='reverse')],
+                                                          'alt': [locus.Locus(name='chr2A_00611930', 
+                                                                                   mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 219, 240, 299]}, 
+                                                                                   start=100, 
+                                                                                   end=299, 
+                                                                                   direction='reverse')]}),
+                                          [{"reference" : 'chr2A_00611930',
+                                             "reference start" : 100,
+                                             "reference end" : 299,
+                                             "alternative" : 'chr2A_00611930',
+                                             "alternative start" : 100,
+                                             "alternative end" : 299,
+                                             "reference mRNA" : 'chr2A_00611930_mrna',
+                                             "alternative mRNA" : 'chr2A_00611930_mrna',
+                                             "mismatch/match" : [60, 10, 90],
+                                             "identity" : 37.5,
+                                             "mismatch zones" : ([209, 219], [[100, 129], [150, 209]]),
+                                             "cluster name" : "cluster 0",
+                                             "reference mRNA number" : 1,
+                                             "alternative mRNA number" : 1}]],
+                 
                  'multiple_mRNAs' : [cl.Cluster(name="cluster 0",
                                                 loci={'ref': [locus.Locus(name='chr2A_00611930', 
                                                                          mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
@@ -1210,16 +1366,16 @@ def test_old_annotation_match():
                                 "alternative mRNA number" : 1}]],
                  
                  'shift' : [cl.Cluster(name="cluster 0",
-                                                    loci={'ref': [locus.Locus(name='chr2A_00611930', 
-                                                                                 mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
-                                                                                 start=100, 
-                                                                                 end=299, 
-                                                                                 direction='direct')],
-                                                          'alt': [locus.Locus(name='chr2A_00611930', 
-                                                                                       mRNAs={'chr2A_00611930_mrna': [100, 129, 151, 209, 240, 299]}, 
-                                                                                       start=100, 
-                                                                                       end=299, 
-                                                                                       direction='direct')]}),
+                                        loci={'ref': [locus.Locus(name='chr2A_00611930', 
+                                                                     mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
+                                                                     start=100, 
+                                                                     end=299, 
+                                                                     direction='direct')],
+                                              'alt': [locus.Locus(name='chr2A_00611930', 
+                                                                           mRNAs={'chr2A_00611930_mrna': [100, 129, 151, 209, 240, 299]}, 
+                                                                           start=100, 
+                                                                           end=299, 
+                                                                           direction='direct')]}),
                             [{"reference" : 'chr2A_00611930',
                             "reference start" : 100,
                             "reference end" : 299,
@@ -1234,6 +1390,60 @@ def test_old_annotation_match():
                             "cluster name" : "cluster 0",
                             "reference mRNA number" : 1,
                             "alternative mRNA number" : 1}]],
+                 
+                 'reverse' : [cl.Cluster(name="cluster 0",
+                                         end=299,
+                                                    loci={'ref': [locus.Locus(name='chr2A_00611930', 
+                                                                             mRNAs={'chr2A_00611930_mrna': [0, 59, 90, 149, 170, 199]}, 
+                                                                             start=100, 
+                                                                             end=299, 
+                                                                             direction='reverse')],
+                                                          'alt': [locus.Locus(name='chr2A_00611930', 
+                                                                                   mRNAs={'chr2A_00611930_mrna': [0, 59, 90, 149, 170, 199]}, 
+                                                                                   start=100, 
+                                                                                   end=299, 
+                                                                                   direction='reverse')]}),
+                                          [{"reference" : 'chr2A_00611930',
+                                             "reference start" : 100,
+                                             "reference end" : 299,
+                                             "alternative" : 'chr2A_00611930',
+                                             "alternative start" : 100,
+                                             "alternative end" : 299,
+                                             "reference mRNA" : 'chr2A_00611930_mrna',
+                                             "alternative mRNA" : 'chr2A_00611930_mrna',
+                                             "mismatch/match" : [150, 0, 0],
+                                             "identity" : 100.0,
+                                             "mismatch zones" : '?',
+                                             "cluster name" : "cluster 0",
+                                             "reference mRNA number" : 1,
+                                             "alternative mRNA number" : 1}]],
+                 
+                 'reverse-modified' : [cl.Cluster(name="cluster 0",
+                                                  end=299,
+                                                    loci={'ref': [locus.Locus(name='chr2A_00611930', 
+                                                                             mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
+                                                                             start=100, 
+                                                                             end=299, 
+                                                                             direction='reverse')],
+                                                          'alt': [locus.Locus(name='chr2A_00611930', 
+                                                                                   mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 219, 240, 299]}, 
+                                                                                   start=100, 
+                                                                                   end=299, 
+                                                                                   direction='reverse')]}),
+                                          [{"reference" : 'chr2A_00611930',
+                                             "reference start" : 100,
+                                             "reference end" : 299,
+                                             "alternative" : 'chr2A_00611930',
+                                             "alternative start" : 100,
+                                             "alternative end" : 299,
+                                             "reference mRNA" : 'chr2A_00611930_mrna',
+                                             "alternative mRNA" : 'chr2A_00611930_mrna',
+                                             "mismatch/match" : [60, 10, 90],
+                                             "identity" : 37.5,
+                                             "mismatch zones" : '?',
+                                             "cluster name" : "cluster 0",
+                                             "reference mRNA number" : 1,
+                                             "alternative mRNA number" : 1}]],
                  
                  'multiple_mRNAs' : [cl.Cluster(name="cluster 0",
                                                 loci={'ref': [locus.Locus(name='chr2A_00611930', 
@@ -1495,6 +1705,23 @@ def test_new_annotation_comparison():
                         "cluster name" : "cluster 0",
                         "reference mRNA number" : 1,
                         "alternative mRNA number" : 1}]]],     
+        
+        "reverse-modified" : ["./data/tests/reverse_test.gff3", 
+                     "./data/tests/reverse_modified_test.gff3",
+                     [[{"reference" : 'chr2A_00611930',
+                        "reference start" : 100,
+                        "reference end" : 299,
+                        "alternative" : 'chr2A_00611930',
+                        "alternative start" : 100,
+                        "alternative end" : 299,
+                        "reference mRNA" : 'chr2A_00611930_mrna',
+                        "alternative mRNA" : 'chr2A_00611930_mrna',
+                        "mismatch/match" : [60, 10, 90],
+                        "identity" : 37.5,
+                        "mismatch zones" : ([209, 219], [[100, 129], [150, 209]]),
+                        "cluster name" : "cluster 0",
+                        "reference mRNA number" : 1,
+                        "alternative mRNA number" : 1}]]],  
         
         "diff-start-before" : ["./data/tests/basic_test.gff3",
                                "./data/tests/diff-start-before_test.gff3",
@@ -1829,7 +2056,24 @@ def test_old_annotation_comparison():
                         "mismatch zones" : '?',
                         "cluster name" : "cluster 0",
                         "reference mRNA number" : 1,
-                        "alternative mRNA number" : 1}]]],        
+                        "alternative mRNA number" : 1}]]],  
+        
+        "reverse-modified" : ["./data/tests/reverse_test.gff3", 
+                     "./data/tests/reverse_modified_test.gff3",
+                     [[{"reference" : 'chr2A_00611930',
+                        "reference start" : 100,
+                        "reference end" : 299,
+                        "alternative" : 'chr2A_00611930',
+                        "alternative start" : 100,
+                        "alternative end" : 299,
+                        "reference mRNA" : 'chr2A_00611930_mrna',
+                        "alternative mRNA" : 'chr2A_00611930_mrna',
+                        "mismatch/match" : [60, 10, 90],
+                        "identity" : 37.5,
+                        "mismatch zones" : '?',
+                        "cluster name" : "cluster 0",
+                        "reference mRNA number" : 1,
+                        "alternative mRNA number" : 1}]]],  
         
         "diff-start-before" : ["./data/tests/basic_test.gff3",
                                "./data/tests/diff-start-before_test.gff3",
@@ -2056,7 +2300,7 @@ def test_compute_matches_mismatches_EI_RF():
                        (150, 0, 0, [], [[]])],
         
         "fusion" : [[100, 129, 150, 209, 240, 299],
-                       iu.OrderedIntervals(intervals=[100, 209, 240, 299], include_ub=True), 
+                       iu.OrderedIntervals(intervals=[100, 129, 150, 209, 240, 299], include_ub=True), 
                        [100, 209, 240, 299],
                        (30, 20, 120, [130, 150], [[150, 209], [240, 299]])],
         
@@ -2066,32 +2310,32 @@ def test_compute_matches_mismatches_EI_RF():
                        (30, 1, 119, [150, 151], [[151, 209], [240, 299]])],
         
         "reverse-reverse" : [[0, 59, 90, 149, 170, 199],
-                             iu.OrderedIntervals(intervals=[0, 60, 90, 150, 170, 200], include_ub=True), 
+                             iu.OrderedIntervals(intervals=[0, 59, 90, 149, 170, 199], include_ub=True), 
                              [0, 59, 90, 149, 170, 199],
                              (150, 0, 0, [], [[]])],
         
         "diff-start-before" : [[100, 129, 150, 209, 240, 299],
-                       iu.OrderedIntervals(intervals=[100, 130, 150, 210, 240, 300], include_ub=True), 
+                       iu.OrderedIntervals(intervals=[100, 129, 150, 209, 240, 299], include_ub=True), 
                        [40, 69, 90, 149, 180, 239],
                        (30, 180, 30, [40, 70, 90, 100, 130, 180, 210, 300], [[100, 129]])],
         
         "diff-start-after" : [[100, 129, 150, 209, 240, 299],
-                       iu.OrderedIntervals(intervals=[100, 130, 150, 210, 240, 300], include_ub=True), 
+                       iu.OrderedIntervals(intervals=[100, 129, 150, 209, 240, 299], include_ub=True), 
                        [160, 189, 210, 269, 300, 359],
                        (30, 180, 30, [100, 130, 150, 160, 190, 240, 270, 360], [[160, 189]])],
         
         'overlapping-loci (first cluster/locus)' : [[50, 149],
-                       iu.OrderedIntervals(intervals=[50, 150], include_ub=True), 
+                       iu.OrderedIntervals(intervals=[50, 149], include_ub=True), 
                        [100, 249],
                        (0, 150, 50, [50, 100, 150, 250], [[100, 149]])],
         
         'overlapping-loci (first cluster / 2nd locus)' : [[200, 349],
-                       iu.OrderedIntervals(intervals=[200, 350], include_ub=True), 
+                       iu.OrderedIntervals(intervals=[200, 349], include_ub=True), 
                        [100, 249],
                        (0, 200, 50, [100, 200, 250, 350], [[200, 249]])],
                          
         "length_computation" : [[8, 13],
-                       iu.OrderedIntervals(intervals=[8, 14], include_ub=True), 
+                       iu.OrderedIntervals(intervals=[8, 13], include_ub=True), 
                        [1, 4, 12, 13],
                        (2, 8, 0, [1, 5, 8, 12], [[]])]
         }

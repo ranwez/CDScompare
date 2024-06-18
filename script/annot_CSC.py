@@ -18,8 +18,6 @@ Created on Thu May  2 11:57:29 2024
 import getopt
 import sys
 import os
-import intervals_utils as iu
-import locus as lc
 import read_files as rf
 import pre_comparison as pc
 import comparison as comp
@@ -201,70 +199,4 @@ if __name__ == "__main__":
     main()
     #test_reverse()
 
-    
-def test_reverse():
-    loc = lc.Locus(name="locus1", mRNAs={"chrblabla": [100, 200, 300, 400]}, start=100, end=400, direction="reverse")
-    loc.reverse(600)
-    print(loc.mRNAs)
-    #FAIRE LA REINVERSION POUR LES ZONES DE MISMATCH
-
-def test_get_reading_frame():
-    cds_bounds_ref =[4,9,12,13]
-    cds_bounds_alt=[1,6,9,10]
-    cds_inter = [4,6,9,9]
-    rf_ref=get_reading_frame(cds_bounds_ref, cds_inter, True, True)
-    rf_alt=get_reading_frame(cds_bounds_alt, cds_inter, True, True)
-    print(rf_ref)
-    print(rf_alt)
-
-def test2_get_reading_frame():
-    cds_bounds_ref =[4,9,12,13]
-    cds_bounds_alt=[4,13]
-    cds_inter = [4,9,12,13]
-    rf_ref=get_reading_frame(cds_bounds_ref, cds_inter, True, True)
-    rf_alt=get_reading_frame(cds_bounds_alt, cds_inter, True, True)
-    print(rf_ref)
-    print(rf_alt)
-
-def test3_get_reading_frame():
-    cds_bounds_ref =[4,9,12,13]
-    cds_bounds_alt=[5,9,12,13]
-    cds_inter = [5,9,12,13]
-    rf_ref=get_reading_frame(cds_bounds_ref, cds_inter, True, True)
-    rf_alt=get_reading_frame(cds_bounds_alt, cds_inter, True, True)
-    print(rf_ref)
-    print(rf_alt)
-
-def test_mrna_comp():
-    cds_bounds_ref =[4,9,12,13]
-    cds_bounds_alt=[1,6,9,10]
-    intervals_ref = iu.OrderedIntervals(cds_bounds_ref, True);
-    (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
-    print([matches, mismatches_EI, mismatches_RF])
-    print( matches / (matches + mismatches_EI+mismatches_RF) * 100)
-
-def test_mrna_comp2():
-    cds_bounds_ref =[4,9,12,13]
-    cds_bounds_alt=[4,13]
-    intervals_ref = iu.OrderedIntervals(cds_bounds_ref, True);
-    (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
-    print([matches, mismatches_EI, mismatches_RF])
-    print( matches / (matches + mismatches_EI+mismatches_RF) * 100)
-
-
-def test_mrna_comp3():
-    cds_bounds_ref =[4,9,12,13]
-    cds_bounds_alt=[5,9,12,13]
-    intervals_ref = iu.OrderedIntervals(cds_bounds_ref, True);
-    (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
-    print([matches, mismatches_EI, mismatches_RF])
-    print( matches / (matches + mismatches_EI+mismatches_RF) * 100)
-
-def test_mrna_comp4():
-    cds_bounds_ref =[4,9,12,13]
-    cds_bounds_alt=[5,9,11,13]
-    intervals_ref = iu.OrderedIntervals(cds_bounds_ref, True);
-    (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF (cds_bounds_ref, intervals_ref, cds_bounds_alt)
-    print([matches, mismatches_EI, mismatches_RF])
-    print( matches / (matches + mismatches_EI+mismatches_RF) * 100)
     
