@@ -8,6 +8,24 @@ Created on Sat Jun 15 21:05:26 2024
 
 import cluster as cl
 
+
+#TODO docu (returns 'True' only if both annotations' loci are ordered)
+def ref_alt_is_sorted(dict_ref, dict_alt, debug=False, verbose=False):
+    is_sorted = True
+    ref_list = list(dict_ref.items())
+    alt_list = list(dict_alt.items())
+    
+    for i in range(len(ref_list)-1):
+        if ref_list[i] > ref_list[i+1]:
+            is_sorted = False
+            
+    for j in range(len(alt_list)-1):
+        if alt_list[j] > alt_list[j+1]:
+            is_sorted = False
+
+    return is_sorted        
+
+
 ## This function creates a list of all the locus coordinates for both 
 # annotations and sorts it in ascending order by their lower bound position. 
 #
@@ -29,29 +47,56 @@ import cluster as cl
 # each locus, its locus ID, and a boolean indicating if the locus was retrieved
 # from the reference (True) or the alternative (False)
 def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
-    if verbose:
-        print("\n\n**************** Constructing the locus order list of the two annotations ****************")
-    locus_order = []
-    
-    # get all reference loci bounds and locus ids as tuples in a list
-    # 'True' indicates the tuple is from the reference
-    for locus_id, locus in dict_ref.items():
-        locus_order.append((locus.start, locus.end, locus.name, True, locus.direction)) 
- 		
-    # get all alternative loci bounds and locus ids as tuples in a list
-    # 'False' indicates the tuple is from the alternative
-    for locus_id, locus in dict_alt.items():
-        locus_order.append((locus.start, locus.end, locus.name, False, locus.direction)) 
+    is_sorted = ref_alt_is_sorted(dict_ref, dict_alt, debug=False, verbose=False)
+    if is_sorted:
+        locus_order = []
+        i = 0
+        j = 0
+        ref_key_list = list(dict_ref.keys())
+        alt_key_list = list(dict_alt.keys())
         
-    if verbose:
-        print("\nSorting the locus order list")
- 	
-    # sorts the list using the first value of each tuple 
-    # (= lower bound of the locus)
-    locus_order.sort()
+        while i<len(ref_key_list) and j<len(alt_key_list):
+            loc_ref = dict_ref[ref_key_list[i]]
+            loc_alt = dict_alt[alt_key_list[j]]
+            if loc_ref.start < loc_alt.start:
+                locus_order.append((loc_ref.start, loc_ref.end, loc_ref.name, True, loc_ref.direction))
+                i += 1
+            else:
+                locus_order.append((loc_alt.start, loc_alt.end, loc_alt.name, False, loc_alt.direction))
+                j += 1
+                
+        if i<len(ref_key_list):
+            for k in range(i+1, len(ref_key_list)+1):
+                locus_order.append((loc_ref.start, loc_ref.end, loc_ref.name, True, loc_ref.direction))
+        if j<len(alt_key_list):
+            for k in range(j+1, len(alt_key_list)+1):
+                locus_order.append((loc_alt.start, loc_alt.end, loc_alt.name, False, loc_alt.direction))
+    else:
+        if verbose:
+            print("\n\n**************** Constructing the locus order list of the two annotations ****************")
+        locus_order = []
+        
+        # get all reference loci bounds and locus ids as tuples in a list
+        # 'True' indicates the tuple is from the reference
+        for locus_id, locus in dict_ref.items():
+            locus_order.append((locus.start, locus.end, locus.name, True, locus.direction)) 
+     		
+        # get all alternative loci bounds and locus ids as tuples in a list
+        # 'False' indicates the tuple is from the alternative
+        for locus_id, locus in dict_alt.items():
+            locus_order.append((locus.start, locus.end, locus.name, False, locus.direction)) 
+            
+        if verbose:
+            print("\nSorting the locus order list")
+     	
+        # sorts the list using the first value of each tuple 
+        # (= lower bound of the locus)
+        locus_order.sort()
+    
+    
     if debug:
         print(f"\nlocus order list = {locus_order}")
-     
+    print(locus_order)
     return locus_order
 
 
