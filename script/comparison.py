@@ -20,13 +20,8 @@ import pre_comparison as pc
 #
 # @param cluster_end End coordinate of the last locus of the cluster
 #
-# @param debug If True, triggers display of many messages intended for 
-# debugging the program. Default is 'False'
-#
 # @returns Returns a tuple of lists corresponding to the reversed zones
-def reverse_coord(mismatch_zones, cluster_end, debug=False):
-    if debug: print(f"mismatch_zones before re-reversing: {mismatch_zones}")
-    if debug: print(f"cluster end position: {cluster_end}")
+def reverse_coord(mismatch_zones, cluster_end):
     new_list_EI = []
     new_list_RF = []
     
@@ -37,7 +32,6 @@ def reverse_coord(mismatch_zones, cluster_end, debug=False):
     if mismatch_zones[1] != [[]]:
         for bounds in reversed(mismatch_zones[1]):
             new_list_RF.append([cluster_end-bounds[1], cluster_end-bounds[0]])
-    if debug: print(f"mismatch_zones after re-reversing: {(new_list_EI, new_list_RF)}")
     return (new_list_EI, new_list_RF)
 
 ## This function compares two annotations' loci returned by the function 
@@ -54,9 +48,6 @@ def reverse_coord(mismatch_zones, cluster_end, debug=False):
 #
 # @param alt_locus The alternative annotation's locus (Locus class instance)
 #
-# @param debug If True, triggers display of many messages intended for 
-# debugging the program. Default is 'False'
-#
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
@@ -67,7 +58,7 @@ def reverse_coord(mismatch_zones, cluster_end, debug=False):
 # producing mismatches, and the compared mRNA names
 #
 # @remark This function doesn't expect any annotation to be a 'reference'
-def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
+def compare_loci(ref_locus, alt_locus, verbose=False):
     if verbose:
         print(f"\n\n**************** comparing loci {ref_locus.name} of reference and {alt_locus.name} of alternative ****************")
     final_comparison = [0,0,0]
@@ -76,22 +67,18 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     
     # if the loci are on different strands, return 'null' values
     if ref_locus.direction != alt_locus.direction:
-        if debug:
-            print(f"{ref_locus.name} and {alt_locus.name} are not on the same strand, returning 0% identity")
         return ('_', 0.0, '_', '_', '_')
     
     # if the loci don't overlap, return 'null' values
     overlap = (alt_locus.start <= ref_locus.end <= alt_locus.end) or (ref_locus.start <= alt_locus.end <= ref_locus.end)
     if not overlap:
-        if debug:
-            print(f"{ref_locus.name} and {alt_locus.name} do not overlap, returning 0% identity")
         return('_', 0.0, '_', '_', '_')
     
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
-        intervals_ref = iu.OrderedIntervals(mRNA_ref, True, debug);
+        intervals_ref = iu.OrderedIntervals(mRNA_ref, True);
     
         for mRNA_alt_id, mRNA_alt in alt_locus.mRNAs.items():
-            (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, verbose)
+            (matches, mismatches_EI, mismatches_RF, diff_EI, diff_RF) = compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, verbose)
             identity = matches / (matches + mismatches_EI + mismatches_RF)
         
             # for each mRNA, we test wether the computed identity is higher 
@@ -112,9 +99,6 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     
     # return the highest mRNA identity between the locus of each annotation
     final_identity = round(final_identity * 100, 1)
-    if debug:
-        print(f"final mismatch zones = {final_mismatch_zones}")
-        print(f"final reference mRNA = {final_ref_mRNA}, final alternative mRNA = {final_alt_mRNA}")
     if verbose:
         print(f"\nFinal result of the comparison of the locus : {final_comparison[1]} matches and {final_comparison[0]} mismatches (identity = {final_identity})" )
     return (final_comparison, final_identity, final_mismatch_zones, final_ref_mRNA, final_alt_mRNA)
@@ -131,9 +115,6 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
 #
 # @param mRNA_alt CDS position intervals of the reference (as a list)
 #
-# @param debug If True, triggers display of many messages intended for 
-# debugging the program. Default is 'False'
-#
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
@@ -147,38 +128,29 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
 # is not in a CDS for the current position; 'RF' stands for 'Reading Frame' and
 # indicates the two annotations are not in the same codon position at the 
 # current position
-def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, verbose):
-    if debug: print(f"reference CDS list = {mRNA_ref}\nalternative CDS list = {mRNA_alt}")
+def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, verbose):
     matches=0    
-    intervals_alt = iu.OrderedIntervals(mRNA_alt, True, debug);
+    intervals_alt = iu.OrderedIntervals(mRNA_alt, True);
     inter_mrna = intervals_ref.intersection(intervals_alt);
     union_mrna = intervals_ref.union(intervals_alt);
-    if debug: print(f"CDS unions : {union_mrna.get_intervals_with_included_ub()}")
     # exon and intron (EI) mismatches
     mismatches_EI=union_mrna.total_length()-inter_mrna.total_length();
     inter_mrna_bounds=inter_mrna.get_intervals_with_included_ub();
-    if debug: print(f"CDS intersections : {inter_mrna_bounds}")
-    rf_ref=pc.get_reading_frame(mRNA_ref, inter_mrna_bounds, True, True)
-    rf_alt=pc.get_reading_frame(mRNA_alt, inter_mrna_bounds, True, True)
+    rf_ref=pc.get_reading_frame(mRNA_ref, inter_mrna_bounds, True)
+    rf_alt=pc.get_reading_frame(mRNA_alt, inter_mrna_bounds, True)
     interval_id=0;
     diff_EI=intervals_ref.symmetric_difference(intervals_alt);
-    if debug: print(f"CDS-intron comparison zones : {diff_EI.get_intervals_with_included_ub()}")
     diff_RF=[];
     mismatches_RF=0; # reading frame (RF) mismatches
-    if debug: print(f"reference mRNAs = {mRNA_ref}\nalternative mRNAs = {mRNA_alt}\nreference reading frames = {rf_ref}\nalternative reading frames = {rf_alt}")
     for interval_id in range(0, len(rf_ref)):
         interval_lg= inter_mrna_bounds[2*interval_id+1]-inter_mrna_bounds[2*interval_id]+1;
-        if debug: print(f"comparison area :\nlower bound = {inter_mrna_bounds[2*interval_id]+1}\nupper bound = {inter_mrna_bounds[2*interval_id+1]}\nlength = {interval_lg}")
         if rf_ref[interval_id] != rf_alt[interval_id]:
-            if debug: print(f"different reading frames for reference and alternative: adding length ({interval_lg}) to reading frame mismatches (mismatches_RF)")
             mismatches_RF+=interval_lg
             diff_RF.append([inter_mrna_bounds[2*interval_id], inter_mrna_bounds[2*interval_id+1]]);
         else:
-            if debug: print(f"identical reading frames for reference and alternative: adding length ({interval_lg}) to matches")
             matches+=interval_lg
     if diff_RF == []:
         diff_RF = [[]]
-    print(f"************************************{(diff_EI.intervals, diff_RF)}")
     return (matches, mismatches_EI, mismatches_RF, diff_EI.intervals, diff_RF)
 
 
@@ -191,9 +163,6 @@ def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, v
 #
 # @param borders_vector_alt Instance of class 'Locus' of the alternative locus
 #
-# @param debug If True, triggers display of many messages intended for 
-# debugging the program. Default is 'False'
-#
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
@@ -202,7 +171,7 @@ def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, v
 # compared mRNA names
 #
 # @remark This function doesn't expect any annotation to be a 'reference'
-def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
+def old_compare_loci(ref_locus, alt_locus, verbose=False):
     if verbose:
         print(f"\n\n**************** comparing loci {ref_locus.name} of reference and {alt_locus.name} of alternative ****************")
     final_comparison = [0,0,0]
@@ -210,15 +179,11 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     
     # if the loci are on different strands, return 'null' values
     if ref_locus.direction != alt_locus.direction:
-        if debug:
-            print(f"{ref_locus.name} and {alt_locus.name} are not on the same strand, returning 0% identity")
         return ('_', 0.0, "_", "_")
     
     # if the loci don't overlap, return 'null' values
     overlap = (alt_locus.start <= ref_locus.end <= alt_locus.end) or (ref_locus.start <= alt_locus.end <= ref_locus.end)
     if not overlap:
-        if debug:
-            print(f"{ref_locus.name} and {alt_locus.name} do not overlap, returning 0% identity")
         return('_', 0.0, "_", "_")
     
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
@@ -227,8 +192,8 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 print(f"**************** comparing mRNA {mRNA_ref_id} of reference locus {ref_locus.name} and mRNA {mRNA_alt_id} of alternative locus {alt_locus.name} ****************")
             
             # we create the structure string for each mRNA
-            start_ref, vector_ref = pc.create_vectors(mRNA_ref, debug, verbose)
-            start_alt, vector_alt = pc.create_vectors(mRNA_alt, debug, verbose)
+            start_ref, vector_ref = pc.create_vectors(mRNA_ref, verbose)
+            start_alt, vector_alt = pc.create_vectors(mRNA_alt, verbose)
             comparison = [0,0,0]
                 
             # we assign to 'minimum string' and 'maximum string' the reference
@@ -244,18 +209,9 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 start_min = start_alt
                 start_max = start_ref
             diff = start_max - start_min
-            if debug:
-                print(f"vector_ref = {vector_ref}")
-                print(f"vector_alt = {vector_alt}")
-                print(f"vector_min = {vector_min}")
-                print(f"vector_max = {vector_max}")
-                print(f"position difference = {diff}")
-                print(f"range = {max(len(vector_ref), len(vector_alt)) + diff}")
             
             # for each position in the string of maximum length + position diff
             for i in range(max(len(vector_ref), len(vector_alt)) + diff):
-                if debug:
-                    print(f"i = {i}")
                     
                 # identitify the presence of a CDS at each position
                 try:
@@ -276,27 +232,18 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 # if both are in a cds and have the same codon position,
                 # identify as a 'match'
                 if min_in_cds and max_in_cds and vector_min[i] == vector_max[i-diff]:
-                    if debug:
-                        print("both ref and alt are in cds with same codon position value, adding to 'match'")
                     comparison[0] += 1
                     
                 # if both are in a cds but don't have the same codon
                 # position, identify as a 'mismatch'
                 elif min_in_cds and max_in_cds and vector_min[i] != vector_max[i-diff]:
-                    if debug:
-                        print("both ref and alt are in cds, with different codon position value, adding to 'mismatch'")
                     comparison[2] += 1
                     
                 # if only one is in a cds, identify as a 'mismatch'
                 elif min_in_cds or max_in_cds:
-                    if debug:
-                        print("ref or alt in cds, adding to 'mismatch'")
                     comparison[1] += 1
                     
                 # the cas of both not being in a cds is ignored
-                else:
-                    if debug:
-                        print("ref and alt not in cds, ignoring")
             identity = comparison[0] / (comparison[0] + comparison[1] + comparison[2])
             
             # for each mRNA, we test wether the computed identity is higher 
@@ -306,8 +253,6 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
                 final_identity = identity
                 final_ref_mRNA = mRNA_ref_id
                 final_alt_mRNA = mRNA_alt_id 
-                if debug:
-                    print(f"comparison = {comparison}\nfinal_comparison = {final_comparison}\nidentity = {identity}\nfinal identity = {final_identity}")
             # if all mRNAs comparisons return 0% identity, we still want 
             # mismatch values to be returned
             elif identity == 0.0 and comparison[1]+comparison[2] > final_comparison[1]+final_comparison[2]:
@@ -335,9 +280,6 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
 # @param create_strings Boolean indicating wether to use the new compare_loci
 # fucntion ('False') or the old_compare_loci function ('True')
 #
-# @param debug If True, triggers display of many messages intended for 
-# debugging the program. Default is 'False'
-#
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
@@ -347,7 +289,7 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
 #
 # @returns Returns a list of dictionaries detailing the locus information for 
 # each locus comparison 
-def annotation_match(cluster, create_strings=False, debug=False, verbose=False):
+def annotation_match(cluster, create_strings=False, verbose=False):
     cluster_ref = cluster.get_loci()["ref"]
     cluster_alt = cluster.get_loci()["alt"]
     cluster_name = cluster.name
@@ -377,10 +319,6 @@ def annotation_match(cluster, create_strings=False, debug=False, verbose=False):
         dyn_prog_matrix.append([])
         for j in range(len(cluster_alt)+1):
             dyn_prog_matrix[i].append(0)
-    if debug:        
-        print("Initialized dynamic programmation matrix :")
-        for line in dyn_prog_matrix:
-            print(str(line))
             
     # compute all internal values of the matrix by taking the maximum value of
     # the top 'cell', the left 'cell', and the top-left 'cell' summed with the
@@ -389,46 +327,27 @@ def annotation_match(cluster, create_strings=False, debug=False, verbose=False):
         for j in range(1, len(cluster_alt)+1):
             
             if create_strings:
-                comparison, identity, ref_mRNA, alt_mRNA = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
+                comparison, identity, ref_mRNA, alt_mRNA = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], verbose)
             else:
-                comparison, identity, EI_RF_mismatch_zones, ref_mRNA, alt_mRNA = compare_loci(cluster_ref[i-1], cluster_alt[j-1], debug, verbose)
-            if debug:
-                print("comparison identity score = " + str(identity))
-                print(f"top value = {dyn_prog_matrix[i-1][j]}; left value = {dyn_prog_matrix[i][j-1]}; diagonal value+identity = {dyn_prog_matrix[i-1][j-1]} + {identity}")
+                comparison, identity, EI_RF_mismatch_zones, ref_mRNA, alt_mRNA = compare_loci(cluster_ref[i-1], cluster_alt[j-1], verbose)
             
             dyn_prog_matrix[i][j] = max(dyn_prog_matrix[i-1][j],
                                         dyn_prog_matrix[i][j-1],
                                         dyn_prog_matrix[i-1][j-1] + identity)
-    if debug:        
-        print("complete dynamic programmation matrix :")
-        for line in dyn_prog_matrix:
-            print(str(line))
         
     # retrieve best match alignment through backtracking
     i = len(cluster_ref)
     j = len(cluster_alt)
     results = []
-    if debug:
-        print(f"initial i = {i}, initial j = {j}")
     while i>0 and j>0:
-        if debug:
-            print(f"i = {i}, j = {j}")
         
         if create_strings:
-            comparison, identity, ref_mRNA, alt_mRNA = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)    
+            comparison, identity, ref_mRNA, alt_mRNA = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], False)    
         else:
-            comparison, identity, mismatch_zones, ref_mRNA, alt_mRNA = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
-            if debug: print(f"mismatch zones = {EI_RF_mismatch_zones}")
+            comparison, identity, mismatch_zones, ref_mRNA, alt_mRNA = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False)
             if cluster_ref[0].direction == "reverse":
-                print(cluster_ref[i-1].name)
-                if cluster_ref[i-1].name == "chr4A_598656537":
-                    print("tac")
                 if mismatch_zones not in ["_", "?"]:
-                    mismatch_zones = reverse_coord(mismatch_zones, cluster_end, debug)
-                if debug: print(f"new mismatch zones = {mismatch_zones}")
-        if debug:
-            print(f"top value : {dyn_prog_matrix[i-1][j]}, \nleft value : {dyn_prog_matrix[i][j-1]}, \ndiagonal value : {dyn_prog_matrix[i-1][j-1]} + {identity}")
-            print(f"max value : {max(dyn_prog_matrix[i-1][j], dyn_prog_matrix[i][j-1], dyn_prog_matrix[i-1][j-1] + identity)}")
+                    mismatch_zones = reverse_coord(mismatch_zones, cluster_end)
         
         # if the maximum value is the diagonal value + computed identity, we
         # add both locus informations to the results dictionary and 'progress'

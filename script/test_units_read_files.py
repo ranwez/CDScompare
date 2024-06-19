@@ -39,7 +39,7 @@ def test_get_structure_id():
         
         print(f"\n{test} test")
         
-        result = rf.get_structure_id(test_dict[test][0], False, False)
+        result = rf.get_structure_id(test_dict[test][0], False)
         print(f"result : {result}\n")
         print(test_dict[test][1])
         assert result == test_dict[test][1]
@@ -128,7 +128,7 @@ def test_get_gff_borders():
     
     for test in test_dict:
         print(f"\n{test} file test")
-        result = rf.get_gff_borders(test_dict[test][0], False, False)
+        result = rf.get_gff_borders(test_dict[test][0], False)
         
         # verify presence of expected mRNAs
         dna_mol = test_dict[test][1]

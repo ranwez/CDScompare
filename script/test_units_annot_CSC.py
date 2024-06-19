@@ -329,7 +329,7 @@ def test_new_annotation_comparison():
         
         print(f"\n{test} test")
         
-        result = annot_CSC.annotation_comparison(test_dict[test][0], test_dict[test][1], False, False, False)
+        result = annot_CSC.annotation_comparison(test_dict[test][0], test_dict[test][1], False)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
@@ -650,7 +650,7 @@ def test_old_annotation_comparison():
         
         print(f"\n{test} test")
         
-        result = annot_CSC.annotation_comparison(test_dict[test][0], test_dict[test][1], False, False, True)
+        result = annot_CSC.annotation_comparison(test_dict[test][0], test_dict[test][1], False, True)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]

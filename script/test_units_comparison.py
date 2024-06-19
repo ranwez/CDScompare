@@ -203,7 +203,7 @@ def test_compare_loci():
         
         print(f"\n{test} file test")
         
-        result = comp.compare_loci(test_dict[test][0], test_dict[test][1], False, False)
+        result = comp.compare_loci(test_dict[test][0], test_dict[test][1], False)
         print(f"Expected result = {test_dict[test][2]}")
         print(f"Result = {result}")
         assert result == test_dict[test][2]
@@ -402,7 +402,7 @@ def test_old_compare_loci():
         
         print(f"\n{test} file test")
         
-        result = comp.old_compare_loci(test_dict[test][0], test_dict[test][1], False, False)
+        result = comp.old_compare_loci(test_dict[test][0], test_dict[test][1], False)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
@@ -652,7 +652,7 @@ def test_new_annotation_match():
         
         print(f"\n{test} test")
         
-        result = comp.annotation_match(test_dict[test][0], False, False, False)
+        result = comp.annotation_match(test_dict[test][0], False)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][1]}\n")
         assert result == test_dict[test][1]
@@ -902,7 +902,7 @@ def test_old_annotation_match():
         
         print(f"\n{test} test")
         
-        result = comp.annotation_match(test_dict[test][0], True, False, False)
+        result = comp.annotation_match(test_dict[test][0], True, False)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][1]}\n")
         assert result == test_dict[test][1]
@@ -965,7 +965,7 @@ def test_compute_matches_mismatches_EI_RF():
         
         print(f"\n{test} file test")
         
-        result = comp.compute_matches_mismatches_EI_RF(test_dict[test][0], test_dict[test][1], test_dict[test][2], False, False)
+        result = comp.compute_matches_mismatches_EI_RF(test_dict[test][0], test_dict[test][1], test_dict[test][2], False)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][3]}\n")
         assert result == test_dict[test][3]

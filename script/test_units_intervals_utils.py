@@ -61,7 +61,7 @@ def test_transform_intervals_to_exclude_ub():
         
         print(f"\n{test} file test")
         # transform_intervals_to_exclude_ub is called by the class constructor
-        interval = iu.OrderedIntervals(test_dict[test][0], True, False)
+        interval = iu.OrderedIntervals(test_dict[test][0], True)
         result = interval.intervals
         print(f"result : {result}\n")
         print(test_dict[test][1])
@@ -114,7 +114,7 @@ def test_total_length():
         
         print(f"\n{test} file test")
         
-        interval = iu.OrderedIntervals(test_dict[test][0], True, False)
+        interval = iu.OrderedIntervals(test_dict[test][0], True)
         result = interval.total_length()
         print(f"result : {result}\n")
         print(test_dict[test][1])
@@ -167,8 +167,8 @@ def test_intersection():
         
         print(f"\n{test} file test")
         
-        interval1 = iu.OrderedIntervals(test_dict[test][0], True, False)
-        interval2 = iu.OrderedIntervals(test_dict[test][1], True, False)
+        interval1 = iu.OrderedIntervals(test_dict[test][0], True)
+        interval2 = iu.OrderedIntervals(test_dict[test][1], True)
         result = interval1.intersection(interval2).get_intervals_with_included_ub()
         print(f"result : {result}\n")
         print(test_dict[test][2])
@@ -221,8 +221,8 @@ def test_union():
         
         print(f"\n{test} file test")
         
-        interval1 = iu.OrderedIntervals(test_dict[test][0], True, False)
-        interval2 = iu.OrderedIntervals(test_dict[test][1], True, False)
+        interval1 = iu.OrderedIntervals(test_dict[test][0], True)
+        interval2 = iu.OrderedIntervals(test_dict[test][1], True)
         result = interval1.union(interval2).get_intervals_with_included_ub()
         print(f"result : {result}\n")
         print(test_dict[test][2])

@@ -18,16 +18,13 @@ import cluster as cl
 # @param dict_alt Alternative annotation's dictionary, as returned by
 # get_gff_borders
 #
-# @param debug If True, triggers display of many messages intended for 
-# debugging the program. Default is 'False'
-#
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
 # @see get_gff_borders()
 #
 # @returns Returns 'True' if both dictionaries are already sorted, else 'False'
-def ref_alt_is_sorted(dict_ref, dict_alt, debug=False, verbose=False):
+def ref_alt_is_sorted(dict_ref, dict_alt, verbose=False):
     is_sorted = True
     ref_list = list(dict_ref.items())
     alt_list = list(dict_alt.items())
@@ -53,9 +50,6 @@ def ref_alt_is_sorted(dict_ref, dict_alt, debug=False, verbose=False):
 # @param dict_alt Dictionary containing all loci of the alternative annotation,
 # as returned by the 'get_gff_borders' function
 #
-# @param debug If True, triggers display of many messages intended for 
-# debugging the program. Default is 'False'
-#
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
@@ -69,10 +63,10 @@ def ref_alt_is_sorted(dict_ref, dict_alt, debug=False, verbose=False):
 # already sorted in ascendign order, this function's complexity reduces to 
 # O(nb_loci), else it is O(nb_loci x log(nb_loci)) (where 'nb_loci' is the
 # number of loci in the dictionaries)
-def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
+def annotation_sort(dict_ref, dict_alt, verbose=False):
     if verbose:
         print("\n\n**************** Constructing the locus order list of the two annotations ****************")
-    is_sorted = ref_alt_is_sorted(dict_ref, dict_alt, debug=False, verbose=False)
+    is_sorted = ref_alt_is_sorted(dict_ref, dict_alt, verbose=False)
     if is_sorted:
         if verbose: print("loci are already sorted")
         locus_order = []
@@ -80,9 +74,6 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
         j = 0
         ref_key_list = list(dict_ref.keys())
         alt_key_list = list(dict_alt.keys())
-        if debug:
-            print(f"list of reference loci : {ref_key_list}")
-            print(f"list of alternative loci : {alt_key_list}")
         
         while i<len(ref_key_list) and j<len(alt_key_list):
             loc_ref = dict_ref[ref_key_list[i]]
@@ -123,9 +114,6 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
         # (= lower bound of the locus)
         locus_order.sort()
     
-    
-    if debug:
-        print(f"\nlocus order list = {locus_order}")
     return locus_order
 
 
@@ -144,9 +132,6 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
 # locus of each annotation in ascending order of their lower border, as 
 # returned by annotation_sort
 #
-# @param debug If True, triggers display of many messages intended for 
-# debugging the program. Default is 'False'
-#
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
@@ -159,7 +144,7 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
 #
 # @returns an instance of the Clusters class describing the cluster structure
 # of the two annotations loci
-def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=False):
+def construct_clusters(dict_ref, dict_alt, locus_order, verbose=False):
 
     # initialisation of the dictionary keeping track of what loci have already
     # been fused
@@ -177,11 +162,6 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
         locus_borders = [locus_order[i][0], locus_order[i][1]] 
         locus_is_ref = locus_order[i][3]
         locus_strand = locus_order[i][4]
-        if debug:
-            print(f"\ni = {i}")
-            print(f"locus id = {locus_id}")
-            print(f"locus borders = {locus_borders}")
-            print(f"locus strand = {locus_strand}")
             
         if locus_is_ref:
             is_ref_marker = "_ref"
@@ -223,11 +203,6 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                 next_is_ref_marker = "_ref"
             else:
                 next_is_ref_marker = "_alt"
-            if debug:
-                print(f"\nj = {j}")
-                print(f"next lower border = {next_lower_border}")
-                print(f"already grouped : {already_grouped}")
-                print(f"next locus strand = {next_strand}")
                 
             # if the locus pointed by 'j' has not already been grouped and 
             # is not on a different strand...
@@ -239,12 +214,8 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                 # upper bound of the current locus search is also extended 
                 # to upper bound of the 'j' locus
                 if locus_borders[0] <= next_lower_border <= locus_borders[1] or locus_borders[0] >= next_lower_border >= locus_borders[1]:
-                    if debug:
-                        print("next locus found in current borders")
                     new_upper_border = locus_order[i+j][1]
                     locus_borders[1] = new_upper_border                
-                    if debug:
-                        print(f"new locus borders = {locus_borders}")
                     
                     if next_is_ref:
                         cluster.append_to_loci("ref", dict_ref[next_locus_id])
@@ -256,28 +227,20 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
                       
                 # if no locus is found in the current locus search's bounds, 
                 # a 'stop signal' is given to stop the 'j' loop
-                else: 
-                    if debug:
-                        print("next locus not found in current borders, stopping search")
+                else:
                     j = -1
                     
             # if the locus pointed by 'j' has already been grouped, the upper 
             # bound of the current locus search is extended to upper bound of
             # the 'j' locus 
             elif next_locus_id + next_is_ref_marker in already_grouped:
-                if debug:
-                    print(f"{next_locus_id} already grouped, skipping and extending search")
                 new_upper_border = locus_order[i+j][1]
-                locus_borders[1] = new_upper_border               
-                if debug:
-                    print(f"new locus borders = {locus_borders}")               
+                locus_borders[1] = new_upper_border
                 j += 1
                 
             # if the locus pointed by 'j' is on a different strand from the 
             # current locus, it is ignored
             elif locus_strand != next_strand:
-                if debug:
-                    print(f"{next_locus_id} on different strand, skipping")        
                 j += 1
                          
         # assign the end coordinate value to the cluster
@@ -290,12 +253,6 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
         except IndexError:
             alt_end = -1
         cluster.set_end(max(ref_end, alt_end))
-        
-        if debug:
-            print(f"cluster name = {cluster_name}")
-            print(f"reference loci = {cluster.get_loci()['ref']}")
-            print(f"alternative loci = {cluster.get_loci()['alt']}")
-            print(f"end of cluster = {cluster.get_end()}")
     
     return cluster_list
 
@@ -306,9 +263,6 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
 # @param cds_bounds List of CDS intervals of an annotation
 #
 # @param area_bounds List of intersection intervals from two annotations
-#
-# @param debug If True, triggers display of many messages intended for 
-# debugging the program. Default is 'False'
 #
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
@@ -321,7 +275,7 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
 # 'get_intervals_with_included_ub' method 
 #
 # @see get_intervals_with_included_ub()
-def get_reading_frame(cds_bounds, area_bounds, debug=False, verbose=False):
+def get_reading_frame(cds_bounds, area_bounds, verbose=False):
     nb_nt = 0;
     nb_nt_in_cds=0;
     cdsb=0; # cds bounds index
@@ -345,9 +299,6 @@ def get_reading_frame(cds_bounds, area_bounds, debug=False, verbose=False):
 # @param borders The list containing all start-end coordinates of the 
 # annotation's locus' CDS
 #
-# @param debug If True, triggers display of many messages intended for 
-# debugging the program. Default is 'False'
-#
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
@@ -355,7 +306,7 @@ def get_reading_frame(cds_bounds, area_bounds, debug=False, verbose=False):
 #
 # @returns Returns a list describing the start of the locus and the annotation 
 # structure of the locus
-def create_vectors(borders, debug=False, verbose=False):
+def create_vectors(borders, verbose=False):
     
     # this variable takes in the strings of gene annotation structure 
     # for each gene
@@ -366,17 +317,12 @@ def create_vectors(borders, debug=False, verbose=False):
     
     # if the locus is on the direct strand
     if borders[1] > borders[0]:
-
-        if debug:
-            print(f"\nLocus is on direct strand, retrieving start of locus from start of coordinates list : {borders[0]}")
         
         # we get the start of the locus
         vector[0] = borders[0]
         
     # if the locus is on the reverse strand
     else:
-        if debug:
-            print(f"\nLocus is on reverse strand, retrieving start of locus from end of coordinates list : {borders[-1]}")
         
         # we get the start (the last CDS value since the locus is reversed) 
         # of the locus
@@ -397,10 +343,6 @@ def create_vectors(borders, debug=False, verbose=False):
         # if we are in a CDS, we append the numbers 1, 2, and 3 
         # (with looping) 
         if in_exon % 2 == 1:
-            if debug:
-                print(f"i = {i}")
-                print("in_exon = True (adding codon positions to structure string)")
-                print(f"Codon position = {codon_pos}")
                 
             # for each nucleotide between this coordinate and the next...
             for j in range( borders[i+1] - borders[i]+1):
@@ -413,21 +355,13 @@ def create_vectors(borders, debug=False, verbose=False):
                     codon_pos = 1
                 else:
                     codon_pos += 1
-            if debug:
-                print(f"New codon position = {codon_pos}")
-                print(f"New structure string : {vector[1]}")
             
         # if we are not in a CDS, we append 0
         if in_exon % 2 == 0:
-            if debug:
-                print(f"i = {i}")
-                print("in_exon = False (adding 0 to structure string)")
             
             # for each nucleotide between this coordinate and the next...
             for j in range( borders[i+1] - borders[i]-1):
                 vector[1] += "0"
-            if debug:
-                print(f"New structure string : {vector[1]}")
         
         in_exon += 1    
     

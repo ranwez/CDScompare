@@ -18,7 +18,6 @@ Created on Thu May  2 11:57:29 2024
 import getopt
 import sys
 import os
-import timeit
 import read_files as rf
 import pre_comparison as pc
 import comparison as comp
@@ -33,16 +32,13 @@ import time
 # @param results A dictionary of list of list of dictionaries containing 
 # results of the annotation comparison, as returned by annotation_match
 #
-# @param debug If True, triggers display of many messages intended for 
-# debugging the program. Default is 'False'
-#
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
 # @see annotation_match()
 #
 # @remark Results are written in CSV ('Comma-Separated Values') format
-def write_results(all_results, debug=False, verbose=False):
+def write_results(all_results, verbose=False):
     # annotation origin of each locus in the results for all chromosomes
     # (first value : both,  second value : reference,  third value : alternative)
     final_locus_annot = [0, 0, 0]
@@ -64,16 +60,12 @@ def write_results(all_results, debug=False, verbose=False):
         locus_initial_annot = [0,0,0]
         
         for cluster in results:
-            print("\n\n")
             for loc in cluster:
                 if loc['mismatch zones'] not in ["_", "?"]:
-                    print(f"******************cluster = {loc['cluster name']}, référence = {loc['reference']}, alternative = {loc['alternative']}")
                     # convert mismatch zones so commas don't modify the CSV output
                     mismatch_EI = ""
                     mismatch_RF = ""
-                    print(f"longueur = {len(loc['mismatch zones'][0])}")
                     for i in range(0, len(loc['mismatch zones'][0]), 2):
-                        print(f"i = {i}")
                         mismatch_EI += "[" + str(loc['mismatch zones'][0][i]) + "//" + str(loc['mismatch zones'][0][i+1]) + "] "
                     if loc['mismatch zones'][1] != [[]]:
                         for coord in loc['mismatch zones'][1]:
@@ -116,9 +108,6 @@ def write_results(all_results, debug=False, verbose=False):
 #
 # @param alt_path Path of the GFF file describing the aternative annotation
 #
-# @param debug If True, triggers display of many messages intended for 
-# debugging the program. Default is 'False'
-#
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
@@ -135,15 +124,15 @@ def write_results(all_results, debug=False, verbose=False):
 #
 # @return Returns a list of lists of dictionaries describing the 
 # comparison of the structure identity between the loci of each annotation
-def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create_strings=False, exon_mode=False):
+def annotation_comparison(ref_path, alt_path, verbose=False, create_strings=False, exon_mode=False):
     
     
     checkpoint = time.time()
     print(f"start time : {checkpoint}")
 
     # get all annotation files and generate the annotation data structure
-    ref_annotations = rf.get_gff_borders(ref_path, debug, verbose, exon_mode)
-    alt_annotations = rf.get_gff_borders(alt_path, debug, verbose, exon_mode)
+    ref_annotations = rf.get_gff_borders(ref_path, verbose, exon_mode)
+    alt_annotations = rf.get_gff_borders(alt_path, verbose, exon_mode)
     
     diff0 = time.time() - checkpoint
     checkpoint =  time.time()
@@ -152,7 +141,7 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     # get the order of the loci of both annotations
     all_locus_order = {}
     for dna_mol in ref_annotations.keys():
-        locus_order = pc.annotation_sort(ref_annotations[dna_mol], alt_annotations[dna_mol], debug, verbose)
+        locus_order = pc.annotation_sort(ref_annotations[dna_mol], alt_annotations[dna_mol], verbose)
         all_locus_order[dna_mol] = locus_order
     
     diff1 = time.time() - checkpoint
@@ -162,7 +151,7 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     # construct clusters of overlapping loci
     all_cluster_list = {}
     for dna_mol in all_locus_order.keys():
-        cluster_list = pc.construct_clusters(ref_annotations[dna_mol], alt_annotations[dna_mol], all_locus_order[dna_mol], debug, verbose)
+        cluster_list = pc.construct_clusters(ref_annotations[dna_mol], alt_annotations[dna_mol], all_locus_order[dna_mol], verbose)
         all_cluster_list[dna_mol] = cluster_list
     
     diff2 = time.time() - checkpoint
@@ -173,7 +162,7 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     for dna_mol in all_cluster_list.keys():
         results = []
         for cluster_id, cluster in all_cluster_list[dna_mol].items():
-            results.append(comp.annotation_match(cluster, create_strings, debug, verbose))
+            results.append(comp.annotation_match(cluster, create_strings, verbose))
         all_results[dna_mol] = results
     
     diff3 = time.time() - checkpoint
@@ -181,7 +170,7 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     print(f"time necessary for comparison : {diff3}")
         
     print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[match/mismatch_EI/mismatch_RF]\t\tIdentity_Score\n")
-    write_results(all_results, debug, verbose)
+    write_results(all_results, verbose)
     
     diff4 = time.time() - checkpoint
     checkpoint =  time.time()
@@ -194,14 +183,14 @@ def usage():
     
     # displayed when '-h' or '--help' is given, or when an invalid script
     # call happens
-    print("Syntax : path/to/main.py [ -h/--help -d/--debug -v/--verbose -o/--old_version ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ] ")
+    print("Syntax : path/to/main.py [ -h/--help -v/--verbose -o/--old_version ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ] ")
     
 
 def main():
     
     # we retrieve all script call options
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hdvoer:a:", ["help", "debug", "verbose", "old_version", "exon-mode", "reference=", "alternative="])
+        opts, args = getopt.getopt(sys.argv[1:], "hvoer:a:", ["help", "verbose", "old_version", "exon-mode", "reference=", "alternative="])
     except getopt.GetoptError as err:
         print(err)
         usage()
@@ -209,13 +198,9 @@ def main():
         
     # initialisation of the display parameters 
     #
-    # debug: display lots of informations on internal function variables and 
-    # mecanisms, not intended to be used by the end user
-    #
     # verbose: display messages indicating which step the program is currently 
     # on, intended to be used when the program is called directly (not
     # integrated in a pipeline or workflow)
-    debug = False
     verbose = False
     
     # boolean indicating which version of the file reading function to use: 
@@ -233,8 +218,6 @@ def main():
         if o in ("-h", "--help"):
             usage()
             sys.exit()
-        elif o in ("-d", "--debug"):
-            debug = True
         elif o in ("-v", "--verbose"):
             verbose = True
         elif o in ("-o", "--old_version"):
@@ -249,7 +232,7 @@ def main():
             assert False, "unhandled option"
             
     # call of the annotation_comparison function
-    return annotation_comparison(ref_path, alt_path, debug, verbose, create_strings, exon_mode)
+    return annotation_comparison(ref_path, alt_path, verbose, create_strings, exon_mode)
     
 if __name__ == "__main__":
     #annotation_comparison("../test_impair_ref.gff", "../test_impair_alt.gff", False, False, False, False)

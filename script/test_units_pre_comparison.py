@@ -165,7 +165,7 @@ def test_annotation_sort():
         
         print(f"\n{test} file test")
         
-        result = pc.annotation_sort(test_dict[test][0], test_dict[test][1], False, False)
+        result = pc.annotation_sort(test_dict[test][0], test_dict[test][1], False)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
@@ -275,7 +275,7 @@ def test_construct_clusters():
         
         print(f"\n{test} test")
         
-        result = pc.construct_clusters(test_dict[test][0], test_dict[test][1], test_dict[test][2], False, False)
+        result = pc.construct_clusters(test_dict[test][0], test_dict[test][1], test_dict[test][2], False)
         for cluster_id, cluster in test_dict[test][3].items():
             result_details = result[cluster_id].get_details()
             print(f"expected mRNAs: {test_dict[test][3][cluster_id]}")
@@ -326,7 +326,7 @@ def test_create_vectors():
         
         print(f"\n{test} file test")
         
-        result = pc.create_vectors(test_dict[test][0], False, False)
+        result = pc.create_vectors(test_dict[test][0], False)
         print(f"result : {result}\n")
         print(test_dict[test][1])
         assert result == test_dict[test][1]
