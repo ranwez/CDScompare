@@ -8,7 +8,9 @@ Created on Sat Jun 15 21:04:46 2024
 
 import sys
 import os
+import re
 import locus as lc
+
 
 ## This function retrieves and returns the id of the structure described from 
 # a line read from a GFF file.
@@ -16,13 +18,17 @@ import locus as lc
 # @param parsed_line The list of the line read from the file parsed through its
 # tabulations (string 'split' method)
 #
+# @param delim Instance of class 'Pattern' ('re' library) compiled with the
+# regular expression selecting all characters from the start of the line to 
+# the first delimiter character
+#
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
 # @remark This function expects the file to be in GFF format
 #
 # @returns Returns the id of the structure described by the line
-def get_structure_id(parsed_line, verbose=False):
+def get_structure_id(parsed_line, delim, verbose=False):
     
     # try to retrieve the last column, else return an error
     try: 
@@ -37,16 +43,8 @@ def get_structure_id(parsed_line, verbose=False):
     except IndexError:
         print("\nNo ID field found in last column (ninth column)")
         sys.exit(1)
-
-    structure_id = ""
-    i = 0
     
-    # for each character from the first, we add it to the locus_id if it is 
-    # not in a list of special characters. When the first special character is 
-    # encountered, stop the loop and return the locus_id 
-    while id_and_rest[i] not in [",", "?", ";", ":", "/", "!", "*", "$", "%", "+", "@", "#", "~", "&", "\n", "\t"] :
-        i += 1
-    structure_id = id_and_rest[0:i]
+    structure_id = delim.findall(id_and_rest)[0]
         
     return structure_id
 
@@ -57,6 +55,10 @@ def get_structure_id(parsed_line, verbose=False):
 # @param parsed_line The list of the line read from the file parsed through its
 # tabulations (string 'split' method)
 #
+# @param delim Instance of class 'Pattern' ('re' library) compiled with the
+# regular expression selecting all characters from the start of the line to 
+# the first delimiter character
+#
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
@@ -64,7 +66,7 @@ def get_structure_id(parsed_line, verbose=False):
 # parent id field to come after the id field
 #
 # @returns Returns the id of the parent of the structure described by the line
-def get_parent_id(parsed_line, verbose=False):
+def get_parent_id(parsed_line, delim, verbose=False):
     
     # try to retrieve the last column, else return an error
     try: 
@@ -81,14 +83,8 @@ def get_parent_id(parsed_line, verbose=False):
         sys.exit(1)
     
     structure_id = ""
-    i = 0
     
-    # for each character from the first, we add it to the locus_id if it is 
-    # not in a list of special characters. When the first special character is
-    # encountered, stop the loop and return the locus_id 
-    while id_and_rest[i] not in [",", "?", ";", ":", "/", "!", "*", "$", "%", "+", "@", "#", "~", "&", "\n", "\t"] :
-        i += 1
-    structure_id = id_and_rest[0:i]
+    structure_id = delim.findall(id_and_rest)[0]
         
     return structure_id
 
@@ -145,6 +141,8 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
     locus = lc.Locus() # Initialisation of the Locus class instance to construct
     loci = None
     
+    delim = re.compile("^[^,?;:/!$%@#~&\n\t]+")
+    
     for line in file:
         
         parsed_line = line.split("\t")
@@ -190,7 +188,7 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
             locus.direction = strand
             
             # we retrieve the id of the locus
-            locus_id = get_structure_id(parsed_line, verbose)
+            locus_id = get_structure_id(parsed_line, delim, verbose)
             locus.name = locus_id
             
             # we retrieve the start and end coordinates of the locus
@@ -206,7 +204,7 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
         # in the instance's mRNAs attribute with an empty list
         elif str(parsed_line[2]) == "mRNA": 
             
-            mRNA_id = get_structure_id(parsed_line, verbose)
+            mRNA_id = get_structure_id(parsed_line, delim, verbose)
             locus.mRNAs[mRNA_id] = []
             if verbose :
                 print("\nReading mRNA " + locus_id)
@@ -214,7 +212,7 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
         # if we encounter a CDS, we add its start and end positions to the 
         # corresponding mRNA key in the locus' mRNAs attribute
         elif str(parsed_line[2]) == exon_or_cds:
-            parent_id = get_parent_id(parsed_line, verbose)
+            parent_id = get_parent_id(parsed_line, delim, verbose)
             
             if parent_id != mRNA_id:
                 print("\nIncorrect file structure (Parent of CDS is not previous mRNA). See 'log.txt' for more information")

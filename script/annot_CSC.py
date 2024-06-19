@@ -235,8 +235,7 @@ def main():
     return annotation_comparison(ref_path, alt_path, verbose, create_strings, exon_mode)
     
 if __name__ == "__main__":
-    #annotation_comparison("../test_impair_ref.gff", "../test_impair_alt.gff", False, False, False, False)
+    #annotation_comparison("../data/real_data/annot_best.gff", "../data/real_data/TRITD_clean.gff3", False, False, False)
     main()
-    #test_reverse()
-
+    
     

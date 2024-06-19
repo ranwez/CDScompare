@@ -6,7 +6,7 @@ Created on Tue Jun 18 11:02:52 2024
 @author: vetea
 """
 
-import os, sys
+import os, sys, re
 
 # code adapted from https://csatlas.com/python-import-file-module/#import_a_file_in_a_different_directory
 script_dir = os.path.dirname( __file__ )
@@ -39,7 +39,8 @@ def test_get_structure_id():
         
         print(f"\n{test} test")
         
-        result = rf.get_structure_id(test_dict[test][0], False)
+        delim = re.compile("^[^,?;:/!$%@#~&\n\t]+")
+        result = rf.get_structure_id(test_dict[test][0], delim, False)
         print(f"result : {result}\n")
         print(test_dict[test][1])
         assert result == test_dict[test][1]
