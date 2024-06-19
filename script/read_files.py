@@ -106,8 +106,11 @@ def get_parent_id(parsed_line, debug=False, verbose=False):
 
 
 ## This function expects a string corresponding to the file path of the GFF 
-# file to read, and returns a dictionary of instances of the class 'Locus', 
-# detailing all the relevant information for the gene and its mRNAs
+# file to read, and returns a dictionary of dictionaries of instances of the 
+# class 'Locus', detailing all the relevant information for the gene and 
+# its mRNAs for each chromosome and DNA strand (direct/reverse)
+#
+# @see Locus
 #
 # @param path Path of the file to read
 #
@@ -121,21 +124,14 @@ def get_parent_id(parsed_line, debug=False, verbose=False):
 # from the file should be coding sequences (CDS, False) or exons (True).
 # Default is 'False' (CDS comaprison)
 #
-#
 # @remark If the parent ID of a CDS does not match the ID of the previous 
 # mRNA (indicating an incorrect file structure), an entry is added to a 'log' 
 # file but the function is not interrupted
 #
-# @return Returns a dictionary of instances of the class 'Locus', containing 
-# the information of the CDS borders of each mRNA of the gene, the start and
-# end coordinates, the DNA strand on which the gene is predicted, and the
-# locus ID
-#
-# @see Locus
-#
-# @remark if a locus is on the reverse strand, its CDS borders list is reversed
-# to be in ascending order
-#
+# @return Returns a dictionary of dictionaries of instances of the class 
+# 'Locus', containing for each chromosome and DNA strand the information of 
+# the CDS borders of each mRNA of the gene, the start and end coordinates, the 
+# DNA strand on which the gene is predicted, and the locus ID
 def get_gff_borders(path, debug=False, verbose=False, exon_mode=False):
     
     # specifiy the desired main structure to be read

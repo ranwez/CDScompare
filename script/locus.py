@@ -16,18 +16,18 @@ class Locus:
     
     ## This method initialises the class with default values for each attribute
     #
-    # @param name ID of the locus
+    # @param name (optional) ID of the locus
     #
-    # @param mRNAs Dictionary listing all mRNAs of the locus. Each key 
-    # corresponds to the ID of the mRNA and eahc value to the list of all CDS
-    # coordinates as retrieved by the get_gff_borders function
+    # @param mRNAs (optional) Dictionary listing all mRNAs of the locus. Each 
+    # key corresponds to the ID of the mRNA and eahc value to the list of all 
+    # CDS coordinates as retrieved by the get_gff_borders function
     #
-    # @param start Start coordinate of the locus
+    # @param start (optional) Start coordinate of the locus
     #
-    # @param end End coordinate of the locus
+    # @param end (optional) End coordinate of the locus
     #
-    # @param dicrection String indicating if the locus is on the 'direct' or 
-    # 'reverse' strand
+    # @param direction (optional) String indicating if the locus is on the 
+    # 'direct' or 'reverse' strand
     #
     # @see get_gff_borders()
     def __init__(self, name="", mRNAs=None, start=-1, end=-1, direction=""):
@@ -46,7 +46,9 @@ class Locus:
     def mRNAs(self):
         return self.mRNAs
     
-    #TODO docu
+    ## Sets the value of the 'mRNAs' attribute of the class instance
+    #
+    # @param value Value to be assigned to the 'mRNAs' attribute
     def set_mRNAs(self, value):
         self.mRNAs = value
     
@@ -67,7 +69,16 @@ class Locus:
                 return False
             return self.mRNAs[mrna_name] == positions_list
         
-    #TODO docu
+        
+    ## Reverses the coordinates of all mRNAs of the class instance
+    #
+    # @param cluster_end End position coordinate of the cluster containing
+    # the locus
+    #
+    # @remark This method doesn't return anything and modifies directly
+    # the class instance. This method is used in case of loci on the reverse
+    # strand, and transforms the coordinates into coordinates from the end
+    # of the parent cluster
     def reverse(self, cluster_end):
         new_mRNAs = {}
         for mRNA_id, mRNA in self.mRNAs.items():
@@ -75,6 +86,7 @@ class Locus:
             for i in range(len(mRNA)-1, -1, -1):
                 new_mRNAs[mRNA_id].append(cluster_end-mRNA[i])
         self.set_mRNAs(new_mRNAs)
+
 
     ## This function was added for convenience as a way to easily retrieve the
     # attribute values of the class instance as a formatted string

@@ -9,7 +9,24 @@ Created on Sat Jun 15 21:05:26 2024
 import cluster as cl
 
 
-#TODO docu (returns 'True' only if both annotations' loci are ordered)
+## Checks if both given annotations dictionaries are sorted by their start
+# coordinate in ascending order
+#
+# @param dict_ref Reference annotation's dictionary, as returned by 
+# get_gff_borders
+#
+# @param dict_alt Alternative annotation's dictionary, as returned by
+# get_gff_borders
+#
+# @param debug If True, triggers display of many messages intended for 
+# debugging the program. Default is 'False'
+#
+# @param verbose If True, triggers display of more information messages. 
+# Default is 'False'
+#
+# @see get_gff_borders()
+#
+# @returns Returns 'True' if both dictionaries are already sorted, else 'False'
 def ref_alt_is_sorted(dict_ref, dict_alt, debug=False, verbose=False):
     is_sorted = True
     ref_list = list(dict_ref.items())
@@ -27,7 +44,8 @@ def ref_alt_is_sorted(dict_ref, dict_alt, debug=False, verbose=False):
 
 
 ## This function creates a list of all the locus coordinates for both 
-# annotations and sorts it in ascending order by their lower bound position. 
+# annotations and sorts it in ascending order by their lower bound position if
+# necessary
 #
 # @param dict_ref Dictionary containing all loci of the reference annotation, 
 # as returned by the 'get_gff_borders' function
@@ -46,14 +64,25 @@ def ref_alt_is_sorted(dict_ref, dict_alt, debug=False, verbose=False):
 # @return Returns a list of tuples containing the lower and upper bounds of 
 # each locus, its locus ID, and a boolean indicating if the locus was retrieved
 # from the reference (True) or the alternative (False)
+#
+# @remark If the genes detailed in the input GFF files of the program are 
+# already sorted in ascendign order, this function's complexity reduces to 
+# O(nb_loci), else it is O(nb_loci x log(nb_loci)) (where 'nb_loci' is the
+# number of loci in the dictionaries)
 def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
+    if verbose:
+        print("\n\n**************** Constructing the locus order list of the two annotations ****************")
     is_sorted = ref_alt_is_sorted(dict_ref, dict_alt, debug=False, verbose=False)
     if is_sorted:
+        if debug: print("loci are already sorted")
         locus_order = []
         i = 0
         j = 0
         ref_key_list = list(dict_ref.keys())
         alt_key_list = list(dict_alt.keys())
+        if debug:
+            print(ref_key_list)
+            print(alt_key_list)
         
         while i<len(ref_key_list) and j<len(alt_key_list):
             loc_ref = dict_ref[ref_key_list[i]]
@@ -66,14 +95,15 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
                 j += 1
                 
         if i<len(ref_key_list):
-            for k in range(i+1, len(ref_key_list)+1):
+            for k in range(i, len(ref_key_list)):
+                loc_ref = dict_ref[ref_key_list[k]]
                 locus_order.append((loc_ref.start, loc_ref.end, loc_ref.name, True, loc_ref.direction))
         if j<len(alt_key_list):
-            for k in range(j+1, len(alt_key_list)+1):
+            for k in range(j, len(alt_key_list)):
+                loc_alt = dict_alt[alt_key_list[k]]
                 locus_order.append((loc_alt.start, loc_alt.end, loc_alt.name, False, loc_alt.direction))
     else:
-        if verbose:
-            print("\n\n**************** Constructing the locus order list of the two annotations ****************")
+        if debug: print("loci not sorted, sorting the loci list")
         locus_order = []
         
         # get all reference loci bounds and locus ids as tuples in a list
@@ -96,7 +126,6 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
     
     if debug:
         print(f"\nlocus order list = {locus_order}")
-    print(locus_order)
     return locus_order
 
 
@@ -127,9 +156,6 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
 #
 # @remark The clusters names will not necessarily follow each other. 'Cluster6'
 # might follow 'Cluster2'
-#
-# @remark Loci on different strands ('direct' or 'reverse') will be put in
-# different clusters
 #
 # @returns an instance of the Clusters class describing the cluster structure
 # of the two annotations loci
@@ -273,7 +299,28 @@ def construct_clusters(dict_ref, dict_alt, locus_order, debug=False, verbose=Fal
     
     return cluster_list
 
-#TODO docu
+## Creates a list detailing the codon position of the given annotation 
+# ('cds_bounds')at the start of every intersection interval in the given 
+# interval list ('area_bounds')
+#
+# @param cds_bounds List of CDS intervals of an annotation
+#
+# @param area_bounds List of intersection intervals from two annotations
+#
+# @param debug If True, triggers display of many messages intended for 
+# debugging the program. Default is 'False'
+#
+# @param verbose If True, triggers display of more information messages. 
+# Default is 'False'
+#
+# @returns Returns a list of numbers describing the codon position of the 
+# annotation at the start of the corresponding intersection interval
+#
+# @remark The intervals must include the upper bounds. For the intersection
+# intervals, this can be obtained through the use of the 
+# 'get_intervals_with_included_ub' method 
+#
+# @see get_intervals_with_included_ub()
 def get_reading_frame(cds_bounds, area_bounds, debug=False, verbose=False):
     nb_nt = 0;
     nb_nt_in_cds=0;

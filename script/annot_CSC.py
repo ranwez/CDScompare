@@ -30,14 +30,16 @@ import comparison as comp
 #
 # @see annotation_match()
 #
-# @param results A list of list of dictionaries containing results of the 
-# annotation comparison, as returned by annotation_match
+# @param results A dictionary of list of list of dictionaries containing 
+# results of the annotation comparison, as returned by annotation_match
 #
 # @param debug If True, triggers display of many messages intended for 
 # debugging the program. Default is 'False'
 #
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
+#
+# @see annotation_match()
 #
 # @remark Results are written in CSV ('Comma-Separated Values') format
 def write_results(all_results, debug=False, verbose=False):
@@ -58,7 +60,7 @@ def write_results(all_results, debug=False, verbose=False):
         results_file.write("Chromosome, Cluster name, Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start, Reference end, Alternative start, Alternative end, Reference mRNA, Alternative mRNA, Exon_intron (EI) non-correspondance zones, Reading frame (RF) non-correspondance zones, reference mRNA number, alternative mRNA number\n")
             
         # annotation origin of each locus in the results
-        # (first value : both,  second value : reference,  third value : alternative)
+        # (first value: both,  second: reference,  third: alternative)
         locus_initial_annot = [0,0,0]    
         
         for cluster in results:
@@ -95,6 +97,7 @@ def write_results(all_results, debug=False, verbose=False):
                     locus_initial_annot[0] += 2
                     
         print(f"\nNumber of loci of chromosome {dna_mol}:\n- found in both annotations : {locus_initial_annot[0]}\n- found only in the reference : {locus_initial_annot[1]}\n- found only in the alternative : {locus_initial_annot[2]}\n")
+        # add locus origin counts of the chromosome to final counts for all
         final_locus_annot = [sum(x) for x in zip(final_locus_annot, locus_initial_annot)]
         
     results_file.close()
@@ -115,12 +118,19 @@ def write_results(all_results, debug=False, verbose=False):
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
+# @param create_strings Boolean indicating wether to use the 'old' comparison
+# function (old_compare_loci, 'True') or the new one (compare_loci, 'False')
+#
 # @param exon_mode Boolean indicating if the main comparison structures read
 # from the file should be coding sequences (CDS, False) or exons (True).
 # Default is 'False' (CDS comparison)
 #
+# @see compare_loci()
+#
+# @see old_compare_loci()
+#
 # @return Returns a list of lists of dictionaries describing the 
-# comparison of the structure identity between the loci of each annotation 
+# comparison of the structure identity between the loci of each annotation
 def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create_strings=False, exon_mode=False):
 
     # get all annotation files and generate the annotation data structure
@@ -149,7 +159,7 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
     print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[match/mismatch_EI/mismatch_RF]\t\tIdentity_Score\n")
     write_results(all_results, debug, verbose)
     
-    return results
+    return all_results
     
 
 def usage():

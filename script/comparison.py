@@ -10,7 +10,20 @@ import intervals_utils as iu
 import pre_comparison as pc
 
 
-#TODO docu (et remettre à un autre endroit)
+## reverses the coordinates of the mismatch zones returned by the functions
+# compare_loci
+#
+# @see compare_loci()
+#
+# @param mismatch_zones Comparison mismatch zones as returned by compare_loci (tuple of 
+# lists)
+#
+# @param cluster_end End coordinate of the last locus of the cluster
+#
+# @param debug If True, triggers display of many messages intended for 
+# debugging the program. Default is 'False'
+#
+# @returns Returns a tuple of lists corresponding to the reversed zones
 def reverse_coord(mismatch_zones, cluster_end, debug=False):
     if debug: print(f"mismatch_zones before re-reversing: {mismatch_zones}")
     if debug: print(f"cluster end position: {cluster_end}")
@@ -32,7 +45,8 @@ def reverse_coord(mismatch_zones, cluster_end, debug=False):
 # a comparison list detailing the identities and differences between the two
 # annotations's codon position structure. It returns a tuple containing the 
 # comparison list giving the highest identity, the computed identity level, 
-# and the list of mismatch areas indentified by the comparison.
+# the list of mismatch areas indentified by the comparison, and the mRNAs
+# with the highest identity value
 #
 # @see get_gff_borders()
 #
@@ -106,7 +120,33 @@ def compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     return (final_comparison, final_identity, final_mismatch_zones, final_ref_mRNA, final_alt_mRNA)
 
 
-#TODO docu
+## Computes the number of locus positions matching (both in CDS and same codon 
+# position) or mismatching (one not in CDS or different codon position) in the
+# given intervals
+#
+# @param mRNA_ref CDS position intervals of the reference (as a list)
+#
+# @param intervals_ref Instance of class 'OrderedIntervals' describing the 
+# position intervals of the reference
+#
+# @param mRNA_alt CDS position intervals of the reference (as a list)
+#
+# @param debug If True, triggers display of many messages intended for 
+# debugging the program. Default is 'False'
+#
+# @param verbose If True, triggers display of more information messages. 
+# Default is 'False'
+#
+# @see OrderedIntervals
+#
+# @returns Returns a tuple of the number of positions matching, mismatching
+# for 'EI', mismatching for 'RF', the 'EI' mismatch zones, and the 'RF' 
+# mismatch zones
+#
+# @remark 'EI' stands for 'Exon-Intron' and indicates one of the annotations
+# is not in a CDS for the current position; 'RF' stands for 'Reading Frame' and
+# indicates the two annotations are not in the same codon position at the 
+# current position
 def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, verbose):
     if debug: print(f"reference CDS list = {mRNA_ref}\nalternative CDS list = {mRNA_alt}")
     matches=0    
@@ -157,7 +197,7 @@ def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, v
 # Default is 'False'
 #
 # @returns Returns a tuple containing the list of mismatches (first value) 
-# and matches (second value) and the computed string identity, and the
+# and matches (second value) the computed string identity, and the
 # compared mRNA names
 #
 # @remark This function doesn't expect any annotation to be a 'reference'
@@ -281,22 +321,15 @@ def old_compare_loci(ref_locus, alt_locus, debug=False, verbose=False):
     return (final_comparison, final_identity, final_ref_mRNA, final_alt_mRNA)
     
 
-#TODO update docu (cluster_ref/alt/name --> juste cluster)
 ## This function compares the loci of the reference and alternative clusters
 # returned by the construct_clusters function by assigning each locus to the 
 # overlapping locus of the other annotation cluster which gives the highest
-# computed identity. Each comparison results are displayed in the terminal and 
-# written to a 'results' dictionary detailing locus information.
+# computed identity. Each comparison results are written to a 'results' 
+# dictionary detailing locus information.
 #
 # @see construct_clusters()
 #
-# @param cluster_ref List of Locus class instances describing the loci
-# of the reference annotation cluster
-#
-# @param cluster_alt List of Locus class instances describing the loci
-# of the alternative annotation cluster
-#
-# @param cluster_name name of the cluster containing the loci
+# @param cluster Instance of class 'Cluster' as returned by construct_clusters
 #
 # @param create_strings Boolean indicating wether to use the new compare_loci
 # fucntion ('False') or the old_compare_loci function ('True')
