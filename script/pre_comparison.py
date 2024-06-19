@@ -74,15 +74,15 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
         print("\n\n**************** Constructing the locus order list of the two annotations ****************")
     is_sorted = ref_alt_is_sorted(dict_ref, dict_alt, debug=False, verbose=False)
     if is_sorted:
-        if debug: print("loci are already sorted")
+        if verbose: print("loci are already sorted")
         locus_order = []
         i = 0
         j = 0
         ref_key_list = list(dict_ref.keys())
         alt_key_list = list(dict_alt.keys())
         if debug:
-            print(ref_key_list)
-            print(alt_key_list)
+            print(f"list of reference loci : {ref_key_list}")
+            print(f"list of alternative loci : {alt_key_list}")
         
         while i<len(ref_key_list) and j<len(alt_key_list):
             loc_ref = dict_ref[ref_key_list[i]]
@@ -103,7 +103,7 @@ def annotation_sort(dict_ref, dict_alt, debug=False, verbose=False):
                 loc_alt = dict_alt[alt_key_list[k]]
                 locus_order.append((loc_alt.start, loc_alt.end, loc_alt.name, False, loc_alt.direction))
     else:
-        if debug: print("loci not sorted, sorting the loci list")
+        if verbose: print("loci not sorted, sorting the loci list")
         locus_order = []
         
         # get all reference loci bounds and locus ids as tuples in a list

@@ -57,7 +57,7 @@ def write_results(all_results, debug=False, verbose=False):
     for dna_mol, results in all_results.items():
         print(f"\n**************** Results for chromosome {dna_mol} ****************\n")
         
-        results_file.write("Chromosome, Cluster name, Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start, Reference end, Alternative start, Alternative end, Reference mRNA, Alternative mRNA, Exon_intron (EI) non-correspondance zones, Reading frame (RF) non-correspondance zones, reference mRNA number, alternative mRNA number\n")
+        results_file.write("Chromosome, Cluster name, Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start, Reference end, Alternative start, Alternative end, Reference mRNA, Alternative mRNA, Exon_intron (EI) non-correspondance zones, Reading frame (RF) non-correspondance zones, Exon_Intron (EI) mismatches, Reading Frame (RF) mismatches, reference mRNA number, alternative mRNA number\n")
             
         # annotation origin of each locus in the results
         # (first value: both,  second: reference,  third: alternative)
@@ -86,14 +86,14 @@ def write_results(all_results, debug=False, verbose=False):
                 # the comparison values
                 if loc['mismatch/match'] == []:
                     print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t_\t\t\t\t_")
-                    results_file.write(f"{dna_mol}, {loc['cluster name']},{loc['reference']},{loc['alternative']},_,_,{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {loc['reference mRNA']}, {loc['alternative mRNA']}, _, _, {loc['reference mRNA number']}, {loc['alternative mRNA number']}\n")       
+                    results_file.write(f"{dna_mol}, {loc['cluster name']},{loc['reference']},{loc['alternative']},_,_,{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {loc['reference mRNA']}, {loc['alternative mRNA']}, _, _, _, _, {loc['reference mRNA number']}, {loc['alternative mRNA number']}\n")       
                     if loc['reference'] == '~':
                         locus_initial_annot[2] += 1
                     else:                       
                         locus_initial_annot[1] += 1
                 else:
                     print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t{loc['mismatch/match']}\t\t\t\t{loc['identity']}%")
-                    results_file.write(f"{dna_mol}, {loc['cluster name']},{loc['reference']},{loc['alternative']},{loc['mismatch/match'][0]},{loc['mismatch/match'][1]+loc['mismatch/match'][2]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {loc['reference mRNA']}, {loc['alternative mRNA']}, {mismatch_EI}, {mismatch_RF}, {loc['reference mRNA number']}, {loc['alternative mRNA number']}\n")
+                    results_file.write(f"{dna_mol}, {loc['cluster name']},{loc['reference']},{loc['alternative']},{loc['mismatch/match'][0]},{loc['mismatch/match'][1]+loc['mismatch/match'][2]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']}, {loc['reference mRNA']}, {loc['alternative mRNA']}, {mismatch_EI}, {mismatch_RF}, {loc['mismatch/match'][1]}, {loc['mismatch/match'][2]}, {loc['reference mRNA number']}, {loc['alternative mRNA number']}\n")
                     locus_initial_annot[0] += 2
                     
         print(f"\nNumber of loci of chromosome {dna_mol}:\n- found in both annotations : {locus_initial_annot[0]}\n- found only in the reference : {locus_initial_annot[1]}\n- found only in the alternative : {locus_initial_annot[2]}\n")
