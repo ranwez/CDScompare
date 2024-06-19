@@ -48,8 +48,8 @@ def get_structure_id(parsed_line, debug=False, verbose=False):
     # not in a list of special characters. When the first special character is 
     # encountered, stop the loop and return the locus_id 
     while id_and_rest[i] not in [",", "?", ";", ":", "/", "!", "*", "$", "%", "+", "@", "#", "~", "&", "\n", "\t"] :
-        structure_id += id_and_rest[i]
         i += 1
+    structure_id = id_and_rest[0:i]
     if debug:
         print(f"Structure ID = {structure_id}")
         
@@ -97,8 +97,8 @@ def get_parent_id(parsed_line, debug=False, verbose=False):
     while id_and_rest[i] not in [",", "?", ";", ":", "/", "!", "*", "$", "%", "+", "@", "#", "~", "&", "\n", "\t"] :
         if debug:
             print(f"Reading character {id_and_rest[i]}")
-        structure_id += id_and_rest[i]
         i += 1
+    structure_id = id_and_rest[0:i]
     if debug:
         print(f"Structure parent ID = {structure_id}")
         
@@ -158,49 +158,53 @@ def get_gff_borders(path, debug=False, verbose=False, exon_mode=False):
     mRNA_id = "" # the current mRNA being analyzed
     line_index = 1 # number of the file line currently read
     locus = lc.Locus() # Initialisation of the Locus class instance to construct
+    loci = None
     
     for line in file:
-    
-        parsed_line = line.split("\t")
-        chrm = parsed_line[0]
-        if chrm == "contig":
-            continue
-        strand = "_direct" if parsed_line[6] == "+" else "_reverse" 
-        try:
-            loci = all_loci[chrm+strand]
-        except KeyError:
-            all_loci[chrm+strand] = {}
-            loci = all_loci[chrm+strand]
         
-        # if we encounter a new gene which is not from a contig, 
-        # we get its information and create an instance in 'loci'
-        if str(parsed_line[2]) == "gene" and parsed_line[0] != "contig": 
-            
-            # if there was a previous gene, but its borders list is empty, 
-            # return an error
-            if locus_id != "" and locus.mRNAs[mRNA_id] == []:
-                print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the previous mRNA '{mRNA_id}'\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
-                sys.exit(1)
+        parsed_line = line.split("\t")
+        
+        if parsed_line[0] == "contig":
+            continue
+        
+        if str(parsed_line[2]) == "gene": 
             
             # if there was a previous gene, add it to return dictionary and
             # delete it. Then we create a new Locus instance
             # (if the gene is on the reverse strand, reverse its border list
             # before adding it to the dictionary)
-            if locus.mRNAs != {}:
+            if loci != None:
+                
+                # if there was a previous gene, but its borders list is empty, 
+                # return an error
+                if locus_id != "" and locus.mRNAs[mRNA_id] == []:
+                    print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the previous mRNA '{mRNA_id}'\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
+                    sys.exit(1)
+                    
                 loci[locus_id] = locus
-            del locus
             locus = lc.Locus()
+            mRNA_id = ""
+            end = -1
+            parent_id = ""
+            locus_id = ""
+        
+        chrm = parsed_line[0]
+        if chrm == "contig":
+            continue
+        strand = "direct" if parsed_line[6] == "+" else "reverse" 
+        try:
+            loci = all_loci[chrm+"_"+strand]
+        except KeyError:
+            all_loci[chrm+"_"+strand] = {}
+            loci = all_loci[chrm+"_"+strand]
+        
+        # if we encounter a new gene which is not from a contig, 
+        # we get its information and create an instance in 'loci'
+        if str(parsed_line[2]) == "gene": 
             
-            strand = parsed_line[6]
             if debug:
                 print(f"strand = {strand}")
-            if strand == "-":
-                locus.direction = "reverse"
-            elif strand == "+":
-                locus.direction = "direct"
-            else:
-                print(f"unknown symbol encountered in line {line}, column 6 (strand direction) : {strand}")
-                sys.exit(1)
+            locus.direction = strand
             
             # we retrieve the id of the locus
             locus_id = get_structure_id(parsed_line, debug, verbose)
@@ -217,7 +221,7 @@ def get_gff_borders(path, debug=False, verbose=False, exon_mode=False):
 
         # if we encounter a new mRNA, we get its ID and create a key 
         # in the instance's mRNAs attribute with an empty list
-        if str(parsed_line[2]) == "mRNA" and parsed_line[0] != "contig": 
+        elif str(parsed_line[2]) == "mRNA": 
             
             mRNA_id = get_structure_id(parsed_line, debug, verbose)
             locus.mRNAs[mRNA_id] = []
@@ -226,7 +230,7 @@ def get_gff_borders(path, debug=False, verbose=False, exon_mode=False):
 
         # if we encounter a CDS, we add its start and end positions to the 
         # corresponding mRNA key in the locus' mRNAs attribute
-        if str(parsed_line[2]) == exon_or_cds and parsed_line[0] != "contig":
+        elif str(parsed_line[2]) == exon_or_cds:
             parent_id = get_parent_id(parsed_line, debug, verbose)
             
             if parent_id != mRNA_id:

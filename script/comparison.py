@@ -31,12 +31,12 @@ def reverse_coord(mismatch_zones, cluster_end, debug=False):
     new_list_RF = []
     
     if mismatch_zones[0] != []:
-        for i in range(len(mismatch_zones[0])-1, -1, -1):
-            new_list_EI.append(abs(mismatch_zones[0][i]-cluster_end))
+        for bound in reversed(mismatch_zones[0]):
+            new_list_EI.append(cluster_end-bound)
             
     if mismatch_zones[1] != [[]]:
-        for i in range(len(mismatch_zones[1])-1, -1, -1):
-            new_list_RF.append([abs(mismatch_zones[1][i][1]-cluster_end), abs(mismatch_zones[1][i][0]-cluster_end)])
+        for bounds in reversed(mismatch_zones[1]):
+            new_list_RF.append([cluster_end-bounds[1], cluster_end-bounds[0]])
     if debug: print(f"mismatch_zones after re-reversing: {(new_list_EI, new_list_RF)}")
     return (new_list_EI, new_list_RF)
 
@@ -178,6 +178,7 @@ def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, debug, v
             matches+=interval_lg
     if diff_RF == []:
         diff_RF = [[]]
+    print(f"************************************{(diff_EI.intervals, diff_RF)}")
     return (matches, mismatches_EI, mismatches_RF, diff_EI.intervals, diff_RF)
 
 
@@ -419,7 +420,11 @@ def annotation_match(cluster, create_strings=False, debug=False, verbose=False):
             comparison, identity, mismatch_zones, ref_mRNA, alt_mRNA = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False, False)
             if debug: print(f"mismatch zones = {EI_RF_mismatch_zones}")
             if cluster_ref[0].direction == "reverse":
-                mismatch_zones = reverse_coord(mismatch_zones, cluster_end, debug)
+                print(cluster_ref[i-1].name)
+                if cluster_ref[i-1].name == "chr4A_598656537":
+                    print("tac")
+                if mismatch_zones not in ["_", "?"]:
+                    mismatch_zones = reverse_coord(mismatch_zones, cluster_end, debug)
                 if debug: print(f"new mismatch zones = {mismatch_zones}")
         if debug:
             print(f"top value : {dyn_prog_matrix[i-1][j]}, \nleft value : {dyn_prog_matrix[i][j-1]}, \ndiagonal value : {dyn_prog_matrix[i-1][j-1]} + {identity}")

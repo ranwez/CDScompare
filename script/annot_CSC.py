@@ -18,11 +18,11 @@ Created on Thu May  2 11:57:29 2024
 import getopt
 import sys
 import os
+import timeit
 import read_files as rf
 import pre_comparison as pc
 import comparison as comp
-
-
+import time
 
 ## This function writes to a new 'results.csv' file the results of the 
 # annotation comparison retrieved from the identities dictionary returned by 
@@ -61,15 +61,19 @@ def write_results(all_results, debug=False, verbose=False):
             
         # annotation origin of each locus in the results
         # (first value: both,  second: reference,  third: alternative)
-        locus_initial_annot = [0,0,0]    
+        locus_initial_annot = [0,0,0]
         
         for cluster in results:
+            print("\n\n")
             for loc in cluster:
                 if loc['mismatch zones'] not in ["_", "?"]:
+                    print(f"******************cluster = {loc['cluster name']}, référence = {loc['reference']}, alternative = {loc['alternative']}")
                     # convert mismatch zones so commas don't modify the CSV output
                     mismatch_EI = ""
                     mismatch_RF = ""
+                    print(f"longueur = {len(loc['mismatch zones'][0])}")
                     for i in range(0, len(loc['mismatch zones'][0]), 2):
+                        print(f"i = {i}")
                         mismatch_EI += "[" + str(loc['mismatch zones'][0][i]) + "//" + str(loc['mismatch zones'][0][i+1]) + "] "
                     if loc['mismatch zones'][1] != [[]]:
                         for coord in loc['mismatch zones'][1]:
@@ -132,16 +136,28 @@ def write_results(all_results, debug=False, verbose=False):
 # @return Returns a list of lists of dictionaries describing the 
 # comparison of the structure identity between the loci of each annotation
 def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create_strings=False, exon_mode=False):
+    
+    
+    checkpoint = time.time()
+    print(f"start time : {checkpoint}")
 
     # get all annotation files and generate the annotation data structure
     ref_annotations = rf.get_gff_borders(ref_path, debug, verbose, exon_mode)
     alt_annotations = rf.get_gff_borders(alt_path, debug, verbose, exon_mode)
     
+    diff0 = time.time() - checkpoint
+    checkpoint =  time.time()
+    print(f"time necessary for file reading : {diff0}")
+
     # get the order of the loci of both annotations
     all_locus_order = {}
     for dna_mol in ref_annotations.keys():
         locus_order = pc.annotation_sort(ref_annotations[dna_mol], alt_annotations[dna_mol], debug, verbose)
         all_locus_order[dna_mol] = locus_order
+    
+    diff1 = time.time() - checkpoint
+    checkpoint =  time.time()
+    print(f"time necessary for loci sorting : {diff1}")
     
     # construct clusters of overlapping loci
     all_cluster_list = {}
@@ -149,15 +165,27 @@ def annotation_comparison(ref_path, alt_path, debug=False, verbose=False, create
         cluster_list = pc.construct_clusters(ref_annotations[dna_mol], alt_annotations[dna_mol], all_locus_order[dna_mol], debug, verbose)
         all_cluster_list[dna_mol] = cluster_list
     
+    diff2 = time.time() - checkpoint
+    checkpoint =  time.time()
+    print(f"time necessary for cluster construction : {diff2}")
+    
     all_results = {}
     for dna_mol in all_cluster_list.keys():
         results = []
         for cluster_id, cluster in all_cluster_list[dna_mol].items():
             results.append(comp.annotation_match(cluster, create_strings, debug, verbose))
         all_results[dna_mol] = results
+    
+    diff3 = time.time() - checkpoint
+    checkpoint =  time.time()
+    print(f"time necessary for comparison : {diff3}")
         
     print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[match/mismatch_EI/mismatch_RF]\t\tIdentity_Score\n")
     write_results(all_results, debug, verbose)
+    
+    diff4 = time.time() - checkpoint
+    checkpoint =  time.time()
+    print(f"time necessary for results writing : {diff4}")
     
     return all_results
     
@@ -224,6 +252,7 @@ def main():
     return annotation_comparison(ref_path, alt_path, debug, verbose, create_strings, exon_mode)
     
 if __name__ == "__main__":
+    #annotation_comparison("../test_impair_ref.gff", "../test_impair_alt.gff", False, False, False, False)
     main()
     #test_reverse()
 
