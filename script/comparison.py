@@ -15,8 +15,8 @@ import pre_comparison as pc
 #
 # @see compare_loci()
 #
-# @param mismatch_zones Comparison mismatch zones as returned by compare_loci (tuple of 
-# lists)
+# @param mismatch_zones Comparison mismatch zones as returned by compare_loci 
+# (tuple of lists)
 #
 # @param cluster_end End coordinate of the last locus of the cluster
 #
@@ -28,10 +28,11 @@ def reverse_coord(mismatch_zones, cluster_end):
     if mismatch_zones[0] != []:
         for bound in reversed(mismatch_zones[0]):
             new_list_EI.append(cluster_end-bound)
+        
+    if mismatch_zones[1] != []:
+        for bound in reversed(mismatch_zones[1]):
+            new_list_RF.append(cluster_end-bound)
             
-    if mismatch_zones[1] != [[]]:
-        for bounds in reversed(mismatch_zones[1]):
-            new_list_RF.append([cluster_end-bounds[1], cluster_end-bounds[0]])
     return (new_list_EI, new_list_RF)
 
 ## This function compares two annotations' loci returned by the function 
@@ -128,6 +129,8 @@ def compare_loci(ref_locus, alt_locus, verbose=False):
 # is not in a CDS for the current position; 'RF' stands for 'Reading Frame' and
 # indicates the two annotations are not in the same codon position at the 
 # current position
+#
+# @remark This function was written by Vincent Ranwez
 def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, verbose):
     matches=0    
     intervals_alt = iu.OrderedIntervals(mRNA_alt, True);
@@ -146,11 +149,10 @@ def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, verbose)
         interval_lg= inter_mrna_bounds[2*interval_id+1]-inter_mrna_bounds[2*interval_id]+1;
         if rf_ref[interval_id] != rf_alt[interval_id]:
             mismatches_RF+=interval_lg
-            diff_RF.append([inter_mrna_bounds[2*interval_id], inter_mrna_bounds[2*interval_id+1]]);
+            diff_RF.append(inter_mrna_bounds[2*interval_id])
+            diff_RF.append(inter_mrna_bounds[2*interval_id+1]);
         else:
             matches+=interval_lg
-    if diff_RF == []:
-        diff_RF = [[]]
     return (matches, mismatches_EI, mismatches_RF, diff_EI.intervals, diff_RF)
 
 

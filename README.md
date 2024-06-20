@@ -9,7 +9,7 @@ This is the repository for the 2024 internship of Vetea Jacot in the GE²pop tea
 Run following command :
 
 ```
-python path/to/annot_CSC/script/annot_CSC.py [ -h/--help -d/--debug -v/--verbose -o/--old_version -e/--exon_mode ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ]
+python path/to/annot_CSC/script/annot_CSC.py [ -h/--help -v/--verbose -o/--old_version -e/--exon_mode ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ]
 ```
 
 where <reference_file_path> is the path to the file containing the reference annotation to analyze, and <alternative_file_path> is the path to the file containing the alternative annotation. These two parameters are required, while all others are not.
@@ -17,8 +17,6 @@ where <reference_file_path> is the path to the file containing the reference ann
 optional parameters :
  
 -h/--help : displays script usage
-
--d/--debug : displays debug information during execution
 
 -v/--verbose : displays messages indicating progress during execution
 

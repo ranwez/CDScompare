@@ -67,13 +67,9 @@ def write_results(all_results, verbose=False):
                     mismatch_RF = ""
                     for i in range(0, len(loc['mismatch zones'][0]), 2):
                         mismatch_EI += "[" + str(loc['mismatch zones'][0][i]) + "//" + str(loc['mismatch zones'][0][i+1]) + "] "
-                    if loc['mismatch zones'][1] != [[]]:
-                        for coord in loc['mismatch zones'][1]:
-                            mismatch_RF += "[" + str(coord[0]) + "//" + str(coord[1]) + "] "
-                    if mismatch_EI == "":
-                        mismatch_EI = "_"
-                    if mismatch_RF == "":
-                        mismatch_RF = "_"
+                    for i in range(0, len(loc['mismatch zones'][1]), 2):
+                        mismatch_RF += "[" + str(loc['mismatch zones'][1][i]) + "//" + str(loc['mismatch zones'][1][i+1]) + "] "
+                    
                 else:
                     mismatch_EI = loc['mismatch zones']
                     mismatch_RF = loc['mismatch zones']

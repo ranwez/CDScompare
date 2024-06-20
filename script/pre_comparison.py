@@ -275,6 +275,8 @@ def construct_clusters(dict_ref, dict_alt, locus_order, verbose=False):
 # 'get_intervals_with_included_ub' method 
 #
 # @see get_intervals_with_included_ub()
+#
+# @remark This function was written by Vincent Ranwez
 def get_reading_frame(cds_bounds, area_bounds, verbose=False):
     nb_nt = 0;
     nb_nt_in_cds=0;
