@@ -121,7 +121,15 @@ def test_get_gff_borders():
         
         "length_computation_alt" : ["./data/tests/length_computation_alt_test.gff3", 
                                     "chr2A_direct",
-                        {"chr2A_00611930" : {'chr2A_00611930_mrna': [1, 4, 12, 13]}}]
+                        {"chr2A_00611930" : {'chr2A_00611930_mrna': [1, 4, 12, 13]}}],
+        
+        "multi_chromosome_ref (1er locus)" : ["./data/tests/multi_chromosome_test_ref.gff3",
+                              "chr2A_direct",
+                              {"chr2A_00611930" : {'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}}],
+        
+        "multi_chromosome_ref (2nd locus)" : ["./data/tests/multi_chromosome_test_ref.gff3",
+                              "chr2B_direct",
+                              {"chr2B_00620000" : {'chr2B_00620000_mrna': [600, 699, 800, 899]}}]
         
         }
     
