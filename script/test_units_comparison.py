@@ -23,13 +23,13 @@ def test_reverse_coord():
     # dictionary of inputs and expected ouputs for the method
     test_dict = {
         
-        "reverse-reverse" : [([], [[]]),
+        "reverse-reverse" : [([], []),
                              299,
                              ([], [])],
         
-        "reverse-reverse-modified" : [([80, 90], [[90, 149], [170, 199]]),
+        "reverse-reverse-modified" : [([80, 90], [90, 149, 170, 199]),
                                       299,
-                                      ([209, 219], [[100, 129], [150, 209]])]
+                                      ([209, 219], [100, 129, 150, 209])]
         
         }
     
@@ -60,7 +60,7 @@ def test_compare_loci():
                                     start=100, 
                                     end=299, 
                                     direction='direct'),
-                       ([150, 0, 0], 100.0, ([], [[]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                       ([150, 0, 0], 100.0, ([], []), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
         "minus-CDS" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
@@ -72,7 +72,7 @@ def test_compare_loci():
                                     start=100, 
                                     end=299, 
                                     direction='direct'),
-                       ([90, 60, 0], 60.0, ([150, 210], [[]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                       ([90, 60, 0], 60.0, ([150, 210], []), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
         "fusion" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
@@ -84,7 +84,7 @@ def test_compare_loci():
                                 start=100, 
                                 end=299, 
                                 direction='direct'),
-                    ([30, 20, 120], 17.6, ([130, 150], [[150, 209], [240, 299]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                    ([30, 20, 120], 17.6, ([130, 150], [150, 209, 240, 299]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
         "shift" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
@@ -96,7 +96,7 @@ def test_compare_loci():
                                 start=100, 
                                 end=299, 
                                 direction='direct'),
-                   ([30, 1, 119], 20.0, ([150, 151], [[151, 209], [240, 299]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                   ([30, 1, 119], 20.0, ([150, 151], [151, 209, 240, 299]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
         "reverse" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [0, 59, 90, 149, 170, 199]}, 
@@ -108,7 +108,7 @@ def test_compare_loci():
                                  start=100, 
                                  end=299, 
                                  direction='reverse'),
-                     ([150, 0, 0], 100.0, ([], [[]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                     ([150, 0, 0], 100.0, ([], []), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
         "reverse-modified" : [locus.Locus(name='chr2A_00611930', 
                                           mRNAs={'chr2A_00611930_mrna': [0, 59, 90, 149, 170, 199]}, 
@@ -120,7 +120,7 @@ def test_compare_loci():
                                           start=100, 
                                           end=299, 
                                           direction='reverse'),
-                              ([60, 10, 90], 37.5, ([80, 90], [[90, 149], [170, 199]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                              ([60, 10, 90], 37.5, ([80, 90], [90, 149, 170, 199]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
         "reverse-basic" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
@@ -144,7 +144,7 @@ def test_compare_loci():
                                             start=40, 
                                             end=239, 
                                             direction='direct'),
-                               ([30, 180, 30], 12.5, ([40, 70, 90, 100, 130, 180, 210, 300], [[100, 129]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                               ([30, 180, 30], 12.5, ([40, 70, 90, 100, 130, 180, 210, 300], [100, 129]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
         "diff-start-after" : [locus.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
@@ -156,7 +156,7 @@ def test_compare_loci():
                                             start=160, 
                                             end=359, 
                                             direction='direct'),
-                              ([30, 180, 30], 12.5, ([100, 130, 150, 160, 190, 240, 270, 360], [[160, 189]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                              ([30, 180, 30], 12.5, ([100, 130, 150, 160, 190, 240, 270, 360], [160, 189]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
         "multiple_mRNAs" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
@@ -169,7 +169,7 @@ def test_compare_loci():
                                     start=100, 
                                     end=299, 
                                     direction='direct'),
-                       ([120, 30, 0], 80.0, ([180, 210], [[]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                       ([120, 30, 0], 80.0, ([180, 210], []), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
         "basic-2-loci (second locus)" : [locus.Locus(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [600, 699, 800, 899]}, 
@@ -181,7 +181,7 @@ def test_compare_loci():
                                                     start=600, 
                                                     end=899, 
                                                     direction='direct'),
-                                         ([200, 0, 0], 100.0, ([], [[]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
+                                         ([200, 0, 0], 100.0, ([], []), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')],
         
         "length_computation" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [8, 13]}, 
@@ -193,7 +193,7 @@ def test_compare_loci():
                                     start=1, 
                                     end=13, 
                                     direction='direct'),
-                       ([2, 8, 0], 20.0, ([1, 5, 8, 12], [[]]), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')]
+                       ([2, 8, 0], 20.0, ([1, 5, 8, 12], []), 'chr2A_00611930_mrna', 'chr2A_00611930_mrna')]
         
         }
     
@@ -433,7 +433,7 @@ def test_new_annotation_match():
                                 "alternative mRNA" : 'chr2A_00611930_mrna',
                                 "mismatch/match" : [150, 0, 0],
                                 "identity" : 100.0,
-                                "mismatch zones" : ([], [[]]),
+                                "mismatch zones" : ([], []),
                                 "cluster name" : "cluster 0",
                                 "reference mRNA number" : 1,
                                 "alternative mRNA number" : 1}]],
@@ -459,7 +459,7 @@ def test_new_annotation_match():
                             "alternative mRNA" : 'chr2A_00611930_mrna',
                             "mismatch/match" : [30, 1, 119],
                             "identity" : 20.0,
-                            "mismatch zones" : ([150, 151], [[151, 209], [240, 299]]),
+                            "mismatch zones" : ([150, 151], [151, 209, 240, 299]),
                             "cluster name" : "cluster 0",
                             "reference mRNA number" : 1,
                             "alternative mRNA number" : 1}]],
@@ -513,7 +513,7 @@ def test_new_annotation_match():
                                              "alternative mRNA" : 'chr2A_00611930_mrna',
                                              "mismatch/match" : [60, 10, 90],
                                              "identity" : 37.5,
-                                             "mismatch zones" : ([209, 219], [[100, 129], [150, 209]]),
+                                             "mismatch zones" : ([209, 219], [100, 129, 150, 209]),
                                              "cluster name" : "cluster 0",
                                              "reference mRNA number" : 1,
                                              "alternative mRNA number" : 1}]],
@@ -540,7 +540,7 @@ def test_new_annotation_match():
                                              "alternative mRNA" : 'chr2A_00611930_mrna',
                                              "mismatch/match" : [120, 30, 0],
                                              "identity" : 80.0,
-                                             "mismatch zones" : ([180, 210], [[]]),
+                                             "mismatch zones" : ([180, 210], []),
                                              "cluster name" : "cluster 0",
                                              "reference mRNA number" : 1,
                                              "alternative mRNA number" : 2}]],
@@ -586,7 +586,7 @@ def test_new_annotation_match():
                                    "alternative mRNA" : 'chr2A_1000_mrna',
                                    "mismatch/match" : [0, 150, 50],
                                    "identity" : 0.0,
-                                   "mismatch zones" : ([50, 100, 150, 250], [[100, 149]]),
+                                   "mismatch zones" : ([50, 100, 150, 250], [100, 149]),
                                    "cluster name" : "cluster 0",
                                    "reference mRNA number" : 1,
                                    "alternative mRNA number" : 1},
@@ -600,7 +600,7 @@ def test_new_annotation_match():
                                     "alternative mRNA" : 'chr2A_2000_mrna',
                                     "mismatch/match" : [0, 200, 50],
                                     "identity" : 0.0,
-                                    "mismatch zones" : ([200, 300, 350, 450], [[300, 349]]),
+                                    "mismatch zones" : ([200, 300, 350, 450], [300, 349]),
                                     "cluster name" : "cluster 0",
                                     "reference mRNA number" : 1,
                                     "alternative mRNA number" : 1},
@@ -614,7 +614,7 @@ def test_new_annotation_match():
                                      "alternative mRNA" : 'chr2A_3000_mrna',
                                      "mismatch/match" : [0, 150, 50],
                                      "identity" : 0.0,
-                                     "mismatch zones" : ([400, 500, 550, 600], [[500, 549]]),
+                                     "mismatch zones" : ([400, 500, 550, 600], [500, 549]),
                                      "cluster name" : "cluster 0",
                                      "reference mRNA number" : 1,
                                      "alternative mRNA number" : 1}]],
@@ -640,7 +640,7 @@ def test_new_annotation_match():
                                              "alternative mRNA" : 'chr2A_00611930_mrna',
                                              "mismatch/match" : [2, 8, 0],
                                              "identity" : 20.0,
-                                             "mismatch zones" : ([1, 5, 8, 12], [[]]),
+                                             "mismatch zones" : ([1, 5, 8, 12], []),
                                              "cluster name" : "cluster 0",
                                              "reference mRNA number" : 1,
                                              "alternative mRNA number" : 1}]]
@@ -916,47 +916,47 @@ def test_compute_matches_mismatches_EI_RF():
         "identical" : [[100, 129, 150, 209, 240, 299],
                        iu.OrderedIntervals(intervals=[100, 129, 150, 209, 240, 299], include_ub=True), 
                        [100, 129, 150, 209, 240, 299],
-                       (150, 0, 0, [], [[]])],
+                       (150, 0, 0, [], [])],
         
         "fusion" : [[100, 129, 150, 209, 240, 299],
                        iu.OrderedIntervals(intervals=[100, 129, 150, 209, 240, 299], include_ub=True), 
                        [100, 209, 240, 299],
-                       (30, 20, 120, [130, 150], [[150, 209], [240, 299]])],
+                       (30, 20, 120, [130, 150], [150, 209, 240, 299])],
         
         "shift" : [[100, 129, 150, 209, 240, 299],
                        iu.OrderedIntervals(intervals=[100, 129, 150, 209, 240, 299], include_ub=True), 
                        [100, 129, 151, 209, 240, 299],
-                       (30, 1, 119, [150, 151], [[151, 209], [240, 299]])],
+                       (30, 1, 119, [150, 151], [151, 209, 240, 299])],
         
         "reverse-reverse" : [[0, 59, 90, 149, 170, 199],
                              iu.OrderedIntervals(intervals=[0, 59, 90, 149, 170, 199], include_ub=True), 
                              [0, 59, 90, 149, 170, 199],
-                             (150, 0, 0, [], [[]])],
+                             (150, 0, 0, [], [])],
         
         "diff-start-before" : [[100, 129, 150, 209, 240, 299],
                        iu.OrderedIntervals(intervals=[100, 129, 150, 209, 240, 299], include_ub=True), 
                        [40, 69, 90, 149, 180, 239],
-                       (30, 180, 30, [40, 70, 90, 100, 130, 180, 210, 300], [[100, 129]])],
+                       (30, 180, 30, [40, 70, 90, 100, 130, 180, 210, 300], [100, 129])],
         
         "diff-start-after" : [[100, 129, 150, 209, 240, 299],
                        iu.OrderedIntervals(intervals=[100, 129, 150, 209, 240, 299], include_ub=True), 
                        [160, 189, 210, 269, 300, 359],
-                       (30, 180, 30, [100, 130, 150, 160, 190, 240, 270, 360], [[160, 189]])],
+                       (30, 180, 30, [100, 130, 150, 160, 190, 240, 270, 360], [160, 189])],
         
         'overlapping-loci (first cluster/locus)' : [[50, 149],
                        iu.OrderedIntervals(intervals=[50, 149], include_ub=True), 
                        [100, 249],
-                       (0, 150, 50, [50, 100, 150, 250], [[100, 149]])],
+                       (0, 150, 50, [50, 100, 150, 250], [100, 149])],
         
         'overlapping-loci (first cluster / 2nd locus)' : [[200, 349],
                        iu.OrderedIntervals(intervals=[200, 349], include_ub=True), 
                        [100, 249],
-                       (0, 200, 50, [100, 200, 250, 350], [[200, 249]])],
+                       (0, 200, 50, [100, 200, 250, 350], [200, 249])],
                          
         "length_computation" : [[8, 13],
                        iu.OrderedIntervals(intervals=[8, 13], include_ub=True), 
                        [1, 4, 12, 13],
-                       (2, 8, 0, [1, 5, 8, 12], [[]])]
+                       (2, 8, 0, [1, 5, 8, 12], [])]
         }
     
     print("\n*************Testing the compute_matches_mismatches_EI_RF function*************")

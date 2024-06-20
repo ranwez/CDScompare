@@ -127,20 +127,32 @@ def compare_loci(ref_locus, alt_locus, verbose=False):
 # current position
 #
 # @remark This function was written by Vincent Ranwez
-def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, verbose):
-    matches=0    
+def compute_matches_mismatches_EI_RF(mRNA_ref, intervals_ref, mRNA_alt, verbose):   
     intervals_alt = iu.OrderedIntervals(mRNA_alt, True);
+    
+    # get intersection and union of both intervals lists
     inter_mrna = intervals_ref.intersection(intervals_alt);
     union_mrna = intervals_ref.union(intervals_alt);
-    # exon and intron (EI) mismatches
+    
+    # get exon and intron (EI) mismatches and mismatches zones (simple 
+    # symmetric difference)
     mismatches_EI=union_mrna.total_length()-inter_mrna.total_length();
+    diff_EI=intervals_ref.symmetric_difference(intervals_alt);
+    
+    matches=0 
+    mismatches_RF=0; # reading frame (RF) mismatches
+    diff_RF=[]; # reading frame (RF) mismatches zones
+    
+    # get intervals of intersection with their upper bounds
     inter_mrna_bounds=inter_mrna.get_intervals_with_included_ub();
+    
+    # get reading frames for each interval of the intersection
     rf_ref=pc.get_reading_frame(mRNA_ref, inter_mrna_bounds, True)
     rf_alt=pc.get_reading_frame(mRNA_alt, inter_mrna_bounds, True)
+    
+    # for each intersection interval of the reference and alternative, compare 
+    # the reading frames to determine match or RF mismatch
     interval_id=0;
-    diff_EI=intervals_ref.symmetric_difference(intervals_alt);
-    diff_RF=[];
-    mismatches_RF=0; # reading frame (RF) mismatches
     for interval_id in range(0, len(rf_ref)):
         interval_lg= inter_mrna_bounds[2*interval_id+1]-inter_mrna_bounds[2*interval_id]+1;
         if rf_ref[interval_id] != rf_alt[interval_id]:
