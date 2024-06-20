@@ -64,11 +64,9 @@ def ref_alt_is_sorted(dict_ref, dict_alt, verbose=False):
 # O(nb_loci), else it is O(nb_loci x log(nb_loci)) (where 'nb_loci' is the
 # number of loci in the dictionaries)
 def annotation_sort(dict_ref, dict_alt, verbose=False):
-    if verbose:
-        print("\n\n**************** Constructing the locus order list of the two annotations ****************")
     is_sorted = ref_alt_is_sorted(dict_ref, dict_alt, verbose=False)
     if is_sorted:
-        if verbose: print("loci are already sorted")
+        if verbose: print("loci are already sorted\n")
         locus_order = []
         i = 0
         j = 0
@@ -94,7 +92,7 @@ def annotation_sort(dict_ref, dict_alt, verbose=False):
                 loc_alt = dict_alt[alt_key_list[k]]
                 locus_order.append((loc_alt.start, loc_alt.end, loc_alt.name, False, loc_alt.direction))
     else:
-        if verbose: print("loci not sorted, sorting the loci list")
+        if verbose: print("loci not sorted, sorting the loci list\n")
         locus_order = []
         
         # get all reference loci bounds and locus ids as tuples in a list
@@ -105,10 +103,7 @@ def annotation_sort(dict_ref, dict_alt, verbose=False):
         # get all alternative loci bounds and locus ids as tuples in a list
         # 'False' indicates the tuple is from the alternative
         for locus_id, locus in dict_alt.items():
-            locus_order.append((locus.start, locus.end, locus.name, False, locus.direction)) 
-            
-        if verbose:
-            print("\nSorting the locus order list")
+            locus_order.append((locus.start, locus.end, locus.name, False, locus.direction))
      	
         # sorts the list using the first value of each tuple 
         # (= lower bound of the locus)

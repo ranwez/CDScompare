@@ -49,11 +49,11 @@ def write_results(all_results, verbose=False):
     except FileNotFoundError:
         os.mkdir("./results/") # create 'results' subdirectory
         results_file = open("./results/results.csv", "w")
+        
+    results_file.write("Chromosome, Cluster name, Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start, Reference end, Alternative start, Alternative end, Reference mRNA, Alternative mRNA, Exon_intron (EI) non-correspondance zones, Reading frame (RF) non-correspondance zones, Exon_Intron (EI) mismatches, Reading Frame (RF) mismatches, reference mRNA number, alternative mRNA number\n")
     
     for dna_mol, results in all_results.items():
         print(f"\n**************** Results for chromosome {dna_mol} ****************\n")
-        
-        results_file.write("Chromosome, Cluster name, Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start, Reference end, Alternative start, Alternative end, Reference mRNA, Alternative mRNA, Exon_intron (EI) non-correspondance zones, Reading frame (RF) non-correspondance zones, Exon_Intron (EI) mismatches, Reading Frame (RF) mismatches, reference mRNA number, alternative mRNA number\n")
             
         # annotation origin of each locus in the results
         # (first value: both,  second: reference,  third: alternative)
@@ -122,7 +122,6 @@ def write_results(all_results, verbose=False):
 # comparison of the structure identity between the loci of each annotation
 def annotation_comparison(ref_path, alt_path, verbose=False, create_strings=False, exon_mode=False):
     
-    
     checkpoint = time.time()
     print(f"start time : {checkpoint}")
 
@@ -137,6 +136,8 @@ def annotation_comparison(ref_path, alt_path, verbose=False, create_strings=Fals
     # get the order of the loci of both annotations
     all_locus_order = {}
     for dna_mol in ref_annotations.keys():
+        if verbose:
+            print(f"Constructing the locus order list of the chromosome {dna_mol}")
         locus_order = pc.annotation_sort(ref_annotations[dna_mol], alt_annotations[dna_mol], verbose)
         all_locus_order[dna_mol] = locus_order
     

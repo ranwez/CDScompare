@@ -198,7 +198,7 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
             locus.end = end
             
             if verbose :
-                print("\n**************** Reading the locus " + locus_id + " ****************")
+                print("Reading the locus " + locus_id)
 
         # if we encounter a new mRNA, we get its ID and create a key 
         # in the instance's mRNAs attribute with an empty list
@@ -206,8 +206,6 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
             
             mRNA_id = get_structure_id(parsed_line, delim, verbose)
             locus.mRNAs[mRNA_id] = []
-            if verbose :
-                print("\nReading mRNA " + locus_id)
 
         # if we encounter a CDS, we add its start and end positions to the 
         # corresponding mRNA key in the locus' mRNAs attribute
@@ -224,8 +222,6 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
             
             locus.mRNAs[mRNA_id].append(int(parsed_line[3]))
             locus.mRNAs[mRNA_id].append(int(parsed_line[4]))
-            if verbose:
-                print("Adding borders to " + locus_id + " : " + parsed_line[3] + ", " + parsed_line[4])
                 
         line_index += 1 # increment the line indicator (for debug purposes)
                 

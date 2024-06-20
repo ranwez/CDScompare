@@ -60,8 +60,6 @@ def reverse_coord(mismatch_zones, cluster_end):
 #
 # @remark This function doesn't expect any annotation to be a 'reference'
 def compare_loci(ref_locus, alt_locus, verbose=False):
-    if verbose:
-        print(f"\n\n**************** comparing loci {ref_locus.name} of reference and {alt_locus.name} of alternative ****************")
     final_comparison = [0,0,0]
     final_identity = 0.0
     final_mismatch_zones = []
@@ -100,8 +98,6 @@ def compare_loci(ref_locus, alt_locus, verbose=False):
     
     # return the highest mRNA identity between the locus of each annotation
     final_identity = round(final_identity * 100, 1)
-    if verbose:
-        print(f"\nFinal result of the comparison of the locus : {final_comparison[1]} matches and {final_comparison[0]} mismatches (identity = {final_identity})" )
     return (final_comparison, final_identity, final_mismatch_zones, final_ref_mRNA, final_alt_mRNA)
 
 
@@ -296,7 +292,7 @@ def annotation_match(cluster, create_strings=False, verbose=False):
     cluster_alt = cluster.get_loci()["alt"]
     cluster_name = cluster.name
     if verbose:
-        print("\n\n**************** matching annotations loci with each other ****************")
+        print(f"matching annotations loci with each other for {cluster_name}")
     dyn_prog_matrix = [] # dynamic programmation matrix
     
     # if the loci stored in the cluster are on the reverse strand, reverse 
