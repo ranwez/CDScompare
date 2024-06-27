@@ -5,3 +5,7 @@ data/tests/__pycache__/
 data/real_data/
 data/tests/.~lock.test_files.odp#
 results/
+data/time_tests/
+benchmark*
+time_test.txt
+data/lrrtransfer_tests/

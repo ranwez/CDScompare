@@ -121,17 +121,10 @@ def write_results(all_results, verbose=False):
 # @return Returns a list of lists of dictionaries describing the 
 # comparison of the structure identity between the loci of each annotation
 def annotation_comparison(ref_path, alt_path, verbose=False, create_strings=False, exon_mode=False):
-    
-    checkpoint = time.time()
-    print(f"start time : {checkpoint}")
 
     # get all annotation files and generate the annotation data structure
     ref_annotations = rf.get_gff_borders(ref_path, verbose, exon_mode)
     alt_annotations = rf.get_gff_borders(alt_path, verbose, exon_mode)
-    
-    diff0 = time.time() - checkpoint
-    checkpoint =  time.time()
-    print(f"time necessary for file reading : {diff0}")
 
     # get the order of the loci of both annotations
     all_locus_order = {}
@@ -141,19 +134,11 @@ def annotation_comparison(ref_path, alt_path, verbose=False, create_strings=Fals
         locus_order = pc.annotation_sort(ref_annotations[dna_mol], alt_annotations[dna_mol], verbose)
         all_locus_order[dna_mol] = locus_order
     
-    diff1 = time.time() - checkpoint
-    checkpoint =  time.time()
-    print(f"time necessary for loci sorting : {diff1}")
-    
     # construct clusters of overlapping loci
     all_cluster_list = {}
     for dna_mol in all_locus_order.keys():
         cluster_list = pc.construct_clusters(ref_annotations[dna_mol], alt_annotations[dna_mol], all_locus_order[dna_mol], verbose)
         all_cluster_list[dna_mol] = cluster_list
-    
-    diff2 = time.time() - checkpoint
-    checkpoint =  time.time()
-    print(f"time necessary for cluster construction : {diff2}")
     
     all_results = {}
     for dna_mol in all_cluster_list.keys():
@@ -161,17 +146,9 @@ def annotation_comparison(ref_path, alt_path, verbose=False, create_strings=Fals
         for cluster_id, cluster in all_cluster_list[dna_mol].items():
             results.append(comp.annotation_match(cluster, create_strings, verbose))
         all_results[dna_mol] = results
-    
-    diff3 = time.time() - checkpoint
-    checkpoint =  time.time()
-    print(f"time necessary for comparison : {diff3}")
         
     print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[match/mismatch_EI/mismatch_RF]\t\tIdentity_Score\n")
     write_results(all_results, verbose)
-    
-    diff4 = time.time() - checkpoint
-    checkpoint =  time.time()
-    print(f"time necessary for results writing : {diff4}")
     
     return all_results
     

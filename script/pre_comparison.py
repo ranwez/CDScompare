@@ -282,7 +282,7 @@ def get_reading_frame(cds_bounds, area_bounds, verbose=False):
         while area_bounds[i] > cds_bounds[cdsb+1]:
             nb_nt += cds_bounds[cdsb+1] - cds_bounds[cdsb] +1;
             cdsb+=2
-        # now set the reading frame of the current are
+        # now set the reading frame of the current area
         nb_nt_in_cds = area_bounds[i]-cds_bounds[cdsb]+1;
         reading_frames.append((nb_nt+nb_nt_in_cds-1) % 3 +1);
     return reading_frames;
