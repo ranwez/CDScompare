@@ -1,6 +1,8 @@
 
+library(ggplot2)
+
 # lecture du fichier de comparaison des méthodes 'cdna' et 'cdna_exon'
-tab_cdna = read.csv("/home/vetea/Documents/premiere_annee/second_semestre/stage/annot_CSC/results/cdna_cdna_exon.csv", 
+tab_cdna = read.csv("/home/vetea/Documents/premiere_annee/second_semestre/stage/CDScompR/results/cdna_cdna_exon.csv", 
                     header=TRUE, 
                     sep=",", 
                     dec=".")
@@ -13,7 +15,7 @@ hist(tab_cdna$identity,
      ylab="effectif")
 
 # lecture du fichier de comparaison des méthodes 'prot' et 'prot_exon'
-tab_prot = read.csv("/home/vetea/Documents/premiere_annee/second_semestre/stage/annot_CSC/results/prot_prot_exon.csv", 
+tab_prot = read.csv("/home/vetea/Documents/premiere_annee/second_semestre/stage/CDScompR/results/prot_prot_exon.csv", 
                     header=TRUE, 
                     sep=",", 
                     dec=".")
@@ -26,7 +28,7 @@ hist(tab_prot$identity,
      ylab="effectif")
 
 # lecture du fichier de comparaison de toutes les méthodes (contre la référence expertisée)
-tab_methods = read.csv("/home/vetea/Documents/premiere_annee/second_semestre/stage/annot_CSC/results/may_methods_combined.csv", 
+tab_methods = read.csv("/home/vetea/Documents/premiere_annee/second_semestre/stage/CDScompR/results/may_methods_combined.csv", 
                     header=TRUE, 
                     sep=",", 
                     dec=".")

@@ -3,7 +3,7 @@
 library(ggplot2)
 
 # lecture du fichier de comparaison de la comparaison des résultats de Mars avec la référence expertisée
-tab_mars = read.csv("/home/vetea/Documents/premiere_annee/second_semestre/stage/annot_CSC/results/exp_best_mars.csv", 
+tab_mars = read.csv("/home/vetea/Documents/premiere_annee/second_semestre/stage/CDScompR/results/exp_best_mars.csv", 
                     header=TRUE, 
                     sep=",", 
                     dec=".")
@@ -16,7 +16,7 @@ hist(tab_mars$identity,
      ylab="effectif")
 
 # lecture du fichier de comparaison de la comparaison des résultats de Mai avec la référence expertisée
-tab_mai = read.csv("/home/vetea/Documents/premiere_annee/second_semestre/stage/annot_CSC/results/exp_best_mai.csv", 
+tab_mai = read.csv("/home/vetea/Documents/premiere_annee/second_semestre/stage/CDScompR/results/exp_best_mai.csv", 
                    header=TRUE, 
                    sep=",", 
                    dec=".")
@@ -30,7 +30,7 @@ hist(tab_mai$identity,
 
 
 # lecture du fichier combinant les comparaisons de Mars et Mai avec la référence
-tab_fusion = read.csv("/home/vetea/Documents/premiere_annee/second_semestre/stage/annot_CSC/results/mars_may_combined.csv", 
+tab_fusion = read.csv("/home/vetea/Documents/premiere_annee/second_semestre/stage/CDScompR/results/mars_may_combined.csv", 
                       header=TRUE, 
                       sep=",", 
                       dec=".")
@@ -62,6 +62,7 @@ ggplot(tab_fusion, aes(x=identity_mars, y=identity_may, color=is_canonical)) +
 
 library(ggpubr)
 
+# code récupéré de http://www.sthda.com/english/articles/24-ggpubr-publication-ready-plots/78-perfect-scatter-plots-with-correlation-and-marginal-histograms/
 # Scatter plot colored by groups ("Species")
 sp <- ggscatter(tab_fusion, x = "identity_mars", y = "identity_may",
                 color = "is_canonical", palette = "jco",
@@ -83,4 +84,14 @@ ggarrange(xplot, NULL, sp, yplot,
           common.legend = TRUE)
 
 write.csv(tab_fusion, "Comparaison_transfert_Mars_Mai.csv")
+
+# test de la différence de qualité de prédiction de la version de Mai entre gènes canoniques et non-canoniques
+
+tab_canon = tab_fusion[tab_fusion$is_canonical!="éliminé",]
+tab_canon = tab_canon[tab_canon$is_canonical!="NA",]
+
+# vérification de l'égalité des variances
+var.test(identity_may ~ is_canonical, data=tab_canon) # les variances ne diffèrent pas significativement, on peut utiliser le test paramétrique
+
+t.test(identity_may ~ is_canonical, data = tab_canon)
 
