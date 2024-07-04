@@ -27,10 +27,17 @@ class Cluster:
     #
     # @param end (optional) the end coordinate of the last locus of the cluster
     def __init__(self, name, loci=None, end=-1):
+        
+        ### name of the cluster
         self.name = name
         if not loci:
             loci = {"ref": [], "alt": []}
+        
+        ### list of Locus class instances present in the cluster
         self.loci = loci.copy()
+        
+        ### end coordinate of the cluster. Equal to the end coordinate of 
+        # the last cluster's locus
         self.end = end
         
     ## Retrieves the 'loci' attribute of the instance

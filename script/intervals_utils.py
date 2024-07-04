@@ -22,6 +22,7 @@ class OrderedIntervals:
         if include_ub:
             self.intervals = OrderedIntervals.transform_intervals_to_exclude_ub(intervals)
         else:
+            ### List of sequence coordinates representing CDS intervals
             self.intervals = intervals
     
     ## Excludes the upper bound of each interval of the given list

@@ -19,7 +19,7 @@ class Locus:
     # @param name (optional) ID of the locus
     #
     # @param mRNAs (optional) Dictionary listing all mRNAs of the locus. Each 
-    # key corresponds to the ID of the mRNA and eahc value to the list of all 
+    # key corresponds to the ID of the mRNA and each value to the list of all 
     # CDS coordinates as retrieved by the get_gff_borders function
     #
     # @param start (optional) Start coordinate of the locus
@@ -34,10 +34,19 @@ class Locus:
         if not mRNAs:
             mRNAs = {}
         
+        ### name (identifier) of the locus
         self.name = name
+        
+        ### Dictionary of lists containing the CDS list of each mRNA of the locus
         self.mRNAs = mRNAs.copy()
+        
+        ### start coordinate of the locus on the sequence
         self.start = start
+        
+        ### end coordinate of the locus on the sequence
         self.end = end
+        
+        ### string indicating if the locus is on direct or reverse strand
         self.direction = direction
         
     ## This method is used to retrieve the 'mRNAs' attribute of an instance
