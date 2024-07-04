@@ -55,7 +55,7 @@ class Locus:
     ## This method is used to verify if all mRNAs of a dictionary are present 
     # in the class instance's 'mRNAs' attribute
     #
-    # @param **mRNAs Dictionary with mRNA names as keys and CDS coordinates
+    # @param **mrnas Dictionary with mRNA names as keys and CDS coordinates
     # list as values
     #
     # @returns Returns a boolean indicating if all given mRNAs were found in

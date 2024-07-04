@@ -80,7 +80,7 @@ class OrderedIntervals:
         return self.merge(other, lambda a, b: a or b)
 
 
-    # Calculates the intersection of this interval list with another interval 
+    ## Calculates the intersection of this interval list with another interval 
     # list.
     #
     # @param other An OrderedIntervals object.
@@ -90,7 +90,7 @@ class OrderedIntervals:
     def intersection(self, other):
         return self.merge(other, lambda a, b: a and b)
 
-    # Calculates the difference of this interval list with another interval 
+    ## Calculates the difference of this interval list with another interval 
     # list and returns the intervals of this list (asymmetric difference)
     #
     # @param other Another OrderedIntervals object.
@@ -106,7 +106,7 @@ class OrderedIntervals:
     def difference(self, other):
         return self.merge(other, lambda a, b: a and not b)
 
-    # Calculates the difference of this interval list with another interval 
+    ## Calculates the difference of this interval list with another interval 
     # list and returns both intervals list (symmetric difference)
     #
     # @param other Another OrderedIntervals object.
