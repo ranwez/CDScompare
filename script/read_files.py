@@ -216,7 +216,7 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
                 print("\nIncorrect file structure (Parent of CDS is not previous mRNA). See 'log.txt' for more information")
                 log.write("Line " + str(line_index) + " : CDS parent ID (" + parent_id + ") does not match last mRNA ID (" + locus_id +")\n")
                 
-            if locus_id == '':
+            if mRNA_id == '':
                 print(f"\nLine {line_index} = get_gff_borders() function error : CDS has been found before any mRNA\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
                 sys.exit(1)
             

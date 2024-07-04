@@ -25,6 +25,11 @@ optional parameters :
 -e/--exon_mode : triggers use of the exon coordinates instead of the CDS coordinates to compare the two annotations' loci
 
 
+## Caution
+
+The program expects two files in GFF format (.gff or .gff3 extension) for which the structure lines are correctly ordered according to their relationships. It the structure lines order is not correct, an error is returned. If you need to compare disordered files, use the program "GFFcleaner" first to create new clean equivalent files: https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py (A new comprehensive annotation of leucine-rich repeat-containing receptors in rice, Gottin et al., 2021)
+
+
 ## Program test
 
 A small example of reference and alternative public annotations are included in the repository and can be used to test and visualize program results before using it on real data. This example can be run using the command :
