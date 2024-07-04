@@ -45,10 +45,10 @@ def test_reverse_coord():
         assert result == test_dict[test][2]
         
         
-# test function for the 'annot_CSC.py' function 'compare_loci' (new locus comparison function)
+# test function for the 'comparison.py' function 'compare_loci' (new locus comparison function)
 def test_compare_loci():
     
-    # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'compare_loci' (new locus comparison function)
+    # dictionary of inputs and expected ouputs for each test file for the 'comparison.py' function 'compare_loci' (new locus comparison function)
     test_dict = {
         "identical" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
@@ -209,10 +209,10 @@ def test_compare_loci():
         assert result == test_dict[test][2]
         
         
-# test function for the 'annot_CSC.py' function 'create_vectors' (structure string creation function)
+# test function for the 'comparison.py' function 'create_vectors' (structure string creation function)
 def test_old_compare_loci():
     
-    # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'old_compare_loci' (old locus comparison function)
+    # dictionary of inputs and expected ouputs for each test file for the 'comparison.py' function 'old_compare_loci' (old locus comparison function)
     test_dict = {
         "identical" : [locus.Locus(name='chr2A_00611930', 
                                  mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
@@ -408,10 +408,10 @@ def test_old_compare_loci():
         assert result == test_dict[test][2]
         
         
-# test function for the 'annot_CSC.py' function 'annotation_match' (main annotation comparison function) with the 'create_strings' parameter as 'False' (uses new program version)
+# test function for the 'comparison.py' function 'annotation_match' (main annotation comparison function) with the 'create_strings' parameter as 'False' (uses new program version)
 def test_new_annotation_match():
     
-    # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'annotation_match' (main annotation comparison function)
+    # dictionary of inputs and expected ouputs for each test file for the 'comparison.py' function 'annotation_match' (main annotation comparison function)
     test_dict = {'basic' : [cl.Cluster(name="cluster 0",
                                        loci={'ref': [locus.Locus(name='chr2A_00611930', 
                                                                     mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
@@ -658,10 +658,10 @@ def test_new_annotation_match():
         assert result == test_dict[test][1]
         
         
-# test function for the 'annot_CSC.py' function 'annotation_match' (main annotation comparison function) with the 'create_strings' parameter as 'True' (uses old program version)
+# test function for the 'comparison.py' function 'annotation_match' (main annotation comparison function) with the 'create_strings' parameter as 'True' (uses old program version)
 def test_old_annotation_match():
     
-    # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'annotation_match' (main annotation comparison function)
+    # dictionary of inputs and expected ouputs for each test file for the 'comparison.py' function 'annotation_match' (main annotation comparison function)
     test_dict = {'basic' : [cl.Cluster(name="cluster 0",
                                        loci={'ref': [locus.Locus(name='chr2A_00611930', 
                                                                     mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 

@@ -165,13 +165,12 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
                     sys.exit(1)
                     
                 loci[locus_id] = locus
-            locus = lc.Locus()
-            mRNA_id = ""
-            end = -1
-            parent_id = ""
-            locus_id = ""
+            locus = lc.Locus() # new instance for the locus being read
+            mRNA_id = "" # identifier of the mRNA currently being read
+            parent_id = "" # identifier of the parent of the current structure 
+            locus_id = "" # identifier of the current locus
         
-        chrm = parsed_line[0]
+        chrm = parsed_line[0] # name of the chromosome
         if chrm == "contig":
             continue
         strand = "direct" if parsed_line[6] == "+" else "reverse" 
@@ -193,9 +192,9 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
             
             # we retrieve the start and end coordinates of the locus
             start = int(parsed_line[3])
-            locus.start = start
+            locus.start = start # start coordinate of the locus
             end = int(parsed_line[4])
-            locus.end = end
+            locus.end = end # end coordinate of the locus
             
             if verbose :
                 print("Reading the locus " + locus_id)
@@ -205,7 +204,7 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
         elif str(parsed_line[2]) == "mRNA": 
             
             mRNA_id = get_structure_id(parsed_line, delim, verbose)
-            locus.mRNAs[mRNA_id] = []
+            locus.mRNAs[mRNA_id] = [] # list of CDS coordinates of the mRNA
 
         # if we encounter a CDS, we add its start and end positions to the 
         # corresponding mRNA key in the locus' mRNAs attribute

@@ -1,5 +1,5 @@
 
-# Annot_CSC
+# CDScompR
 
 This is the repository for the 2024 internship of Vetea Jacot in the GE²pop team of the research unit AGAP. The goal of the program defined in this repo is to enable the comparison of two genome annotations in GFF format (one reference and one alternative) to determine the structure identity of the alternative to the reference. This program takes into account multiple caracteristics of the problem, for exemple the reading frames of a locus and overlapping loci. It creates two files: "log.txt" records all minor structure errors of the given input files, and "results.csv" lists the detailed results for each locus comparison.
 
@@ -9,7 +9,7 @@ This is the repository for the 2024 internship of Vetea Jacot in the GE²pop tea
 Run following command :
 
 ```
-python path/to/annot_CSC/script/annot_CSC.py [ -h/--help -v/--verbose -o/--old_version -e/--exon_mode ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ]
+python path/to/CDScompR/script/CDScompR.py [ -h/--help -v/--verbose -o/--old_version -e/--exon_mode ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ]
 ```
 
 where <reference_file_path> is the path to the file containing the reference annotation to analyze, and <alternative_file_path> is the path to the file containing the alternative annotation. These two parameters are required, while all others are not.
@@ -35,7 +35,7 @@ The program expects two files in GFF format (.gff or .gff3 extension) for which 
 A small example of reference and alternative public annotations are included in the repository and can be used to test and visualize program results before using it on real data. This example can be run using the command :
 
 ```
-python path/to/annot_CSC/script/annot_CSC.py -r data/tests/program_test_ref.gff3 -a data/tests/program_test_alt.gff3
+python path/to/CDScompR/script/CDScompR.py -r data/tests/program_test_ref.gff3 -a data/tests/program_test_alt.gff3
 ```
 
 

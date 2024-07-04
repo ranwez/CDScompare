@@ -14,7 +14,7 @@ sys.path.append( script_dir )
 import read_files as rf
 
 
-# test function for the 'annot_CSC.py' function 'get_structure_id' (structure id acquisition function)
+# test function for the 'read_files.py' function 'get_structure_id' (structure id acquisition function)
 def test_get_structure_id():
     test_dict = {        
         "TRITD_HC" : [["chr2A", "PGSB_Jan2017", "gene", "22128", "24635", ".", "-", ".", "ID=TRITD2Av1G000030;primconf=HC\n"],
@@ -46,10 +46,10 @@ def test_get_structure_id():
         assert result == test_dict[test][1]
 
 
-# test function for the 'annot_CSC.py' function 'get_gff_borders' (CDS coordinates acquisition function)
+# test function for the 'read_files.py' function 'get_gff_borders' (CDS coordinates acquisition function)
 def test_get_gff_borders():
     
-    # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'get_gff_borders' (CDS coordinates acquisition function)
+    # dictionary of inputs and expected ouputs for each test file for the 'read_files.py' function 'get_gff_borders' (CDS coordinates acquisition function)
     test_dict = {
         "basic" : ["./data/tests/basic_test.gff3", 
                    "chr2A_direct",

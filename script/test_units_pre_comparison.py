@@ -84,10 +84,10 @@ def test_get_reading_frame():
         assert result == test_dict[test][2]
         
 
-# test function for the 'annot_CSC.py' function 'annotation_sort' (locus list creation and sorting function)
+# test function for the 'pre_comparison.py' function 'annotation_sort' (locus list creation and sorting function)
 def test_annotation_sort():
     
-    # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'annotation_sort' (locus list creation and sorting function)
+    # dictionary of inputs and expected ouputs for each test file for the 'pre_comparison.py' function 'annotation_sort' (locus list creation and sorting function)
     test_dict = {"overlapping-loci" : [
                                 {'chr2A_1000': locus.Locus(name='chr2A_1000', 
                                                      mRNAs={'chr2A_1000_mrna': [50, 149]}, 
@@ -171,10 +171,10 @@ def test_annotation_sort():
         assert result == test_dict[test][2]
         
         
-# test function for the 'annot_CSC.py' function 'construct_clusters' (overlapping loci grouping function)
+# test function for the 'pre_comparison.py' function 'construct_clusters' (overlapping loci grouping function)
 def test_construct_clusters():
     
-    # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'construct_clusters' (overlapping loci grouping function)
+    # dictionary of inputs and expected ouputs for each test file for the 'pre_comparison.py' function 'construct_clusters' (overlapping loci grouping function)
     test_dict = {'simple' : [{
         'chr2A_1000': locus.Locus(name='chr2A_1000', 
                                  mRNAs={'chr2A_1000_mrna': [50, 149]}, 
@@ -283,10 +283,10 @@ def test_construct_clusters():
             assert result_details == cluster
             
             
-# test function for the 'annot_CSC.py' function 'create_vectors' (structure string creation function)
+# test function for the 'pre_comparison.py' function 'create_vectors' (structure string creation function)
 def test_create_vectors():
     
-    # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'create_vectors' (structure string creation function)
+    # dictionary of inputs and expected ouputs for each test file for the 'pre_comparison.py' function 'create_vectors' (structure string creation function)
     test_dict = {
         "basic" : [[100, 129, 150, 209, 240, 299], 
                    [100, "12312312312312312312312312312300000000000000000000123123123123123123123123123123123123123123123123123123123123000000000000000000000000000000123123123123123123123123123123123123123123123123123123123123"]],

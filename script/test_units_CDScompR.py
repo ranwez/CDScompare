@@ -11,13 +11,13 @@ import os, sys
 # code adapted from https://csatlas.com/python-import-file-module/#import_a_file_in_a_different_directory
 script_dir = os.path.dirname( __file__ )
 sys.path.append( script_dir )
-import annot_CSC
+import CDScompR
 
 
-# test function for the 'annot_CSC.py' function 'annotation_comparison' ('main' function of the program) with the 'create_strings' parameter as 'False' (uses new program version)
+# test function for the 'CDScompR.py' function 'annotation_comparison' ('main' function of the program) with the 'create_strings' parameter as 'False' (uses new program version)
 def test_new_annotation_comparison():
     
-    # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'annotation_comparison' ('main' function of the program)
+    # dictionary of inputs and expected ouputs for each test file for the 'CDScompR.py' function 'annotation_comparison' ('main' function of the program)
     test_dict = test_dict = {
         "basic" : ["./data/tests/basic_test.gff3", 
                    "./data/tests/identical_test.gff3",
@@ -360,16 +360,16 @@ def test_new_annotation_comparison():
         
         print(f"\n{test} test")
         
-        result = annot_CSC.annotation_comparison(test_dict[test][0], test_dict[test][1], False)
+        result = CDScompR.annotation_comparison(test_dict[test][0], test_dict[test][1], False)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
         
         
-# test function for the 'annot_CSC.py' function 'annotation_comparison' ('main' function of the program) with the 'create_strings' parameter as 'True' (uses old program version)
+# test function for the 'CDScompR.py' function 'annotation_comparison' ('main' function of the program) with the 'create_strings' parameter as 'True' (uses old program version)
 def test_old_annotation_comparison():
     
-    # dictionary of inputs and expected ouputs for each test file for the 'annot_CSC.py' function 'annotation_comparison' ('main' function of the program)
+    # dictionary of inputs and expected ouputs for each test file for the 'CDScompR.py' function 'annotation_comparison' ('main' function of the program)
     test_dict = test_dict = {
         "basic" : ["./data/tests/basic_test.gff3", 
                    "./data/tests/identical_test.gff3",
@@ -712,7 +712,7 @@ def test_old_annotation_comparison():
         
         print(f"\n{test} test")
         
-        result = annot_CSC.annotation_comparison(test_dict[test][0], test_dict[test][1], False, True)
+        result = CDScompR.annotation_comparison(test_dict[test][0], test_dict[test][1], False, True)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
