@@ -6,13 +6,12 @@ Created on Thu May  2 11:57:29 2024
 @author: vetea
 """
 
-##@package main
+##@package CDScompR
 # This script is used to compute the distance between two structural 
 # annotations of a same genome, one reference and one alternative annotation. 
 # It expects as input the paths to the annotation files (in GFF format), 
-# displays the computed distances between all annotation pairs, and returns a 
-# dictionary of lists of lists detailing the matchs/mismatchs between the 
-# two annotations' structure string
+# displays the computed distances between all annotation pairs, and creates
+# a results CSV file detailing the loci comparisons between the annotations
 
 
 import getopt
@@ -21,7 +20,6 @@ import os
 import read_files as rf
 import pre_comparison as pc
 import comparison as comp
-import time
 
 ## This function writes to a new 'results.csv' file the results of the 
 # annotation comparison retrieved from the identities dictionary returned by 
@@ -32,23 +30,26 @@ import time
 # @param results A dictionary of list of list of dictionaries containing 
 # results of the annotation comparison, as returned by annotation_match
 #
+# @param alt_name String indicating the name of the original alternative 
+# annotation file
+#
 # @param verbose If True, triggers display of more information messages. 
 # Default is 'False'
 #
 # @see annotation_match()
 #
 # @remark Results are written in CSV ('Comma-Separated Values') format
-def write_results(all_results, verbose=False):
+def write_results(all_results, alt_name, verbose=False):
     # annotation origin of each locus in the results for all chromosomes
     # (first value : both,  second value : reference,  third value : alternative)
     final_locus_annot = [0, 0, 0]
     
-    # try to open the results file
+    # try to open the results file (named after the alternative file name)
     try:
-        results_file = open("./results/results.csv", "w")
+        results_file = open(f"./results/{alt_name}.csv", "w")
     except FileNotFoundError:
         os.mkdir("./results/") # create 'results' subdirectory
-        results_file = open("./results/results.csv", "w")
+        results_file = open(f"./results/{alt_name}.csv", "w")
         
     results_file.write("Chromosome, Cluster name, Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start, Reference end, Alternative start, Alternative end, Reference mRNA, Alternative mRNA, Exon_intron (EI) non-correspondance zones, Reading frame (RF) non-correspondance zones, Exon_Intron (EI) mismatches, Reading Frame (RF) mismatches, reference mRNA number, alternative mRNA number\n")
     
@@ -93,6 +94,13 @@ def write_results(all_results, verbose=False):
         final_locus_annot = [sum(x) for x in zip(final_locus_annot, locus_initial_annot)]
         
     results_file.close()
+    
+    # write to a txt file the collected origins of loci
+    results_file = open(f"./results/{alt_name}.txt", "w")
+    results_file.write(f"\nNumber of loci (whole data):\n- found in both annotations : {final_locus_annot[0]}\n- found only in the reference : {final_locus_annot[1]}\n- found only in the alternative : {final_locus_annot[2]}\n")
+    results_file.close()
+    
+    # display in the standard ouput the loci origins
     print(f"\nNumber of loci (whole data):\n- found in both annotations : {final_locus_annot[0]}\n- found only in the reference : {final_locus_annot[1]}\n- found only in the alternative : {final_locus_annot[2]}\n")
     
 
@@ -147,8 +155,10 @@ def annotation_comparison(ref_path, alt_path, verbose=False, create_strings=Fals
             results.append(comp.annotation_match(cluster, create_strings, verbose))
         all_results[dna_mol] = results
         
+    alt_name = (os.path.basename(alt_path)).split(".")[0]
+        
     print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[match/mismatch_EI/mismatch_RF]\t\tIdentity_Score\n")
-    write_results(all_results, verbose)
+    write_results(all_results, alt_name, verbose)
     
     return all_results
     
@@ -157,7 +167,7 @@ def usage():
     
     # displayed when '-h' or '--help' is given, or when an invalid script
     # call happens
-    print("Syntax : path/to/main.py [ -h/--help -v/--verbose -o/--old_version ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ] ")
+    print("Syntax : path/to/CDScompR.py [ -h/--help -v/--verbose -o/--old_version ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ] ")
     
 
 def main():
