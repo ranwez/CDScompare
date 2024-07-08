@@ -1,12 +1,14 @@
 
 # CDScompR
 
-This is the repository for the 2024 internship of Vetea Jacot in the GE²pop team of the research unit AGAP. The goal of the program defined in this repo is to enable the comparison of two genome annotations in GFF format (one reference and one alternative) to determine the structure identity of the alternative to the reference. This program takes into account multiple caracteristics of the problem, for exemple the reading frames of a locus and overlapping loci. It creates two files: "log.txt" records all minor structure errors of the given input files, and "results.csv" lists the detailed results for each locus comparison. "CDScompR" stands for "CDS Comparison with Reading-frames".
+This is the repository for the 2024 internship of Vetea Jacot in the GE²pop team of the research unit AGAP. The goal of the program CDScompR is to enable the comparison of two genome annotations in GFF format (one reference and one alternative) to determine the structure identity of the alternative to the reference. This program takes into account multiple caracteristics of the problem, for exemple the reading frames of a locus and overlapping loci. It creates two files: "log.txt" records all minor structure errors of the given input files, and "results.csv" lists the detailed results for each locus comparison. "CDScompR" stands for "CDS Comparison with Reading-frames".
+
+This project also includes a script to enable the comparison of multiple alternative annotations to a single reference: CDSmulticompR. It relies on CDScompR for the comparison of each annotations pair, and is called in a similar way.
 
 
-## Running the program
+## Running the programs
 
-Run following command :
+To run CDScompR (one-to-one comparison), use the following command :
 
 ```
 python path/to/CDScompR/script/CDScompR.py [ -h/--help -v/--verbose -o/--old_version -e/--exon_mode ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ]
@@ -24,10 +26,16 @@ optional parameters :
 
 -e/--exon_mode : triggers use of the exon coordinates instead of the CDS coordinates to compare the two annotations' loci
 
+To run CDSmulticompR (multiple comparisons), use the same command with multiple calls to the '-a' option:
+
+```
+python path/to/CDScompR/script/CDSmulticompR.py [ -h/--help -v/--verbose -o/--old_version -e/--exon_mode ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> -a/--alternative <second_alternative_file_path> -a/--alternative <third_alternative_file_path> -a/--alternative ...] 
+```
+
 
 ## Caution
 
-The program expects two files in GFF format (.gff or .gff3 extension) for which the structure lines are correctly ordered according to their relationships. It the structure lines order is not correct, an error is returned. If you need to compare disordered files, use the program "GFFcleaner" first to create new clean equivalent files: https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py (A new comprehensive annotation of leucine-rich repeat-containing receptors in rice, Gottin et al., 2021)
+The program expects files in GFF format (.gff or .gff3 extension) for which the structure lines are correctly ordered according to their relationships. It the structure lines order is not correct, an error is returned. If you need to compare disordered files, use the program "GFFcleaner" first to create new clean equivalent files: https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py (A new comprehensive annotation of leucine-rich repeat-containing receptors in rice, Gottin et al., 2021)
 
 
 ## Program test
