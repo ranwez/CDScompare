@@ -17,7 +17,8 @@ import getopt
 import sys
 import os
 
-sys.path.insert(0, '/home/vetea/Documents/premiere_annee/second_semestre/stage/CDScompR/script/python_util/')
+script_dir = os.path.dirname( __file__ ) + "/python_util/"
+sys.path.append( script_dir )
 
 import read_files as rf
 import pre_comparison as pc
