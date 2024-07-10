@@ -5,6 +5,21 @@ This is the repository for the 2024 internship of Vetea Jacot in the GE²pop tea
 
 This project also includes a script to enable the comparison of multiple alternative annotations to a single reference: CDSmulticompR. It relies on CDScompR for the comparison of each annotations pair, and is called in a similar way.
 
+## Installation
+
+To get the program, simply clone the github repository using the following command: 
+
+```
+git clone https://github.com/ranwez/CDScompR
+```
+
+Then get to the directory root to use the program:
+
+```
+cd CScompR/
+```
+
+No other installation steps are required. The program can be run as is.
 
 ## Running the programs
 
