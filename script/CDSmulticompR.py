@@ -18,6 +18,18 @@ import getopt
 import sys
 import os
 
+def result_to_dict(result):
+    # key is the ref gene id, value is the tuple (alt_gene_id, identity)
+    dict_result = {}
+    for chrm_name, chrm in result.items():
+        for cluster in chrm:
+            for locus in cluster:
+                ref_locus = locus['reference']
+                alt_locus = locus['alternative']
+                identity = locus['identity']
+                if(ref_locus != "~"):
+                    dict_result[ref_locus] = (alt_locus, identity)
+    return dict_result
 
 ## Writes the results returned by the function multicomp into a results 
 # synthesis CSV file detailing the loci identity for each alternative
@@ -27,7 +39,7 @@ import os
 # @param multi_results List of results dictionaries, as returned by multicomp
 #
 # @param ref_path Path to the reference annotation GFF file
-def write_multi_results(multi_results, ref_path):
+def write_multi_results(multi_results, ref_path, alt_paths):
     
     ref_name = os.path.basename(ref_path).split(".")[0]
     
@@ -47,32 +59,25 @@ def write_multi_results(multi_results, ref_path):
     
     header = "Reference_locus"
     
-    for alt in multi_results:
-        alt_name = alt[1]
+    for alt in alt_paths:
+        alt_name =  os.path.basename(alt).split(".")[0]
         header += f",{alt_name} locus,{alt_name} identity"
         
     results_file.write(header+"\n")
     
     # write the results
+    ref_keys = set();
+    for result in multi_results:
+        ref_keys=ref_keys.union(result.keys())
     
-    for chrm_name, chrm in multi_results[0][0].items():
-        cluster_id = 0
-        for cluster in chrm:
-            locus_id = 0
-            for locus in cluster:
-                ref_locus = locus['reference']
-                line = f"{ref_locus}"
-                
-                for alt in multi_results:
-                    # get name and identity of the associated alternative locus
-                    alt_locus = alt[0][chrm_name][cluster_id][locus_id]['alternative']
-                    alt_ident = alt[0][chrm_name][cluster_id][locus_id]['identity']
-                    line += f",{alt_locus},{alt_ident}"
-                locus_id += 1
-                results_file.write(line+"\n")
-                
-            cluster_id += 1
-                    
+    for ref_key in sorted(ref_keys):
+        line = ref_key
+        for alt in multi_results:
+            if ref_key in alt:
+                line += f",{alt[ref_key][0]},{alt[ref_key][1]}"
+            else:
+                line += ",~,0.0"
+        results_file.write(line+"\n")
                     
     results_file.close()
 
@@ -111,10 +116,10 @@ def multicomp(ref_path, alt_paths, verbose, create_strings, exon_mode):
     # compute results for the comparison with the reference, write the results
     # in a CSV file, and append the returned results dictionary to a list
     for alt in alt_paths:
-        alt_name = os.path.basename(alt).split(".")[0]
-        multi_results.append((cc.annotation_comparison(ref_path, alt, verbose, create_strings, exon_mode), alt_name))
+        multi_results.append(result_to_dict(cc.annotation_comparison(ref_path, alt, verbose, create_strings, exon_mode)))
+
         
-    write_multi_results(multi_results, ref_path)
+    write_multi_results(multi_results, ref_path, alt_paths)
     
     return multi_results
     
