@@ -13,10 +13,12 @@ Created on Thu May  2 11:57:29 2024
 # displays the computed distances between all annotation pairs, and creates
 # a results CSV file detailing the loci comparisons between the annotations
 
-
 import getopt
 import sys
 import os
+
+sys.path.insert(0, '/home/vetea/Documents/premiere_annee/second_semestre/stage/CDScompR/script/python_util/')
+
 import read_files as rf
 import pre_comparison as pc
 import comparison as comp

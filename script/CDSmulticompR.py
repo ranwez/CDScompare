@@ -13,11 +13,12 @@ Created on Fri Jul  5 13:18:44 2024
 # format), displays the computed distances between all annotation pairs, and 
 # creates results CSV files for each alternative and one global synthesis file
 
-import CDScompR as cc
 import getopt
 import sys
 import os
+import CDScompR as cc
 
+#TODO DOCU
 def result_to_dict(result):
     # key is the ref gene id, value is the tuple (alt_gene_id, identity)
     dict_result = {}

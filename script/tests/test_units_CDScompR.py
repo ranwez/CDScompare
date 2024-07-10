@@ -8,9 +8,10 @@ Created on Tue Jun 18 10:50:09 2024
 
 import os, sys
 
-# code adapted from https://csatlas.com/python-import-file-module/#import_a_file_in_a_different_directory
 script_dir = os.path.dirname( __file__ )
+script_dir = "/".join(script_dir.split("/")[:-1]) + "/"
 sys.path.append( script_dir )
+
 import CDScompR
 
 
