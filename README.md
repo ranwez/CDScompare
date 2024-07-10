@@ -16,10 +16,14 @@ git clone https://github.com/ranwez/CDScompR
 Then get to the directory root to use the program:
 
 ```
-cd CScompR/
+cd CDScompR/
 ```
 
 No other installation steps are required. The program can be run as is.
+
+## Requirements
+
+None, except Python 3.
 
 ## Running the programs
 
