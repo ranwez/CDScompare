@@ -161,7 +161,7 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
                 # if there was a previous gene, but its borders list is empty, 
                 # return an error
                 if locus_id != "" and locus.mRNAs[mRNA_id] == []:
-                    print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the previous mRNA '{mRNA_id}'\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
+                    print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the previous mRNA '{mRNA_id}' in file {path}\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
                     sys.exit(1)
                     
                 loci[locus_id] = locus
@@ -212,11 +212,11 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
             parent_id = get_parent_id(parsed_line, delim, verbose)
             
             if parent_id != mRNA_id:
-                print("\nIncorrect file structure (Parent of CDS is not previous mRNA). See 'log.txt' for more information")
+                print("\nIncorrect file structure (Parent of CDS is not previous mRNA) in file {path}. See 'log.txt' for more information")
                 log.write("Line " + str(line_index) + " : CDS parent ID (" + parent_id + ") does not match last mRNA ID (" + locus_id +")\n")
                 
             if mRNA_id == '':
-                print(f"\nLine {line_index} = get_gff_borders() function error : CDS has been found before any mRNA\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
+                print(f"\nLine {line_index} = get_gff_borders() function error : CDS has been found before any mRNA in file {path}\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
                 sys.exit(1)
             
             locus.mRNAs[mRNA_id].append(int(parsed_line[3]))
