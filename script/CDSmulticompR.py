@@ -18,7 +18,15 @@ import sys
 import os
 import CDScompR as cc
 
-#TODO DOCU
+
+## Extracts the computed identity for each locus of the given result dictionary
+# and add it to a new dictionary
+#
+# @param result Result dictionary, as returned by CDScompR's 
+# annotation_compare() function
+#
+# @returns Returns a dictionary with the locus name as key, and the comparison
+# identity as value
 def result_to_dict(result):
     # key is the ref gene id, value is the tuple (alt_gene_id, identity)
     dict_result = {}
@@ -32,12 +40,14 @@ def result_to_dict(result):
                     dict_result[ref_locus] = (alt_locus, identity)
     return dict_result
 
+
 ## Writes the results returned by the function multicomp into a results 
 # synthesis CSV file detailing the loci identity for each alternative
 #
 # @see multicomp()
 #
-# @param multi_results List of results dictionaries, as returned by multicomp
+# @param multi_results List of loci identities (dictionaries), as returned 
+# by multicomp
 #
 # @param ref_path Path to the reference annotation GFF file
 def write_multi_results(multi_results, ref_path, alt_paths):
@@ -84,8 +94,8 @@ def write_multi_results(multi_results, ref_path, alt_paths):
 
 
 ## Compares all alternative annotations given (alt_paths) to the reference 
-# annotation (ref_path) by calling annotation_sort and appends the results 
-# dictionaries to a list
+# annotation (ref_path) by calling annotation_sort and appends the loci 
+# identities to a list
 #
 # @see annotation_sort()
 #
@@ -107,7 +117,8 @@ def write_multi_results(multi_results, ref_path, alt_paths):
 #
 # @see old_compare_loci()
 #
-# @returns Returns the list of all results dictionaries of all alternatives
+# @returns Returns the list of all loci identities (dictionaries) of all 
+# alternatives
 def multicomp(ref_path, alt_paths, verbose, create_strings, exon_mode):
     
     # list of all results dictionaries returned by CDScompR
@@ -115,7 +126,7 @@ def multicomp(ref_path, alt_paths, verbose, create_strings, exon_mode):
     
     # for each alternative annotation given to the program, use CDScompR to 
     # compute results for the comparison with the reference, write the results
-    # in a CSV file, and append the returned results dictionary to a list
+    # in a CSV file, and append the returned loci identities to a list
     for alt in alt_paths:
         multi_results.append(result_to_dict(cc.annotation_comparison(ref_path, alt, verbose, create_strings, exon_mode)))
 
