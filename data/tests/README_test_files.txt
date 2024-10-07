@@ -45,4 +45,9 @@ Description for each test file used in the program's unit tests:
 - multi_chromosome_test_alt.gff3 : GFF file describing two loci on different chromosomes (chr2A and chr2B), which should yield identities of 20 and 100 % when compared with multi_chromosome_test_ref.gff3.
 
 
+- comment_test.gff3: GFF file describing 2 loci on the chr2A and one on "contig", with a commented first line. The program should ignore the lines starting with 'contig' and '#' and only retrieve the 2 loci from the chr2A.
 
+
+- diff_dnaMol-1-chr_test.gff3: GFF file describing 1 locus on the ch2A, intended to be compared to diff_dnaMol-2-chr_test.gff3. This gff is successively used as ref and alt in the test.
+
+- diff_dnaMol-2-chr_test.gff3: GFF file describing the same locus as diff_dnaMol-1-chr_test.gff3 + another one on the chr2B, intended to be compared to diff_dnaMol-1-chr_test.gff3. The fact that the chr2B_forward is only present in one of the 2 gff should not raise an error, and loci from both DNA molecules are expected to be described in the csv output. This gff is successively used as ref and alt in the test.

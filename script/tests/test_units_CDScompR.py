@@ -17,10 +17,10 @@ import CDScompR
 
 # test function for the 'CDScompR.py' function 'annotation_comparison' ('main' function of the program) with the 'create_strings' parameter as 'False' (uses new program version)
 def test_new_annotation_comparison():
-    
+
     # dictionary of inputs and expected ouputs for each test file for the 'CDScompR.py' function 'annotation_comparison' ('main' function of the program)
     test_dict = test_dict = {
-        "basic" : ["./data/tests/basic_test.gff3", 
+        "basic" : ["./data/tests/basic_test.gff3",
                    "./data/tests/identical_test.gff3",
                         {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                            "reference start" : 100,
@@ -36,8 +36,8 @@ def test_new_annotation_comparison():
                            "cluster name" : "cluster 0",
                            "reference mRNA number" : 1,
                            "alternative mRNA number" : 1}]]}],
-        
-        "minus-CDS" : ["./data/tests/basic_test.gff3", 
+
+        "minus-CDS" : ["./data/tests/basic_test.gff3",
                        "./data/tests/minus-CDS_test.gff3",
                        {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                           "reference start" : 100,
@@ -53,8 +53,8 @@ def test_new_annotation_comparison():
                           "cluster name" : "cluster 0",
                           "reference mRNA number" : 1,
                           "alternative mRNA number" : 1}]]}],
-        
-        "fusion" : ["./data/tests/basic_test.gff3", 
+
+        "fusion" : ["./data/tests/basic_test.gff3",
                     "./data/tests/fusion_test.gff3",
                     {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                        "reference start" : 100,
@@ -70,8 +70,8 @@ def test_new_annotation_comparison():
                        "cluster name" : "cluster 0",
                        "reference mRNA number" : 1,
                        "alternative mRNA number" : 1}]]}],
-        
-        "shift" : ["./data/tests/basic_test.gff3", 
+
+        "shift" : ["./data/tests/basic_test.gff3",
                    "./data/tests/shift_test.gff3",
                    {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                       "reference start" : 100,
@@ -87,8 +87,8 @@ def test_new_annotation_comparison():
                       "cluster name" : "cluster 0",
                       "reference mRNA number" : 1,
                       "alternative mRNA number" : 1}]]}],
-        
-        "reverse-reverse" : ["./data/tests/reverse_test.gff3", 
+
+        "reverse-reverse" : ["./data/tests/reverse_test.gff3",
                      "./data/tests/reverse_test.gff3",
                      {'chr2A_reverse': [[{"reference" : 'chr2A_00611930',
                         "reference start" : 100,
@@ -103,9 +103,9 @@ def test_new_annotation_comparison():
                         "mismatch zones" : ([], []),
                         "cluster name" : "cluster 0",
                         "reference mRNA number" : 1,
-                        "alternative mRNA number" : 1}]]}],     
-        
-        "reverse-modified" : ["./data/tests/reverse_test.gff3", 
+                        "alternative mRNA number" : 1}]]}],
+
+        "reverse-modified" : ["./data/tests/reverse_test.gff3",
                      "./data/tests/reverse_modified_test.gff3",
                      {'chr2A_reverse': [[{"reference" : 'chr2A_00611930',
                         "reference start" : 100,
@@ -120,8 +120,8 @@ def test_new_annotation_comparison():
                         "mismatch zones" : ([209, 219], [100, 129, 150, 209]),
                         "cluster name" : "cluster 0",
                         "reference mRNA number" : 1,
-                        "alternative mRNA number" : 1}]]}],  
-        
+                        "alternative mRNA number" : 1}]]}],
+
         "diff-start-before" : ["./data/tests/basic_test.gff3",
                                "./data/tests/diff-start-before_test.gff3",
                                {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
@@ -138,7 +138,7 @@ def test_new_annotation_comparison():
                                   "cluster name" : "cluster 0",
                                   "reference mRNA number" : 1,
                                   "alternative mRNA number" : 1}]]}],
-        
+
         "diff-start-after" : ["./data/tests/basic_test.gff3",
                               "./data/tests/diff-start-after_test.gff3",
                               {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
@@ -155,7 +155,7 @@ def test_new_annotation_comparison():
                                  "cluster name" : "cluster 0",
                                  "reference mRNA number" : 1,
                                  "alternative mRNA number" : 1}]]}],
-        
+
         "basic-2-loci" : ["./data/tests/basic-2-loci_test.gff3",
                           "./data/tests/identical-2-loci_test.gff3",
                               {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
@@ -186,7 +186,7 @@ def test_new_annotation_comparison():
                                   "cluster name" : "cluster 2",
                                   "reference mRNA number" : 1,
                                   "alternative mRNA number" : 1}]]}],
-        
+
         "minus-loci" : ["./data/tests/basic_test.gff3",
                           "./data/tests/identical-2-loci_test.gff3",
                               {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
@@ -217,7 +217,7 @@ def test_new_annotation_comparison():
                                   "cluster name" : "cluster 2",
                                   "reference mRNA number" : '_',
                                   "alternative mRNA number" : 1}]]}],
-        
+
         "overlapping-loci" : ["./data/tests/overlapping-loci_test.gff3",
                               "./data/tests/overlapping-loci-alt_test.gff3",
                               {'chr2A_direct': [[{'reference': 'chr2A_1000',
@@ -249,63 +249,63 @@ def test_new_annotation_comparison():
                                  "reference mRNA number" : 1,
                                  "alternative mRNA number" : 1},
                                 {'reference': 'chr2A_3000',
-                                 'reference start': 400, 
+                                 'reference start': 400,
                                  'reference end': 549,
-                                 'alternative': 'chr2A_3000', 
+                                 'alternative': 'chr2A_3000',
                                  'alternative start': 500,
-                                 'alternative end': 599, 
+                                 'alternative end': 599,
                                  "reference mRNA" : 'chr2A_3000_mrna',
                                  "alternative mRNA" : 'chr2A_3000_mrna',
-                                 'mismatch/match': [0, 150, 50], 
-                                 'identity': 0.0, 
+                                 'mismatch/match': [0, 150, 50],
+                                 'identity': 0.0,
                                  'mismatch zones': ([400, 500, 550, 600], [500, 549]),
                                  "cluster name" : "cluster 0",
                                  "reference mRNA number" : 1,
                                  "alternative mRNA number" : 1}],
-                               [{'reference': 'chr2A_4000', 
+                               [{'reference': 'chr2A_4000',
                                  'reference start': 650,
-                                 'reference end': 699, 
+                                 'reference end': 699,
                                  'alternative': 'chr2A_4000',
-                                 'alternative start': 650, 
-                                 'alternative end': 699, 
+                                 'alternative start': 650,
+                                 'alternative end': 699,
                                  "reference mRNA" : 'chr2A_4000_mrna',
                                  "alternative mRNA" : 'chr2A_4000_mrna',
-                                 'mismatch/match': [50, 0, 0], 
-                                 'identity': 100.0, 
+                                 'mismatch/match': [50, 0, 0],
+                                 'identity': 100.0,
                                  'mismatch zones': ([], []),
                                  "cluster name" : "cluster 6",
                                  "reference mRNA number" : 1,
-                                 "alternative mRNA number" : 1}], 
+                                 "alternative mRNA number" : 1}],
                                [{'reference': 'chr2A_5000',
-                                 'reference start': 750, 
+                                 'reference start': 750,
                                  'reference end': 799,
-                                 'alternative': 'chr2A_5000', 
+                                 'alternative': 'chr2A_5000',
                                  'alternative start': 750,
-                                 'alternative end': 779, 
+                                 'alternative end': 779,
                                  "reference mRNA" : 'chr2A_5000_mrna',
                                  "alternative mRNA" : 'chr2A_5000_mrna',
-                                 'mismatch/match': [30, 20, 0], 
+                                 'mismatch/match': [30, 20, 0],
                                  'identity': 60.0,
                                  'mismatch zones': ([780, 800], []),
                                  "cluster name" : "cluster 8",
                                  "reference mRNA number" : 1,
-                                 "alternative mRNA number" : 1}, 
+                                 "alternative mRNA number" : 1},
                                 {'reference': '~',
-                                 'reference start': '_', 
+                                 'reference start': '_',
                                  'reference end': '_',
                                  'alternative': 'chr2A_6000',
-                                 'alternative start': 790, 
+                                 'alternative start': 790,
                                  'alternative end': 849,
                                  "reference mRNA" : '_',
                                  "alternative mRNA" : 'chr2A_6000_mrna',
-                                 'mismatch/match': [], 
-                                 'identity': '_', 
+                                 'mismatch/match': [],
+                                 'identity': '_',
                                  'mismatch zones': '_',
                                  "cluster name" : "cluster 8",
                                  "reference mRNA number" : '_',
                                  "alternative mRNA number" : 1}]]}],
-        
-        'length_computation' : ["./data/tests/length_computation_ref_test.gff3", 
+
+        'length_computation' : ["./data/tests/length_computation_ref_test.gff3",
                                 "./data/tests/length_computation_alt_test.gff3",
                                  {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                                     "reference start" : 8,
@@ -321,8 +321,8 @@ def test_new_annotation_comparison():
                                     "cluster name" : "cluster 0",
                                     "reference mRNA number" : 1,
                                     "alternative mRNA number" : 1}]]}],
-        
-        "multi_chromosome" : ["./data/tests/multi_chromosome_test_ref.gff3", 
+
+        "multi_chromosome" : ["./data/tests/multi_chromosome_test_ref.gff3",
                    "./data/tests/multi_chromosome_test_alt.gff3",
                    {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                       "reference start" : 100,
@@ -351,28 +351,90 @@ def test_new_annotation_comparison():
                        "mismatch zones" : ([], []),
                        "cluster name" : "cluster 0",
                        "reference mRNA number" : 1,
-                       "alternative mRNA number" : 1}]]}]
-        
+                       "alternative mRNA number" : 1}]]}],
+
+        "diff_dnaMol1" : ["./data/tests/diff_dnaMol-1-chr_test.gff3",
+                           "./data/tests/diff_dnaMol-2-chr_test.gff3",
+                           {'chr2A_direct': [[{'reference': 'chr2A_00611930',
+                               'reference start': 100,
+                               'reference end': 299,
+                               'alternative': 'chr2A_00611930',
+                               'alternative start': 100,
+                               'alternative end': 299,
+                               'mismatch/match': [150, 0, 0],
+                               'identity': 100.0,
+                               'mismatch zones': ([], []),
+                               'cluster name': 'cluster 0',
+                               'reference mRNA': 'chr2A_00611930_mrna',
+                               'alternative mRNA': 'chr2A_00611930_mrna',
+                               'reference mRNA number': 1,
+                               'alternative mRNA number': 1}]],
+                           'chr2B_direct': [[{'reference': '~',
+                               'reference start': '_',
+                               'reference end': '_',
+                               'alternative': 'chr2B_00620000',
+                               'alternative start': 600,
+                               'alternative end': 899,
+                               'mismatch/match': [],
+                               'identity': 0.0,
+                               'mismatch zones': '_',
+                               'cluster name': 'cluster 0',
+                               'reference mRNA': '_',
+                               'alternative mRNA': '_',
+                               'reference mRNA number': '_',
+                               'alternative mRNA number': 1}]]}],
+
+        "diff_dnaMol2" : ["./data/tests/diff_dnaMol-2-chr_test.gff3",
+                           "./data/tests/diff_dnaMol-1-chr_test.gff3",
+                           {'chr2A_direct': [[{'reference': 'chr2A_00611930',
+                               'reference start': 100,
+                               'reference end': 299,
+                               'alternative': 'chr2A_00611930',
+                               'alternative start': 100,
+                               'alternative end': 299,
+                               'mismatch/match': [150, 0, 0],
+                               'identity': 100.0,
+                               'mismatch zones': ([], []),
+                               'cluster name': 'cluster 0',
+                               'reference mRNA': 'chr2A_00611930_mrna',
+                               'alternative mRNA': 'chr2A_00611930_mrna',
+                               'reference mRNA number': 1, 'alternative mRNA number': 1}]],
+                           'chr2B_direct': [[{'reference': 'chr2B_00620000',
+                               'reference start': 600,
+                               'reference end': 899,
+                               'alternative': '~',
+                               'alternative start': '_',
+                               'alternative end': '_',
+                               'mismatch/match': [],
+                               'identity': 0.0,
+                               'mismatch zones': '_',
+                               'cluster name': 'cluster 0',
+                               'reference mRNA': '_',
+                               'alternative mRNA': '_',
+                               'reference mRNA number': 1,
+                               'alternative mRNA number': '_'}]]}]
+
+
         }
 
     print("\n*************Testing the 'new' annotation_comparison function*************")
-    
+
     for test in test_dict:
-        
+
         print(f"\n{test} test")
-        
+
         result = CDScompR.annotation_comparison(test_dict[test][0], test_dict[test][1], False)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][2]}\n")
         assert result == test_dict[test][2]
-        
-        
+
+
 # test function for the 'CDScompR.py' function 'annotation_comparison' ('main' function of the program) with the 'create_strings' parameter as 'True' (uses old program version)
 def test_old_annotation_comparison():
-    
+
     # dictionary of inputs and expected ouputs for each test file for the 'CDScompR.py' function 'annotation_comparison' ('main' function of the program)
     test_dict = test_dict = {
-        "basic" : ["./data/tests/basic_test.gff3", 
+        "basic" : ["./data/tests/basic_test.gff3",
                    "./data/tests/identical_test.gff3",
                         {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                            "reference start" : 100,
@@ -388,8 +450,8 @@ def test_old_annotation_comparison():
                            "cluster name" : "cluster 0",
                            "reference mRNA number" : 1,
                            "alternative mRNA number" : 1}]]}],
-        
-        "minus-CDS" : ["./data/tests/basic_test.gff3", 
+
+        "minus-CDS" : ["./data/tests/basic_test.gff3",
                        "./data/tests/minus-CDS_test.gff3",
                        {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                           "reference start" : 100,
@@ -405,8 +467,8 @@ def test_old_annotation_comparison():
                           "cluster name" : "cluster 0",
                           "reference mRNA number" : 1,
                           "alternative mRNA number" : 1}]]}],
-        
-        "fusion" : ["./data/tests/basic_test.gff3", 
+
+        "fusion" : ["./data/tests/basic_test.gff3",
                     "./data/tests/fusion_test.gff3",
                     {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                        "reference start" : 100,
@@ -422,8 +484,8 @@ def test_old_annotation_comparison():
                        "cluster name" : "cluster 0",
                        "reference mRNA number" : 1,
                        "alternative mRNA number" : 1}]]}],
-        
-        "shift" : ["./data/tests/basic_test.gff3", 
+
+        "shift" : ["./data/tests/basic_test.gff3",
                    "./data/tests/shift_test.gff3",
                    {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                       "reference start" : 100,
@@ -439,8 +501,8 @@ def test_old_annotation_comparison():
                       "cluster name" : "cluster 0",
                       "reference mRNA number" : 1,
                       "alternative mRNA number" : 1}]]}],
-        
-        "reverse-reverse" : ["./data/tests/reverse_test.gff3", 
+
+        "reverse-reverse" : ["./data/tests/reverse_test.gff3",
                      "./data/tests/reverse_test.gff3",
                      {'chr2A_reverse': [[{"reference" : 'chr2A_00611930',
                         "reference start" : 100,
@@ -455,9 +517,9 @@ def test_old_annotation_comparison():
                         "mismatch zones" : '?',
                         "cluster name" : "cluster 0",
                         "reference mRNA number" : 1,
-                        "alternative mRNA number" : 1}]]}],  
-        
-        "reverse-modified" : ["./data/tests/reverse_test.gff3", 
+                        "alternative mRNA number" : 1}]]}],
+
+        "reverse-modified" : ["./data/tests/reverse_test.gff3",
                      "./data/tests/reverse_modified_test.gff3",
                      {'chr2A_reverse': [[{"reference" : 'chr2A_00611930',
                         "reference start" : 100,
@@ -472,8 +534,8 @@ def test_old_annotation_comparison():
                         "mismatch zones" : '?',
                         "cluster name" : "cluster 0",
                         "reference mRNA number" : 1,
-                        "alternative mRNA number" : 1}]]}],  
-        
+                        "alternative mRNA number" : 1}]]}],
+
         "diff-start-before" : ["./data/tests/basic_test.gff3",
                                "./data/tests/diff-start-before_test.gff3",
                                {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
@@ -490,7 +552,7 @@ def test_old_annotation_comparison():
                                   "cluster name" : "cluster 0",
                                   "reference mRNA number" : 1,
                                   "alternative mRNA number" : 1}]]}],
-        
+
         "diff-start-after" : ["./data/tests/basic_test.gff3",
                               "./data/tests/diff-start-after_test.gff3",
                               {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
@@ -507,7 +569,7 @@ def test_old_annotation_comparison():
                                  "cluster name" : "cluster 0",
                                  "reference mRNA number" : 1,
                                  "alternative mRNA number" : 1}]]}],
-        
+
         "basic-2-loci" : ["./data/tests/basic-2-loci_test.gff3",
                           "./data/tests/identical-2-loci_test.gff3",
                               {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
@@ -538,7 +600,7 @@ def test_old_annotation_comparison():
                                   "cluster name" : "cluster 2",
                                   "reference mRNA number" : 1,
                                   "alternative mRNA number" : 1}]]}],
-        
+
         "minus-loci" : ["./data/tests/basic_test.gff3",
                           "./data/tests/identical-2-loci_test.gff3",
                               {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
@@ -569,7 +631,7 @@ def test_old_annotation_comparison():
                                   "cluster name" : "cluster 2",
                                   "reference mRNA number" : '_',
                                   "alternative mRNA number" : 1}]]}],
-        
+
         "overlapping-loci" : ["./data/tests/overlapping-loci_test.gff3",
                               "./data/tests/overlapping-loci-alt_test.gff3",
                               {'chr2A_direct': [[{'reference': 'chr2A_1000',
@@ -601,63 +663,63 @@ def test_old_annotation_comparison():
                                  "reference mRNA number" : 1,
                                  "alternative mRNA number" : 1},
                                 {'reference': 'chr2A_3000',
-                                 'reference start': 400, 
+                                 'reference start': 400,
                                  'reference end': 549,
-                                 'alternative': 'chr2A_3000', 
+                                 'alternative': 'chr2A_3000',
                                  'alternative start': 500,
-                                 'alternative end': 599, 
+                                 'alternative end': 599,
                                  "reference mRNA" : 'chr2A_3000_mrna',
                                  "alternative mRNA" : 'chr2A_3000_mrna',
-                                 'mismatch/match': [0, 150, 50], 
-                                 'identity': 0.0, 
+                                 'mismatch/match': [0, 150, 50],
+                                 'identity': 0.0,
                                  'mismatch zones': '?',
                                  "cluster name" : "cluster 0",
                                  "reference mRNA number" : 1,
                                  "alternative mRNA number" : 1}],
-                               [{'reference': 'chr2A_4000', 
+                               [{'reference': 'chr2A_4000',
                                  'reference start': 650,
-                                 'reference end': 699, 
+                                 'reference end': 699,
                                  'alternative': 'chr2A_4000',
-                                 'alternative start': 650, 
-                                 'alternative end': 699, 
+                                 'alternative start': 650,
+                                 'alternative end': 699,
                                  "reference mRNA" : 'chr2A_4000_mrna',
                                  "alternative mRNA" : 'chr2A_4000_mrna',
-                                 'mismatch/match': [50, 0, 0], 
-                                 'identity': 100.0, 
+                                 'mismatch/match': [50, 0, 0],
+                                 'identity': 100.0,
                                  'mismatch zones': '?',
                                  "cluster name" : "cluster 6",
                                  "reference mRNA number" : 1,
-                                 "alternative mRNA number" : 1}], 
+                                 "alternative mRNA number" : 1}],
                                [{'reference': 'chr2A_5000',
-                                 'reference start': 750, 
+                                 'reference start': 750,
                                  'reference end': 799,
-                                 'alternative': 'chr2A_5000', 
+                                 'alternative': 'chr2A_5000',
                                  'alternative start': 750,
-                                 'alternative end': 779, 
+                                 'alternative end': 779,
                                  "reference mRNA" : 'chr2A_5000_mrna',
                                  "alternative mRNA" : 'chr2A_5000_mrna',
-                                 'mismatch/match': [30, 20, 0], 
+                                 'mismatch/match': [30, 20, 0],
                                  'identity': 60.0,
                                  'mismatch zones': '?',
                                  "cluster name" : "cluster 8",
                                  "reference mRNA number" : 1,
-                                 "alternative mRNA number" : 1}, 
+                                 "alternative mRNA number" : 1},
                                 {'reference': '~',
-                                 'reference start': '_', 
+                                 'reference start': '_',
                                  'reference end': '_',
                                  'alternative': 'chr2A_6000',
-                                 'alternative start': 790, 
+                                 'alternative start': 790,
                                  'alternative end': 849,
                                  "reference mRNA" : '_',
                                  "alternative mRNA" : 'chr2A_6000_mrna',
-                                 'mismatch/match': [], 
-                                 'identity': '_', 
+                                 'mismatch/match': [],
+                                 'identity': '_',
                                  'mismatch zones': '_',
                                  "cluster name" : "cluster 8",
                                  "reference mRNA number" : '_',
                                  "alternative mRNA number" : 1}]]}],
-        
-        'length_computation' : ["./data/tests/length_computation_ref_test.gff3", 
+
+        'length_computation' : ["./data/tests/length_computation_ref_test.gff3",
                                 "./data/tests/length_computation_alt_test.gff3",
                                  {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                                     "reference start" : 8,
@@ -673,8 +735,8 @@ def test_old_annotation_comparison():
                                     "cluster name" : "cluster 0",
                                     "reference mRNA number" : 1,
                                     "alternative mRNA number" : 1}]]}],
-        
-        "multi_chromosome" : ["./data/tests/multi_chromosome_test_ref.gff3", 
+
+        "multi_chromosome" : ["./data/tests/multi_chromosome_test_ref.gff3",
                    "./data/tests/multi_chromosome_test_alt.gff3",
                    {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                       "reference start" : 100,
@@ -703,16 +765,79 @@ def test_old_annotation_comparison():
                        "mismatch zones" : '?',
                        "cluster name" : "cluster 0",
                        "reference mRNA number" : 1,
-                       "alternative mRNA number" : 1}]]}]
-        
+                       "alternative mRNA number" : 1}]]}],
+
+        "diff_dnaMol1" : ["./data/tests/diff_dnaMol-1-chr_test.gff3",
+                           "./data/tests/diff_dnaMol-2-chr_test.gff3",
+                           {'chr2A_direct': [[{'reference': 'chr2A_00611930',
+                              'reference start': 100,
+                              'reference end': 299,
+                              'alternative': 'chr2A_00611930',
+                              'alternative start': 100,
+                              'alternative end': 299,
+                              'mismatch/match': [150, 0, 0],
+                              'identity': 100.0,
+                              'mismatch zones': '?',
+                              'cluster name': 'cluster 0',
+                              'reference mRNA': 'chr2A_00611930_mrna',
+                              'alternative mRNA': 'chr2A_00611930_mrna',
+                              'reference mRNA number': 1,
+                              'alternative mRNA number': 1}]],
+                            'chr2B_direct': [[{'reference': '~',
+                              'reference start': '_',
+                              'reference end': '_',
+                              'alternative': 'chr2B_00620000',
+                              'alternative start': 600,
+                              'alternative end': 899,
+                              'mismatch/match': [],
+                              'identity': 0.0,
+                              'mismatch zones': '_',
+                              'cluster name': 'cluster 0',
+                              'reference mRNA': '_',
+                              'alternative mRNA': '_',
+                              'reference mRNA number': '_',
+                              'alternative mRNA number': 1}]]}],
+
+        "diff_dnaMol2" : ["./data/tests/diff_dnaMol-2-chr_test.gff3",
+                           "./data/tests/diff_dnaMol-1-chr_test.gff3",
+                           {'chr2A_direct': [[{'reference': 'chr2A_00611930',
+                               'reference start': 100,
+                               'reference end': 299,
+                               'alternative': 'chr2A_00611930',
+                               'alternative start': 100,
+                               'alternative end': 299,
+                               'mismatch/match': [150, 0, 0],
+                               'identity': 100.0,
+                               'mismatch zones': '?',
+                               'cluster name': 'cluster 0',
+                               'reference mRNA': 'chr2A_00611930_mrna',
+                               'alternative mRNA': 'chr2A_00611930_mrna',
+                               'reference mRNA number': 1,
+                               'alternative mRNA number': 1}]],
+                            'chr2B_direct': [[{'reference': 'chr2B_00620000',
+                                'reference start': 600,
+                                'reference end': 899,
+                                'alternative': '~',
+                                'alternative start': '_',
+                                'alternative end': '_',
+                                'mismatch/match': [],
+                                'identity': 0.0,
+                                'mismatch zones': '_',
+                                'cluster name': 'cluster 0',
+                                'reference mRNA': '_',
+                                'alternative mRNA': '_',
+                                'reference mRNA number': 1,
+                                'alternative mRNA number': '_'}]]}]
+
+
         }
 
     print("\n*************Testing the 'old' annotation_comparison function*************")
-    
+
     for test in test_dict:
-        
+
         print(f"\n{test} test")
-        
+
         result = CDScompR.annotation_comparison(test_dict[test][0], test_dict[test][1], False, True)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][2]}\n")

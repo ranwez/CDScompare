@@ -139,16 +139,16 @@ def annotation_comparison(ref_path, alt_path, verbose=False, create_strings=Fals
 
     # get the order of the loci of both annotations
     all_locus_order = {}
-    for dna_mol in ref_annotations.keys():
+    for dna_mol in ref_annotations.keys() | alt_annotations.keys():
         if verbose:
             print(f"Constructing the locus order list of the chromosome {dna_mol}")
-        locus_order = pc.annotation_sort(ref_annotations[dna_mol], alt_annotations[dna_mol], verbose)
+        locus_order = pc.annotation_sort(ref_annotations.get(dna_mol, {}), alt_annotations.get(dna_mol, {}), verbose)
         all_locus_order[dna_mol] = locus_order
 
     # construct clusters of overlapping loci
     all_cluster_list = {}
     for dna_mol in all_locus_order.keys():
-        cluster_list = pc.construct_clusters(ref_annotations[dna_mol], alt_annotations[dna_mol], all_locus_order[dna_mol], verbose)
+        cluster_list = pc.construct_clusters(ref_annotations.get(dna_mol, {}), alt_annotations.get(dna_mol, {}), all_locus_order[dna_mol], verbose)
         all_cluster_list[dna_mol] = cluster_list
 
     all_results = {}
