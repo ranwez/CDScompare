@@ -145,6 +145,10 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
 
     for line in file:
 
+        # ignore comments
+        if line.startswith("#"):
+            continue
+
         parsed_line = line.split("\t")
 
         if parsed_line[0] == "contig":
@@ -171,8 +175,6 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
             locus_id = "" # identifier of the current locus
 
         chrm = parsed_line[0] # name of the chromosome
-        if chrm == "contig":
-            continue
         strand = "direct" if parsed_line[6] == "+" else "reverse"
         try:
             loci = all_loci[chrm+"_"+strand]

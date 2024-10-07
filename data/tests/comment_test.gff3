@@ -1,0 +1,19 @@
+# random	comment
+chr2A	exonerate:protein2genome:local	gene	100	299	.	+	.	ID=chr2A_00611930
+chr2A	exonerate:protein2genome:local	mRNA	100	299	.	+	.	ID=chr2A_00611930_mrna;Parent=chr2A_00611930
+chr2A	exonerate:protein2genome:local	exon	100	129	.	+	.	ID=chr2A_00611930_exon_2;Parent=chr2A_00611930_mrna
+chr2A	exonerate:protein2genome:local	exon	150	209	.	+	.	ID=chr2A_00611930_exon_1;Parent=chr2A_00611930_mrna
+chr2A	exonerate:protein2genome:local	exon	240	299	.	+	.	ID=chr2A_00611930_exon_1;Parent=chr2A_00611930_mrna
+chr2A	exonerate:protein2genome:local	CDS	100	129	.	+	.	ID=chr2A_00611930_cds_2;Parent=chr2A_00611930_mrna
+chr2A	exonerate:protein2genome:local	CDS	150	209	.	+	.	ID=chr2A_00611930_cds_2;Parent=chr2A_00611930_mrna
+chr2A	exonerate:protein2genome:local	CDS	240	299	.	+	.	ID=chr2A_00611930_cds_1;Parent=chr2A_00611930_mrna
+contig	exonerate:protein2genome:local	gene	150	500	.	+	.	ID=contig_150
+contig	exonerate:protein2genome:local	mRNA	150	500	.	+	.	ID=contig_150_mrna;Parent=contig_150
+contig	exonerate:protein2genome:local	exon	150	305	.	+	.	ID=contig_150_exon_1;Parent=contig_150_mrna
+contig	exonerate:protein2genome:local	CDS	100	305	.	+	.	ID=contig_150_cds_1;Parent=contig_150_mrna
+chr2A	exonerate:protein2genome:local	gene	600	899	.	+	.	ID=chr2A_00620000
+chr2A	exonerate:protein2genome:local	mRNA	600	899	.	+	.	ID=chr2A_00620000_mrna;Parent=chr2A_00620000
+chr2A	exonerate:protein2genome:local	exon	600	699	.	+	.	ID=chr2A_00620000_exon_2;Parent=chr2A_00620000_mrna
+chr2A	exonerate:protein2genome:local	exon	800	899	.	+	.	ID=chr2A_00620000_exon_1;Parent=chr2A_00620000_mrna
+chr2A	exonerate:protein2genome:local	CDS	600	699	.	+	.	ID=chr2A_00620000_cds_2;Parent=chr2A_00620000_mrna
+chr2A	exonerate:protein2genome:local	CDS	800	899	.	+	.	ID=chr2A_00620000_cds_2;Parent=chr2A_00620000_mrna
