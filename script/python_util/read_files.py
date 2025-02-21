@@ -12,23 +12,8 @@ import re
 import locus as lc
 
 
-## This function retrieves and returns the id of the structure described from
-# a line read from a GFF file.
-#
-# @param parsed_line The list of the line read from the file parsed through its
-# tabulations (string 'split' method)
-#
-# @param delim Instance of class 'Pattern' ('re' library) compiled with the
-# regular expression selecting all characters from the start of the line to
-# the first delimiter character
-#
-# @param verbose If True, triggers display of more information messages.
-# Default is 'False'
-#
-# @remark This function expects the file to be in GFF format
-#
-# @returns Returns the id of the structure described by the line
-def get_structure_id(parsed_line, delim, verbose=False):
+
+def get_feature_id(parsed_line, id_regex, verbose=False):
 
     # try to retrieve the last column, else return an error
     try:
@@ -39,34 +24,19 @@ def get_structure_id(parsed_line, delim, verbose=False):
 
     # retrieve the id with the rest of the column text (commentaries)
     try:
-        id_and_rest = last_col.split("=")[1]
+        id_match = id_regex.search(last_col)
+        feature_id = id_match.group(1) if id_match else None
+        
     except IndexError:
         print("\nNo ID field found in last column (ninth column)")
         sys.exit(1)
 
-    structure_id = delim.findall(id_and_rest)[0]
-
-    return structure_id
+    return feature_id
 
 
-## This function retrieves and returns the parent id of the structure
-# described from a line read from a GFF file.
-#
-# @param parsed_line The list of the line read from the file parsed through its
-# tabulations (string 'split' method)
-#
-# @param delim Instance of class 'Pattern' ('re' library) compiled with the
-# regular expression selecting all characters from the start of the line to
-# the first delimiter character
-#
-# @param verbose If True, triggers display of more information messages.
-# Default is 'False'
-#
-# @remark This function expects the file to be in GFF format, and the
-# parent id field to come after the id field
-#
-# @returns Returns the id of the parent of the structure described by the line
-def get_parent_id(parsed_line, delim, verbose=False):
+
+
+def get_parent_id(parsed_line, parent_regex, verbose=False):
 
     # try to retrieve the last column, else return an error
     try:
@@ -77,16 +47,14 @@ def get_parent_id(parsed_line, delim, verbose=False):
 
     # retrieve the id with the rest of the column text (commentaries)
     try:
-        id_and_rest = last_col.split("=")[2]
+        parent_match = parent_regex.search(last_col)
+        parent_id = parent_match.group(1) if parent_match else None
     except IndexError:
         print("\nNo parent ID field found in last column (ninth column)")
         sys.exit(1)
 
-    structure_id = ""
 
-    structure_id = delim.findall(id_and_rest)[0]
-
-    return structure_id
+    return parent_id
 
 
 ## This function expects a string corresponding to the file path of the GFF
@@ -141,7 +109,9 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
     locus = lc.Locus() # Initialisation of the Locus class instance to construct
     loci = None
 
-    delim = re.compile("^[^,?;:/!$%@#~&\n\t]+")
+    #delim = re.compile("^[^,?;:/!$%@#~&\n\t]+")
+    id_regex = re.compile(r'\bID=([^;]+)')
+    parent_regex = re.compile(r'\bParent=([^;]+)')
 
     for line in file:
 
@@ -189,7 +159,7 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
             locus.direction = strand
 
             # we retrieve the id of the locus
-            locus_id = get_structure_id(parsed_line, delim, verbose)
+            locus_id = get_feature_id(parsed_line, id_regex, verbose)
             locus.name = locus_id
 
             # we retrieve the start and end coordinates of the locus
@@ -205,13 +175,13 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
         # in the instance's mRNAs attribute with an empty list
         elif str(parsed_line[2]) == "mRNA":
 
-            mRNA_id = get_structure_id(parsed_line, delim, verbose)
+            mRNA_id = get_feature_id(parsed_line, id_regex, verbose)
             locus.mRNAs[mRNA_id] = [] # list of CDS coordinates of the mRNA
 
         # if we encounter a CDS, we add its start and end positions to the
         # corresponding mRNA key in the locus' mRNAs attribute
         elif str(parsed_line[2]) == exon_or_cds:
-            parent_id = get_parent_id(parsed_line, delim, verbose)
+            parent_id = get_parent_id(parsed_line, parent_regex, verbose)
 
             if parent_id != mRNA_id:
                 print(f"\nIncorrect file structure (Parent of CDS is not previous mRNA) in file {path}. See 'log.txt' for more information")

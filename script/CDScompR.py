@@ -90,7 +90,7 @@ def write_results(all_results, alt_name, verbose=False):
                 else:
                     print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t{loc['mismatch/match']}\t\t\t\t{loc['identity']}%")
                     results_file.write(f"{dna_mol},{loc['cluster name']},{loc['reference']},{loc['alternative']},{loc['mismatch/match'][0]},{loc['mismatch/match'][1]+loc['mismatch/match'][2]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']},{loc['reference mRNA']},{loc['alternative mRNA']},{mismatch_EI},{mismatch_RF},{loc['mismatch/match'][1]},{loc['mismatch/match'][2]},{loc['reference mRNA number']},{loc['alternative mRNA number']}\n")
-                    locus_initial_annot[0] += 2
+                    locus_initial_annot[0] += 1
 
         print(f"\nNumber of loci of chromosome {dna_mol}:\n- found in both annotations : {locus_initial_annot[0]}\n- found only in the reference : {locus_initial_annot[1]}\n- found only in the alternative : {locus_initial_annot[2]}\n")
         # add locus origin counts of the chromosome to final counts for all
