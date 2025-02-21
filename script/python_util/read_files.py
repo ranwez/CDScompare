@@ -26,7 +26,7 @@ def get_feature_id(parsed_line, id_regex, verbose=False):
     try:
         id_match = id_regex.search(last_col)
         feature_id = id_match.group(1) if id_match else None
-        
+
     except IndexError:
         print("\nNo ID field found in last column (ninth column)")
         sys.exit(1)
@@ -81,7 +81,7 @@ def get_parent_id(parsed_line, parent_regex, verbose=False):
 # 'Locus', containing for each chromosome and DNA strand the information of
 # the CDS borders of each mRNA of the gene, the start and end coordinates, the
 # DNA strand on which the gene is predicted, and the locus ID
-def get_gff_borders(path, verbose=False, exon_mode=False):
+def get_gff_borders(path, out_dir, verbose=False, exon_mode=False):
 
     # specifiy the desired main structure to be read
     if exon_mode:
@@ -97,10 +97,10 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
 
     # try to open the structure errors log file
     try:
-        log = open("./results/log.txt", "w")
+        log = open(f"{out_dir}/log.txt", "w")
     except FileNotFoundError:
-        os.mkdir("./results/") # create 'results' subdirectory
-        log = open("./results/log.txt", "w")
+        os.mkdir(out_dir) # create 'results' subdirectory
+        log = open(f"{out_dir}/log.txt", "w")
 
     all_loci = {} # return dictionary
     locus_id = "" # the current gene being analyzed
@@ -114,6 +114,8 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
     parent_regex = re.compile(r'\bParent=([^;]+)')
 
     for line in file:
+
+        line = line.strip()
 
         # ignore comments
         if line.startswith("#"):
@@ -135,10 +137,10 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
                 # if there was a previous gene, but its borders list is empty,
                 # return an error
                 if locus_id != "" and locus.mRNAs[mRNA_id] == []:
-                    print(f"\nLine {line_index} = get_gff_borders() function error : no coding sequence (CDS) could be found for the previous mRNA '{mRNA_id}' in file {path}\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
-                    sys.exit(1)
-
-                loci[locus_id] = locus
+                    print(f"\nLine {line_index} = get_gff_borders() function warning : no coding sequence (CDS) could be found for the previous mRNA '{mRNA_id}' in file {path}\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
+                    #sys.exit(1)
+                else:
+                    loci[locus_id] = locus
             locus = lc.Locus() # new instance for the locus being read
             mRNA_id = "" # identifier of the mRNA currently being read
             parent_id = "" # identifier of the parent of the current structure
@@ -185,7 +187,7 @@ def get_gff_borders(path, verbose=False, exon_mode=False):
 
             if parent_id != mRNA_id:
                 print(f"\nIncorrect file structure (Parent of CDS is not previous mRNA) in file {path}. See 'log.txt' for more information")
-                log.write("Line " + str(line_index) + " : CDS parent ID (" + parent_id + ") does not match last mRNA ID (" + locus_id +")\n")
+                log.write("Line " + str(line_index) + " : CDS parent ID (" + parent_id + ") does not match last mRNA ID (" + mRNA_id +") for locus (" + locus_id +")\n")
 
             if mRNA_id == '':
                 print(f"\nLine {line_index} = get_gff_borders() function error : CDS has been found before any mRNA in file {path}\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")

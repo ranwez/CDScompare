@@ -42,17 +42,18 @@ import comparison as comp
 # @see annotation_match()
 #
 # @remark Results are written in CSV ('Comma-Separated Values') format
-def write_results(all_results, alt_name, verbose=False):
+def write_results(all_results, alt_name, out_dir, verbose=False):
     # annotation origin of each locus in the results for all chromosomes
     # (first value : both,  second value : reference,  third value : alternative)
     final_locus_annot = [0, 0, 0]
 
     # try to open the results file (named after the alternative file name)
+    filename=f"{out_dir}/{alt_name}.csv"
     try:
-        results_file = open(f"./results/{alt_name}.csv", "w")
+        results_file = open(filename, "w")
     except FileNotFoundError:
-        os.mkdir("./results/") # create 'results' subdirectory
-        results_file = open(f"./results/{alt_name}.csv", "w")
+        os.mkdir(out_dir) # create 'results' subdirectory
+        results_file = open(filename, "w")
 
     results_file.write("Chromosome,Cluster name,Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start,Reference end,Alternative start,Alternative end,Reference mRNA,Alternative mRNA,Exon_intron (EI) non-correspondance zones,Reading frame (RF) non-correspondance zones,Exon_Intron (EI) mismatches,Reading Frame (RF) mismatches,reference mRNA number,alternative mRNA number\n")
 
@@ -99,7 +100,7 @@ def write_results(all_results, alt_name, verbose=False):
     results_file.close()
 
     # write to a txt file the collected origins of loci
-    results_file = open(f"./results/{alt_name}.txt", "w")
+    results_file = open(f"{out_dir}/{alt_name}.txt", "w")
     results_file.write(f"\nNumber of loci (whole data):\n- found in both annotations : {final_locus_annot[0]}\n- found only in the reference : {final_locus_annot[1]}\n- found only in the alternative : {final_locus_annot[2]}\n")
     results_file.close()
 
@@ -131,11 +132,11 @@ def write_results(all_results, alt_name, verbose=False):
 #
 # @return Returns a list of lists of dictionaries describing the
 # comparison of the structure identity between the loci of each annotation
-def annotation_comparison(ref_path, alt_path, verbose=False, create_strings=False, exon_mode=False):
+def annotation_comparison(ref_path, alt_path, out_dir, verbose=False, create_strings=False, exon_mode=False):
 
     # get all annotation files and generate the annotation data structure
-    ref_annotations = rf.get_gff_borders(ref_path, verbose, exon_mode)
-    alt_annotations = rf.get_gff_borders(alt_path, verbose, exon_mode)
+    ref_annotations = rf.get_gff_borders(ref_path, out_dir, verbose, exon_mode)
+    alt_annotations = rf.get_gff_borders(alt_path, out_dir, verbose, exon_mode)
 
     # get the order of the loci of both annotations
     all_locus_order = {}
@@ -161,7 +162,7 @@ def annotation_comparison(ref_path, alt_path, verbose=False, create_strings=Fals
     alt_name = (os.path.basename(alt_path)).split(".")[0]
 
     print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[match/mismatch_EI/mismatch_RF]\t\tIdentity_Score\n")
-    write_results(all_results, alt_name, verbose)
+    write_results(all_results, alt_name, out_dir, verbose)
 
     return all_results
 
@@ -170,14 +171,14 @@ def usage():
 
     # displayed when '-h' or '--help' is given, or when an invalid script
     # call happens
-    print("Syntax : path/to/CDScompR.py [ -h/--help -v/--verbose -o/--old_version ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ] ")
+    print("Syntax : path/to/CDScompR.py [ -h/--help -v/--verbose -o/--old_version ] [ -r/--reference <reference_file_path> ] [ -a/--alternative <alternative_file_path> ] [-d/--out_dir <output_directory>] ")
 
 
 def main():
 
     # we retrieve all script call options
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hvoer:a:", ["help", "verbose", "old_version", "exon-mode", "reference=", "alternative="])
+        opts, args = getopt.getopt(sys.argv[1:], "hvoer:a:d:", ["help", "verbose", "old_version", "exon-mode", "reference=", "alternative=", "out_dir="])
     except getopt.GetoptError as err:
         print(err)
         usage()
@@ -199,7 +200,7 @@ def main():
     # version without any structure string creation, True = 'old' version with
     # creation of structure strings to compare the loci of the annotations
     create_strings = False
-
+    out_dir = "results"
     # we retrieve the values given for each parameter
     for o, a in opts:
         if o in ("-h", "--help"):
@@ -215,11 +216,14 @@ def main():
             ref_path = a
         elif o in ("-a", "--alternative"):
             alt_path = a
+        elif o in ("-d", "--out_dir"):
+            out_dir = a
         else:
             assert False, "unhandled option"
 
+
     # call of the annotation_comparison function
-    return annotation_comparison(ref_path, alt_path, verbose, create_strings, exon_mode)
+    return annotation_comparison(ref_path, alt_path, out_dir, verbose, create_strings, exon_mode)
 
 if __name__ == "__main__":
     #annotation_comparison("../data/real_data/annot_best.gff", "../data/real_data/TRITD_clean.gff3", False, False, False)
