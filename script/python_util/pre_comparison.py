@@ -208,9 +208,9 @@ def construct_clusters(dict_ref, dict_alt, locus_order, verbose=False):
                 # 'already_grouped' list
                 # upper bound of the current locus search is also extended 
                 # to upper bound of the 'j' locus
-                if locus_borders[0] <= next_lower_border <= locus_borders[1] or locus_borders[0] >= next_lower_border >= locus_borders[1]:
+                if locus_borders[0] <= next_lower_border <= locus_borders[1]: #or locus_borders[0] >= next_lower_border >= locus_borders[1]:
                     new_upper_border = locus_order[i+j][1]
-                    locus_borders[1] = new_upper_border                
+                    locus_borders[1] = max(locus_borders[1],new_upper_border)                
                     
                     if next_is_ref:
                         cluster.append_to_loci("ref", dict_ref[next_locus_id])
@@ -230,7 +230,7 @@ def construct_clusters(dict_ref, dict_alt, locus_order, verbose=False):
             # the 'j' locus 
             elif next_locus_id + next_is_ref_marker in already_grouped:
                 new_upper_border = locus_order[i+j][1]
-                locus_borders[1] = new_upper_border
+                locus_borders[1] = max(locus_borders[1],new_upper_border)
                 j += 1
                 
             # if the locus pointed by 'j' is on a different strand from the 
