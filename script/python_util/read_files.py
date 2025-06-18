@@ -136,8 +136,8 @@ def get_gff_borders(path, out_dir, verbose=False, exon_mode=False):
 
                 # if there was a previous gene, but its borders list is empty,
                 # return an error
-                if locus_id != "" and locus.mRNAs[mRNA_id] == []:
-                    print(f"\nLine {line_index} = get_gff_borders() function warning : no coding sequence (CDS) could be found for the previous mRNA '{mRNA_id}' in file {path}\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
+                if locus_id != "" and not locus.mRNAs.get(mRNA_id):
+                    print(f"\nLine {line_index} = get_gff_borders() function warning : no coding sequence (CDS) could be found for the previous gene '{locus_id}'(mRNA'{mRNA_id}') in file {path}\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
                     #sys.exit(1)
                 else:
                     loci[locus_id] = locus
@@ -171,7 +171,7 @@ def get_gff_borders(path, out_dir, verbose=False, exon_mode=False):
             locus.end = end # end coordinate of the locus
 
             if verbose :
-                print("Reading the locus " + locus_id)
+                print(f"Reading the locus {locus_id}")
 
         # if we encounter a new mRNA, we get its ID and create a key
         # in the instance's mRNAs attribute with an empty list
@@ -187,8 +187,7 @@ def get_gff_borders(path, out_dir, verbose=False, exon_mode=False):
 
             if parent_id != mRNA_id:
                 print(f"\nIncorrect file structure (Parent of CDS is not previous mRNA) in file {path}. See 'log.txt' for more information")
-                log.write("Line " + str(line_index) + " : CDS parent ID (" + parent_id + ") does not match last mRNA ID (" + mRNA_id +") for locus (" + locus_id +")\n")
-
+                log.write(f"Line {line_index}: CDS parent ID ({parent_id}) does not match last mRNA ID ({mRNA_id}) for locus ({locus_id})\n")
             if mRNA_id == '':
                 print(f"\nLine {line_index} = get_gff_borders() function error : CDS has been found before any mRNA in file {path}\nit is possible the file has an incorrect features order. You can clean it using https://github.com/ranwez/GeneModelTransfer/blob/master/SCRIPT/VR/gff_cleaner.py\n")
                 sys.exit(1)

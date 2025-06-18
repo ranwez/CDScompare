@@ -335,11 +335,17 @@ def annotation_match(cluster, create_strings=False, verbose=False):
     # computed identity for its corresponding loci
     for i in range(1, len(cluster_ref)+1):
         for j in range(1, len(cluster_alt)+1):
-            
-            if create_strings:
-                comparison, identity, ref_mRNA, alt_mRNA = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], verbose)
-            else:
-                comparison, identity, EI_RF_mismatch_zones, ref_mRNA, alt_mRNA = compare_loci(cluster_ref[i-1], cluster_alt[j-1], verbose)
+            try:
+                if create_strings:
+                    comparison, identity, ref_mRNA, alt_mRNA = old_compare_loci(cluster_ref[i-1], cluster_alt[j-1], verbose)
+                else:
+                    comparison, identity, EI_RF_mismatch_zones, ref_mRNA, alt_mRNA = compare_loci(cluster_ref[i-1], cluster_alt[j-1], verbose)
+            except Exception as e:
+                ref_name = getattr(cluster_ref[i-1], 'name', '?')
+                alt_name = getattr(cluster_alt[j-1], 'name', '?')
+                print(f"Exception during loci comparison: ref_locus={ref_name}, alt_locus={alt_name}")
+                print(f"Exception: {e}")
+                raise
             
             dyn_prog_matrix[i][j] = max(dyn_prog_matrix[i-1][j],
                                         dyn_prog_matrix[i][j-1],
