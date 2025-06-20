@@ -3,7 +3,7 @@
 """
 Created on Thu May  2 11:57:29 2024
 
-@author: vetea
+@author: vetea, ranwez
 """
 
 ##@package CDScompR

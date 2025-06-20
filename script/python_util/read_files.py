@@ -3,7 +3,7 @@
 """
 Created on Sat Jun 15 21:04:46 2024
 
-@author: vetea
+@author: vetea, ranwez
 """
 
 import sys
@@ -56,6 +56,13 @@ def get_parent_id(parsed_line, parent_regex, verbose=False):
 
     return parent_id
 
+def compile_id_regex():
+    """Returns compiled regex for extracting ID from GFF attributes"""
+    return re.compile(r'\bID=([^;\n\r]+)')
+
+def compile_parent_regex():
+    """Returns compiled regex for extracting Parent from GFF attributes"""
+    return re.compile(r'\bParent=([^;\n\r]+)')
 
 ## This function expects a string corresponding to the file path of the GFF
 # file to read, and returns a dictionary of dictionaries of instances of the
@@ -109,9 +116,8 @@ def get_gff_borders(path, out_dir, verbose=False, exon_mode=False):
     locus = lc.Locus() # Initialisation of the Locus class instance to construct
     loci = None
 
-    #delim = re.compile("^[^,?;:/!$%@#~&\n\t]+")
-    id_regex = re.compile(r'\bID=([^;]+)')
-    parent_regex = re.compile(r'\bParent=([^;]+)')
+    id_regex = compile_id_regex()
+    parent_regex =compile_parent_regex() 
 
     for line in file:
 

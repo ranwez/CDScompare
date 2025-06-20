@@ -3,10 +3,10 @@
 """
 Created on Tue Jun 18 10:50:09 2024
 
-@author: vetea
+@author: vetea, ranwez
 """
 
-import os, sys
+import os, sys, tempfile
 
 script_dir = os.path.dirname( __file__ )
 script_dir = "/".join(script_dir.split("/")[:-1]) + "/"
@@ -422,11 +422,11 @@ def test_new_annotation_comparison():
     for test in test_dict:
 
         print(f"\n{test} test")
-
-        result = CDScompR.annotation_comparison(test_dict[test][0], test_dict[test][1], False)
-        print(f"result : {result}\n")
-        print(f"expected result : {test_dict[test][2]}\n")
-        assert result == test_dict[test][2]
+        with tempfile.TemporaryDirectory() as tmpdir:
+         result = CDScompR.annotation_comparison(test_dict[test][0], test_dict[test][1], tmpdir, False)
+         print(f"result : {result}\n")
+         print(f"expected result : {test_dict[test][2]}\n")
+         assert result == test_dict[test][2]
 
 
 # test function for the 'CDScompR.py' function 'annotation_comparison' ('main' function of the program) with the 'create_strings' parameter as 'True' (uses old program version)
@@ -837,8 +837,15 @@ def test_old_annotation_comparison():
     for test in test_dict:
 
         print(f"\n{test} test")
+      
+        with tempfile.TemporaryDirectory() as tmpdir:
+         result = CDScompR.annotation_comparison(test_dict[test][0], test_dict[test][1], tmpdir, False, True)
+         print(f"result : {result}\n")
+         print(f"expected result : {test_dict[test][2]}\n")
+         assert result == test_dict[test][2]
 
-        result = CDScompR.annotation_comparison(test_dict[test][0], test_dict[test][1], False, True)
-        print(f"result : {result}\n")
-        print(f"expected result : {test_dict[test][2]}\n")
-        assert result == test_dict[test][2]
+
+        #result = CDScompR.annotation_comparison(test_dict[test][0], test_dict[test][1], False, True)
+        #print(f"result : {result}\n")
+        #print(f"expected result : {test_dict[test][2]}\n")
+        #assert result == test_dict[test][2]

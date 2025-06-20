@@ -3,10 +3,10 @@
 """
 Created on Tue Jun 18 11:02:52 2024
 
-@author: vetea
+@author: vetea, ranwez
 """
 
-import os, sys, re
+import os, sys, re, tempfile
 
 script_dir = os.path.dirname( __file__ )
 script_dir = "/".join(script_dir.split("/")[:-1]) + "/python_util/"
@@ -16,9 +16,9 @@ import read_files as rf
 
 
 # test function for the 'read_files.py' function 'get_structure_id' (structure id acquisition function)
-def test_get_structure_id():
+def test_get_feature_id():
     test_dict = {
-        "TRITD_HC" : [["chr2A", "PGSB_Jan2017", "gene", "22128", "24635", ".", "-", ".", "ID=TRITD2Av1G000030;primconf=HC\n"],
+        "TRITD_HC" : [["chr2A", "PGSB_Jan2017", "gene", "22128", "24635", ".", "-", ".", "ID=TRITD2Av1G000030;primconf=HC"],
                       "TRITD2Av1G000030"],
 
         "EXP_chr2A" : [["chr2A", "exonerate:protein2genome:local", "gene", "608664", "611579", ".", "-", ".", "ID=chr2A_00611930;color=2;comment=modified:yes / Gene-Class:Non-canonical / start_changed_to3f;note=Origin:OSJnip_Chr04_04489784 / pred:prot2genome / prot-%25-ident:51.6 / prot-%25-cov:99.2118 / exo_corr:NA / Origin-Fam:NLR / Origin-Class:Canonical / noStart / Gene-Class:Non-canonical\n"],
@@ -40,8 +40,10 @@ def test_get_structure_id():
 
         print(f"\n{test} test")
 
-        delim = re.compile("^[^,?;:/!$%@#~&\n\t]+")
-        result = rf.get_structure_id(test_dict[test][0], delim, False)
+        #delim = re.compile("^[^,?;:/!$%@#~&\n\t]+")
+        #result = rf.get_structure_id(test_dict[test][0], delim, False)
+        id_regex = rf.compile_id_regex()
+        result = rf.get_feature_id(test_dict[test][0], id_regex, False)
         print(f"result : {result}\n")
         print(test_dict[test][1])
         assert result == test_dict[test][1]
@@ -144,15 +146,17 @@ def test_get_gff_borders():
 
     for test in test_dict:
         print(f"\n{test} file test")
-        result = rf.get_gff_borders(test_dict[test][0], False)
+        with tempfile.TemporaryDirectory() as tmpdir:
 
-        # verify presence of expected mRNAs
-        dna_mol = test_dict[test][1]
-        for loc_id, loc in test_dict[test][2].items():
-            print(f"Result keys : {result[dna_mol].keys()}")
-            print(f"Expected key : {loc_id}")
-            assert loc_id in result[dna_mol]
-            expected_mRNA = test_dict[test][2][loc_id]
-            print(f"Result mRNAs : {result[dna_mol][loc_id].mRNAs}")
-            print(f"Expected mRNA : {test_dict[test][2][loc_id]}")
-            assert result[dna_mol][loc_id].contain_mrnas(**expected_mRNA)
+            result = rf.get_gff_borders(test_dict[test][0], tmpdir, False)
+
+            # verify presence of expected mRNAs
+            dna_mol = test_dict[test][1]
+            for loc_id, loc in test_dict[test][2].items():
+                print(f"Result keys : {result[dna_mol].keys()}")
+                print(f"Expected key : {loc_id}")
+                assert loc_id in result[dna_mol]
+                expected_mRNA = test_dict[test][2][loc_id]
+                print(f"Result mRNAs : {result[dna_mol][loc_id].mRNAs}")
+                print(f"Expected mRNA : {test_dict[test][2][loc_id]}")
+                assert result[dna_mol][loc_id].contain_mrnas(**expected_mRNA)
