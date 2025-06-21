@@ -18,7 +18,7 @@ class OrderedIntervals:
     # of each interval of the list
     #
     # @remark for CDS bounds of GFF annotations, include_ub needs to be 'True'
-    def __init__(self, intervals, include_ub=False):
+    def __init__(self, intervals:list[int], include_ub=False):
         if include_ub:
             self.intervals = OrderedIntervals.transform_intervals_to_exclude_ub(intervals)
         else:
@@ -32,7 +32,7 @@ class OrderedIntervals:
     # @returns Returns the same list of intervals with each upper bound
     # removed
     @staticmethod
-    def transform_intervals_to_exclude_ub(intervals):
+    def transform_intervals_to_exclude_ub(intervals: list[int]) -> list[int]:
         transformed_intervals = []
         for i in range(0, len(intervals), 2):
             lower_bound = intervals[i]
