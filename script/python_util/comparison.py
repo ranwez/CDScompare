@@ -27,6 +27,24 @@ class MatchScore:
                 return self.genomic_overlap > other.genomic_overlap
         else:
             return self.identity > other.identity
+    @classmethod
+    def add(cls, score1: 'MatchScore', score2: 'MatchScore') -> 'MatchScore':
+        """Combine two MatchScore instances."""
+        return cls(
+            genomic_overlap=score1.genomic_overlap + score2.genomic_overlap,
+            identity=score1.identity + score2.identity
+        )
+    @classmethod
+    def max(cls, score1: 'MatchScore', score2: 'MatchScore') -> 'MatchScore':
+        """Return the maximum of two MatchScore instances."""
+        if score1.is_better_than(score2):
+            return score1
+        else:
+            return score2
+    @classmethod
+    def max3(cls, score1: 'MatchScore', score2: 'MatchScore', score3: 'MatchScore') -> 'MatchScore':
+        """Return the maximum of three MatchScore instances."""
+        return cls.max(cls.max(score1, score2), score3)
 
 @define(slots=True, frozen=True, eq=True)
 class MismatchInfo:
@@ -340,7 +358,7 @@ def annotation_match(cluster, create_strings=False, verbose=False):
             loc.reverse(cluster_end)
                  
     # Initialisation de la matrice de programmation dynamique avec des zéros
-    dyn_prog_matrix = [[0 for j in range(len(cluster_alt) + 1)] for i in range(len(cluster_ref) + 1)]       
+    dyn_prog_matrix = [[MatchScore() for j in range(len(cluster_alt) + 1)] for i in range(len(cluster_ref) + 1)]       
             
     # compute all internal values of the matrix by taking the maximum value of
     # the top 'cell', the left 'cell', and the top-left 'cell' summed with the
@@ -356,9 +374,9 @@ def annotation_match(cluster, create_strings=False, verbose=False):
                 print(f"Exception: {e}")
                 raise
             
-            dyn_prog_matrix[i][j] = max(dyn_prog_matrix[i-1][j],
+            dyn_prog_matrix[i][j] = MatchScore.max3(dyn_prog_matrix[i-1][j],
                                         dyn_prog_matrix[i][j-1],
-                                        dyn_prog_matrix[i-1][j-1] + comparison.get_identity())
+                                        MatchScore.add(dyn_prog_matrix[i-1][j-1], comparison.score))
         
     # retrieve best match alignment through backtracking
     i = len(cluster_ref)
@@ -367,8 +385,12 @@ def annotation_match(cluster, create_strings=False, verbose=False):
     while i>0 and j>0:
         comparison = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False)
         
-        if (dyn_prog_matrix[i][j] == dyn_prog_matrix[i-1][j-1] + comparison.get_identity()): 
-            results.append(build_alignment_res(cluster_ref[i-1], cluster_alt[j-1],comparison, cluster))
+        if (dyn_prog_matrix[i][j] == MatchScore.add(dyn_prog_matrix[i-1][j-1], comparison.score)):
+            if(comparison.score.genomic_overlap > 0):
+                results.append(build_alignment_res(cluster_ref[i-1], cluster_alt[j-1],comparison, cluster))
+            else: # if best is (0,0) dont display a match
+                results.append(build_alignment_res(cluster_ref[i-1], None ,None, cluster))
+                results.append(build_alignment_res(None, cluster_alt[j-1],None, cluster))
             i -= 1
             j -= 1
         elif( dyn_prog_matrix[i-1][j] == dyn_prog_matrix[i][j]):

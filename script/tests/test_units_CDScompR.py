@@ -429,3 +429,11 @@ def test_new_annotation_comparison():
          print(f"expected result : {test_dict[test][2]}\n")
          assert result == test_dict[test][2]
 
+def test_geneoverlap_mRNA_dont():
+   with tempfile.TemporaryDirectory() as tmpdir:
+      gff_ref="./data/tests/cluster_3274_urgi.gff"
+      gff_alt="./data/tests/cluster_3274_ncbi.gff"
+
+   print(tmpdir)
+   result = CDScompR.annotation_comparison(gff_ref, gff_alt, tmpdir, False)
+   print(f"result : {result}\n")
