@@ -10,6 +10,23 @@ import intervals_utils as iu
 import pre_comparison as pc
 from attrs import define, field
 from typing import Optional
+from locus import Locus
+
+@define(slots=True, eq=True)
+class MatchScore:
+    """Class representing a score for a comparison."""
+    genomic_overlap: int = field(default=0)
+    identity: float = field(default=0.0)
+    def is_better_than(self, other) -> bool:
+        """Compare two scores based on genomic overlap and identity."""
+        if self.genomic_overlap == 0:
+            return False
+        if other.genomic_overlap == 0:
+            return True
+        if self.identity == other.identity :
+                return self.genomic_overlap > other.genomic_overlap
+        else:
+            return self.identity > other.identity
 
 @define(slots=True, frozen=True, eq=True)
 class MismatchInfo:
@@ -49,26 +66,22 @@ class MrnaMatchInfo:
     genomic_overlap: int = field(default=0)  # Overlap in genomic coordinates
     ref_id: str = field(default='_') 
     alt_id: str =  field(default='_')
-    identity: Optional[float] = field(default=None, init=False)  # Identity level, if applicable
+    score : MatchScore = field(factory=MatchScore, init=False)  # Score for the match
     
+        
     def __attrs_post_init__(self):
         """Calculate identity after initialization."""
         total = self.matches + self.mismatches_EI.nb + self.mismatches_RF.nb
         if total == 0:
-            object.__setattr__(self, 'identity', None)
+            object.__setattr__(self, 'score', MatchScore(self.genomic_overlap, 0))
         else:
-            object.__setattr__(self, 'identity', self.matches / total)
+            object.__setattr__(self, 'score', MatchScore(self.genomic_overlap, self.matches / total))
+
+    def get_identity(self) -> float:
+        return self.score.identity
 
     def has_better_identity_than(self, other: 'MrnaMatchInfo') -> bool:
-        if( self.identity is None):
-            return False
-        if (other.identity is None):
-            return True
-        if( self.identity ==0 and other.matches==0):
-            return self.genomic_overlap > other.genomic_overlap
-        else:
-            return self.identity > other.identity
-
+        return self.score.is_better_than(other.score)
 
 
 
@@ -200,6 +213,86 @@ def compute_matches_mismatches_EI_RF(mRNA_ref_id:str, mRNA_alt_id:str, mRNA_ref,
     genomic_overlap = overlap((mRNA_ref[0], mRNA_ref[-1]), (mRNA_alt[0], mRNA_alt[-1]))
     return MrnaMatchInfo(matches, mismatches_EI, mismatches_RF, genomic_overlap, ref_id=mRNA_ref_id, alt_id=mRNA_alt_id)
 
+def build_alignment_res(ref_locus, alt_locus, comparison, cluster, create_strings=False):
+    """Build a result dictionary for an alignment match between two loci.
+    
+    Args:
+        ref_locus: The reference locus object
+        alt_locus: The alternative locus object
+        comparison: MrnaMatchInfo object containing comparison results
+        cluster_name: Name of the cluster (optional)
+        create_strings: Whether to format mismatch zones as strings (for backward compatibility)
+    
+    Returns:
+        Dictionary containing all alignment information
+    """
+    
+    #build default res and add available information
+    result= {"reference" : "~",
+            "reference start" : "_",
+            "reference end" : "_",
+            "alternative" : "~",
+            "alternative start" : "_",
+            "alternative end" : "_",
+            "reference mRNA" : "_",
+            "alternative mRNA" : "_",
+            "mismatch/match" : [],
+            "identity" : 0.0,
+            "mismatch zones" : "_",
+            "cluster name" : cluster.name,
+            "reference mRNA number" : "_",
+            "alternative mRNA number" : "_"}
+    
+    if ref_locus is not None:
+        num_mRNAs_ref = len(ref_locus.mRNAs.keys())
+        result.update({
+            "reference": ref_locus.name,
+            "reference start": ref_locus.start,
+            "reference end": ref_locus.end,
+            "reference mRNA number": num_mRNAs_ref
+        })
+        if(comparison is None):
+            def_ref_id =  list(ref_locus.mRNAs.keys())[0] if ref_locus.mRNAs else "_"
+            result.update({
+                "reference mRNA": def_ref_id 
+            })
+            
+    if alt_locus is not None:
+        num_mRNAs_alt = len(alt_locus.mRNAs.keys())
+        result.update({
+            "alternative": alt_locus.name,
+            "alternative start": alt_locus.start,
+            "alternative end": alt_locus.end,
+            "alternative mRNA number": num_mRNAs_alt
+        })
+        if comparison is None:
+            def_alt_id = list(alt_locus.mRNAs.keys())[0] if alt_locus.mRNAs else "_"
+            result.update({
+                "alternative mRNA": def_alt_id
+            })
+
+    if comparison is not None:
+        # Extract values from the comparison
+        identity = comparison.get_identity() 
+        mismatch_zones = (comparison.mismatches_EI.zones, comparison.mismatches_RF.zones)
+        
+        # Handle reverse strand if needed
+        if ref_locus.direction == "reverse":
+            mismatch_zones = reverse_coord(mismatch_zones, cluster.get_end())
+
+        # Convert mismatch zones to string representation for compatibility with old code
+        if create_strings:
+            mismatch_zones = "?" if mismatch_zones == ([], []) else str(mismatch_zones)
+        result.update({
+            "reference mRNA": comparison.ref_id,
+            "alternative mRNA": comparison.alt_id,
+            "mismatch/match": [comparison.matches, 
+                               comparison.mismatches_EI.nb, 
+                               comparison.mismatches_RF.nb],
+            "identity": round(identity * 100, 1) if identity is not None else 0.0,
+            "mismatch zones": mismatch_zones
+        })
+    return result
 
 ## This function compares the loci of the reference and alternative clusters
 # returned by the construct_clusters function by assigning each locus to the 
@@ -222,8 +315,8 @@ def compute_matches_mismatches_EI_RF(mRNA_ref_id:str, mRNA_alt_id:str, mRNA_ref,
 # @returns Returns a list of dictionaries detailing the locus information for 
 # each locus comparison 
 def annotation_match(cluster, create_strings=False, verbose=False):
-    cluster_ref  = cluster.get_loci()["ref"]
-    cluster_alt = cluster.get_loci()["alt"]
+    cluster_ref : list[Locus]  = cluster.get_loci()["ref"]
+    cluster_alt : list [Locus] = cluster.get_loci()["alt"]
     cluster_name = cluster.name
     if verbose:
         print(f"matching annotations loci with each other for {cluster_name}")
@@ -245,12 +338,9 @@ def annotation_match(cluster, create_strings=False, verbose=False):
             loc.reverse(cluster_end)
         for loc in cluster_alt:
             loc.reverse(cluster_end)
-            
-    # initialisation (expand matrix and fill it with zeros)
-    for i in range(len(cluster_ref)+1):
-        dyn_prog_matrix.append([])
-        for j in range(len(cluster_alt)+1):
-            dyn_prog_matrix[i].append(0)
+                 
+    # Initialisation de la matrice de programmation dynamique avec des zéros
+    dyn_prog_matrix = [[0 for j in range(len(cluster_alt) + 1)] for i in range(len(cluster_ref) + 1)]       
             
     # compute all internal values of the matrix by taking the maximum value of
     # the top 'cell', the left 'cell', and the top-left 'cell' summed with the
@@ -258,7 +348,7 @@ def annotation_match(cluster, create_strings=False, verbose=False):
     for i in range(1, len(cluster_ref)+1):
         for j in range(1, len(cluster_alt)+1):
             try:
-                comparison, identity, EI_RF_mismatch_zones, ref_mRNA, alt_mRNA = compare_loci(cluster_ref[i-1], cluster_alt[j-1], verbose)
+                comparison = compare_loci(cluster_ref[i-1], cluster_alt[j-1], verbose)
             except Exception as e:
                 ref_name = getattr(cluster_ref[i-1], 'name', '?')
                 alt_name = getattr(cluster_alt[j-1], 'name', '?')
@@ -268,153 +358,33 @@ def annotation_match(cluster, create_strings=False, verbose=False):
             
             dyn_prog_matrix[i][j] = max(dyn_prog_matrix[i-1][j],
                                         dyn_prog_matrix[i][j-1],
-                                        dyn_prog_matrix[i-1][j-1] + identity)
+                                        dyn_prog_matrix[i-1][j-1] + comparison.get_identity())
         
     # retrieve best match alignment through backtracking
     i = len(cluster_ref)
     j = len(cluster_alt)
     results = []
     while i>0 and j>0:
-        comparison, identity, mismatch_zones, ref_mRNA, alt_mRNA = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False)
-        if cluster_ref[0].direction == "reverse":
-            if mismatch_zones not in ["_", "?"]:
-                mismatch_zones = reverse_coord(mismatch_zones, cluster_end)
+        comparison = compare_loci(cluster_ref[i-1], cluster_alt[j-1], False)
         
-        # if the maximum value is the diagonal value + computed identity, we
-        # add both locus informations to the results dictionary and 'progress'
-        # to the top-left cell
-        if max(dyn_prog_matrix[i-1][j],
-            dyn_prog_matrix[i][j-1],
-            dyn_prog_matrix[i-1][j-1] + identity) == dyn_prog_matrix[i-1][j-1]+identity:
-            if create_strings: 
-                if comparison == '_':
-                    mismatch_zones = '_'
-                else:
-                    mismatch_zones = '?'
-                
-            # we retrieve the number of mRNAs of each locus
-            num_mRNAs_ref = len(cluster_ref[i-1].mRNAs.keys())
-            num_mRNAs_alt = len(cluster_alt[j-1].mRNAs.keys())
-            
-            results.append({"reference" : cluster_ref[i-1].name,
-                            "reference start" : cluster_ref[i-1].start,
-                            "reference end" : cluster_ref[i-1].end,
-                            "alternative" : cluster_alt[j-1].name,
-                            "alternative start" : cluster_alt[j-1].start,
-                            "alternative end" : cluster_alt[j-1].end,
-                            "mismatch/match" : comparison,
-                            "identity" : identity,
-                            "mismatch zones" : mismatch_zones,
-                            "cluster name" : cluster_name,
-                            "reference mRNA" : ref_mRNA,
-                            "alternative mRNA" : alt_mRNA,
-                            "reference mRNA number" : num_mRNAs_ref,
-                            "alternative mRNA number" : num_mRNAs_alt})
+        if (dyn_prog_matrix[i][j] == dyn_prog_matrix[i-1][j-1] + comparison.get_identity()): 
+            results.append(build_alignment_res(cluster_ref[i-1], cluster_alt[j-1],comparison, cluster))
             i -= 1
             j -= 1
-        
-        # if the maximum value is the top value, we add the reference locus 
-        # informations to the results dictionary and 'progress' to the top cell
-        elif max(dyn_prog_matrix[i-1][j],
-            dyn_prog_matrix[i][j-1],
-            dyn_prog_matrix[i-1][j-1] + identity) == dyn_prog_matrix[i-1][j]:
-            if create_strings:
-                mismatch_zones = '_'
-                
-            # we retrieve the number of mRNAs of the reference locus
-            num_mRNAs_ref = len(cluster_ref[i-1].mRNAs.keys())
-            num_mRNAs_alt = '_'
-            
-            results.append({"reference" : cluster_ref[i-1].name,
-                            "reference start" : cluster_ref[i-1].start,
-                            "reference end" : cluster_ref[i-1].end,
-                            "alternative" : "~",
-                            "alternative start" : "_",
-                            "alternative end" : "_",
-                            "mismatch/match" : [],
-                            "identity" : "_",
-                            "mismatch zones" : "_",
-                            "cluster name" : cluster_name,
-                            "reference mRNA" : ref_mRNA,
-                            "alternative mRNA" : "_",
-                            "reference mRNA number" : num_mRNAs_ref,
-                            "alternative mRNA number" : num_mRNAs_alt})
+        elif( dyn_prog_matrix[i-1][j] == dyn_prog_matrix[i][j]):
+            results.append(build_alignment_res(cluster_ref[i-1], None ,None, cluster))
             i -= 1
-           
-        # if the maximum value is the left value, we add the alternative locus 
-        # informations to the results dictionary and 'progress' to the left cell
         else:
-            if create_strings:
-                mismatch_zones = '_'
-                
-            # we retrieve the number of mRNAs of the alternative locus
-            num_mRNAs_ref = '_'
-            num_mRNAs_alt = len(cluster_alt[j-1].mRNAs.keys())
-            
-            results.append({"reference" : "~",
-                            "reference start" : "_",
-                            "reference end" : "_",
-                            "alternative" : cluster_alt[j-1].name,
-                            "alternative start" : cluster_alt[j-1].start,
-                            "alternative end" : cluster_alt[j-1].end,
-                            "mismatch/match" : [],
-                            "identity" : "_",
-                            "mismatch zones" : "_",
-                            "cluster name" : cluster_name,
-                            "reference mRNA" : "_",
-                            "alternative mRNA" : alt_mRNA,
-                            "reference mRNA number" : num_mRNAs_ref,
-                            "alternative mRNA number" : num_mRNAs_alt})
+            results.append(build_alignment_res(None, cluster_alt[j-1],None, cluster))
             j -= 1
-            
-    # if we reached the first line but did not reach the first column,
-    # we add the rest of the alternative loci to the results
-    while i==0 and j!=0:
-    
-        # we retrieve the number of mRNAs of the alternative locus
-        num_mRNAs_ref = '_'
-        num_mRNAs_alt = len(cluster_alt[j-1].mRNAs.keys())
 
-        results.append({"reference" : "~",
-                        "reference start" : "_",
-                        "reference end" : "_",
-                        "alternative" : cluster_alt[j-1].name,
-                        "alternative start" : cluster_alt[j-1].start,
-                        "alternative end" : cluster_alt[j-1].end,
-                        "mismatch/match" : [],
-                        "identity" : 0.0,
-                        "mismatch zones" : "_",
-                        "cluster name" : cluster_name,
-                        "reference mRNA" : "_",
-                        "alternative mRNA" : "_",
-                        "reference mRNA number" : num_mRNAs_ref,
-                        "alternative mRNA number" : num_mRNAs_alt})
-        j -= 1
-        
-    # if we reached the first column but did not reach the first line,
-    # we add the rest of the reference loci to the results
-    while i!=0 and j==0:
-    
-        # we retrieve the number of mRNAs of the reference locus
-        num_mRNAs_ref = len(cluster_ref[i-1].mRNAs.keys())
-        num_mRNAs_alt = '_'
-        
-        results.append({"reference" : cluster_ref[i-1].name,
-                        "reference start" : cluster_ref[i-1].start,
-                        "reference end" : cluster_ref[i-1].end,
-                        "alternative" : "~",
-                        "alternative start" : "_",
-                        "alternative end" : "_",
-                        "mismatch/match" : [],
-                        "identity" : 0.0,
-                        "mismatch zones" : "_",
-                        "cluster name" : cluster_name,
-                        "reference mRNA" : "_",
-                        "alternative mRNA" : "_",
-                        "reference mRNA number" : num_mRNAs_ref,
-                        "alternative mRNA number" : num_mRNAs_alt})
-        i -= 1    
-            
+    # add loci remaining in the reference or alternative annotations
+    while j > 0:
+            results.append(build_alignment_res(None, cluster_alt[j-1],None, cluster))
+            j -= 1
+    while i > 0 :
+            results.append(build_alignment_res(cluster_ref[i-1], None ,None, cluster))
+            i -= 1
     # sort the results dictionary list so they are in order of locus start
     final_results = sorted(results, key=lambda d: d['reference'])
         
