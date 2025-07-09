@@ -51,3 +51,7 @@ Description for each test file used in the program's unit tests:
 - diff_dnaMol-1-chr_test.gff3: GFF file describing 1 locus on the ch2A, intended to be compared to diff_dnaMol-2-chr_test.gff3. This gff is successively used as ref and alt in the test.
 
 - diff_dnaMol-2-chr_test.gff3: GFF file describing the same locus as diff_dnaMol-1-chr_test.gff3 + another one on the chr2B, intended to be compared to diff_dnaMol-1-chr_test.gff3. The fact that the chr2B_forward is only present in one of the 2 gff should not raise an error, and loci from both DNA molecules are expected to be described in the csv output. This gff is successively used as ref and alt in the test.
+
+- phased2_alt.gff : a gff file from NCBI with the first CDS in phase 2 (as indicated in phase column of the GFF) if correctly taken into account it is highly similar to phased-loci_ref.gff (same locus annotation from URGI with first CDS inphase 0, phased2_ref.gff): TraesCS6D03G0700300.1   rna-XM_044565053.1   Chr6D_direct    429966244
+
+- phased-rev_alt.gff : a NCBI gff file with one first CDS in phase 1; the phased-rev_ref.gff has two mRNA in phase 0 one with small overlap with NCBI (by change) the other with strong overlap if phase is correctly handled. URGI TraesCS6D03G0218100.2   rna-XM_044562703.1     Chr6D_reverse   85356487

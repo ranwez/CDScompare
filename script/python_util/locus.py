@@ -30,7 +30,7 @@ class Locus:
     # 'direct' or 'reverse' strand
     #
     # @see get_gff_borders()
-    def __init__(self, name="", mRNAs=None, start=-1, end=-1, direction=""):
+    def __init__(self, name="", mRNAs=None, start=-1, end=-1, direction="", phases=None):
         if not mRNAs:
             mRNAs = {}
         
@@ -48,6 +48,14 @@ class Locus:
         
         ### string indicating if the locus is on direct or reverse strand
         self.direction = direction
+
+        ### phase of the first CDS of the mRNAs
+        if phases is None:
+            self.phases = {}
+            for mRNA_id in self.mRNAs.keys():
+                self.phases[mRNA_id]=0
+        else:
+            self.phases = phases.copy()
         
     ## This method is used to retrieve the 'mRNAs' attribute of an instance
     #

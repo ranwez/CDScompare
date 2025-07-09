@@ -20,9 +20,10 @@ import os
 script_dir = os.path.dirname( __file__ ) + "/python_util/"
 sys.path.append( script_dir )
 
-import read_files as rf
+import read_gff as gff
 import pre_comparison as pc
 import comparison as comp
+import cluster as cl
 
 ## This function writes to a new 'results.csv' file the results of the
 # annotation comparison retrieved from the identities dictionary returned by
@@ -108,6 +109,55 @@ def write_results(all_results, alt_name, out_dir, verbose=False):
     print(f"\nNumber of loci (whole data):\n- found in both annotations : {final_locus_annot[0]}\n- found only in the reference : {final_locus_annot[1]}\n- found only in the alternative : {final_locus_annot[2]}\n")
 
 
+def build_cluster_list(read_ref, read_alt, dna_mol):
+    cluster_list = []
+    ref_genes = read_ref.get(dna_mol, [])
+    alt_genes = read_alt.get(dna_mol, [])
+    
+    # get the max end postions of the genes of both annotations
+    sentinel = 1 + max(
+        max(gene.gene_bounds.end for gene in ref_genes) if ref_genes else 0,
+        max(gene.gene_bounds.end for gene in alt_genes) if alt_genes else 0
+    )
+    
+    ref_genes.append(gff.GeneInfo(strand="+", chr=dna_mol, gene_id="sentinel_ref", gene_bounds=gff.Bounds(start=sentinel, end=sentinel+1)))
+    alt_genes.append(gff.GeneInfo(strand="+", chr=dna_mol, gene_id="sentinel_alt", gene_bounds=gff.Bounds(start=sentinel, end=sentinel+1)))
+    
+    ref_i, alt_i = 0, 0
+    ref_gene:gff.GeneInfo = ref_genes[ref_i]
+    alt_gene:gff.GeneInfo = alt_genes[alt_i]
+    
+    cluster_max=-1
+    cluster_loci={"ref": [], "alt": []}
+    cluster_id = 0
+    
+    while ref_gene.gene_bounds.start < sentinel or alt_gene.gene_bounds.start < sentinel:
+        if ref_gene.gene_bounds.start <= alt_gene.gene_bounds.start:
+            gene = ref_gene
+            type= "ref"
+            ref_gene, ref_i =ref_genes[ref_i+1], ref_i + 1
+        else:
+            gene = alt_gene
+            type= "alt"
+            alt_gene, alt_i = alt_genes[alt_i+1], alt_i + 1
+        
+        if gene.gene_bounds.start > cluster_max:
+            if cluster_max != -1:
+                cluster_name = f"{dna_mol}_{cluster_id}"
+                cluster_list.append(cl.Cluster(cluster_name, cluster_loci, cluster_max))
+            cluster_id += 1
+            cluster_loci = {"ref": [], "alt": []}
+            cluster_max = -1
+        
+        cluster_max = max(cluster_max, gene.gene_bounds.end)
+        cluster_loci[type].append(gene.into_locus())
+    
+    if cluster_max != -1:
+        cluster_name = f"{dna_mol}_{cluster_id}"
+        cluster_list.append(cl.Cluster(cluster_name, cluster_loci, cluster_max))
+
+    return cluster_list
+
 ## Main function of this program. Given a reference and alternative path,
 # gets the corresponding GFF files and compares the two annotations to return
 # their information about their loci's comparison
@@ -132,31 +182,15 @@ def write_results(all_results, alt_name, out_dir, verbose=False):
 #
 # @return Returns a list of lists of dictionaries describing the
 # comparison of the structure identity between the loci of each annotation
-def annotation_comparison(ref_path, alt_path, out_dir, verbose=False, create_strings=False, exon_mode=False):
-
-    # get all annotation files and generate the annotation data structure
-    ref_annotations = rf.get_gff_borders(ref_path, out_dir, verbose, exon_mode)
-    alt_annotations = rf.get_gff_borders(alt_path, out_dir, verbose, exon_mode)
-
-    # get the order of the loci of both annotations
-    all_locus_order = {}
-    for dna_mol in ref_annotations.keys() | alt_annotations.keys():
-        if verbose:
-            print(f"Constructing the locus order list of the chromosome {dna_mol}")
-        locus_order = pc.annotation_sort(ref_annotations.get(dna_mol, {}), alt_annotations.get(dna_mol, {}), verbose)
-        all_locus_order[dna_mol] = locus_order
-
-    # construct clusters of overlapping loci
-    all_cluster_list = {}
-    for dna_mol in all_locus_order.keys():
-        cluster_list = pc.construct_clusters(ref_annotations.get(dna_mol, {}), alt_annotations.get(dna_mol, {}), all_locus_order[dna_mol], verbose)
-        all_cluster_list[dna_mol] = cluster_list
-
+def annotation_comparison(ref_path, alt_path, out_dir, verbose=False, create_strings=False, exon_mode=False) :
+    read_ref= gff.gff_to_cdsInfo(ref_path)
+    read_alt= gff.gff_to_cdsInfo(alt_path)
     all_results = {}
-    for dna_mol in all_cluster_list.keys():
-        results = []
-        for cluster_id, cluster in all_cluster_list[dna_mol].items():
-            results.append(comp.annotation_match(cluster, create_strings, verbose))
+    for dna_mol in read_ref.keys() | read_alt.keys():
+        clusters = build_cluster_list(read_ref, read_alt, dna_mol)
+        results = [None] * len(clusters)
+        for i, cluster in enumerate(clusters):
+            results[i]=comp.annotation_match(cluster, create_strings, verbose)
         all_results[dna_mol] = results
 
     alt_name = (os.path.basename(alt_path)).split(".")[0]

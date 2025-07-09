@@ -272,8 +272,10 @@ def construct_clusters(dict_ref, dict_alt, locus_order, verbose=False):
 # @see get_intervals_with_included_ub()
 #
 # @remark This function was written by Vincent Ranwez
-def get_reading_frame(cds_bounds, area_bounds, verbose=False):
-    nb_nt = 0;
+#def get_reading_frame(cds_bounds, area_bounds, verbose=False):
+def get_reading_frame(cds_bounds, area_bounds, phase_first_CDS=0,verbose=False):
+    #nb_nt = 0;
+    nb_nt = (3-phase_first_CDS)%3;
     nb_nt_in_cds=0;
     cdsb=0; # cds bounds index
     reading_frames = [];

@@ -713,7 +713,7 @@ def test_compute_matches_mismatches_EI_RF():
         ref_mrna, alt_mrna, expected_counts, expected_matchInfo = test_dict[test]
         
         # Call the function with proper parameters
-        result:MrnaMatchInfo = comp.compute_matches_mismatches_EI_RF("ref_mrna_id", "alt_mrna_id", ref_mrna, alt_mrna, False)
+        result:MrnaMatchInfo = comp.compute_matches_mismatches_EI_RF("ref_mrna_id", "alt_mrna_id", ref_mrna, alt_mrna)
         counts:tuple = [result.matches, result.mismatches_EI.nb, result.mismatches_RF.nb]
         assert counts == expected_counts, f"Counts don't match: {counts} vs {expected_counts}"
         assert result == expected_matchInfo, f"Matches don't match: {result.matches} vs {expected_matchInfo}"

@@ -16,17 +16,21 @@ from locus import Locus
 class MatchScore:
     """Class representing a score for a comparison."""
     genomic_overlap: int = field(default=0)
+    matches : int = field(default=0)
     identity: float = field(default=0.0)
-    def is_better_than(self, other) -> bool:
+    def is_betterEq_than(self, other) -> bool:
         """Compare two scores based on genomic overlap and identity."""
-        if self.genomic_overlap == 0:
-            return False
         if other.genomic_overlap == 0:
             return True
+        if self.genomic_overlap == 0:
+            return False
         if self.identity == other.identity :
-                return self.genomic_overlap > other.genomic_overlap
+                if self.matches == other.matches :
+                    return self.genomic_overlap >= other.genomic_overlap
+                else:
+                    return self.matches >= other.matches
         else:
-            return self.identity > other.identity
+            return self.identity >= other.identity
     @classmethod
     def add(cls, score1: 'MatchScore', score2: 'MatchScore') -> 'MatchScore':
         """Combine two MatchScore instances."""
@@ -37,7 +41,7 @@ class MatchScore:
     @classmethod
     def max(cls, score1: 'MatchScore', score2: 'MatchScore') -> 'MatchScore':
         """Return the maximum of two MatchScore instances."""
-        if score1.is_better_than(score2):
+        if score1.is_betterEq_than(score2):
             return score1
         else:
             return score2
@@ -91,15 +95,15 @@ class MrnaMatchInfo:
         """Calculate identity after initialization."""
         total = self.matches + self.mismatches_EI.nb + self.mismatches_RF.nb
         if total == 0:
-            object.__setattr__(self, 'score', MatchScore(self.genomic_overlap, 0))
+            object.__setattr__(self, 'score', MatchScore(self.genomic_overlap, 0, 0))
         else:
-            object.__setattr__(self, 'score', MatchScore(self.genomic_overlap, self.matches / total))
+            object.__setattr__(self, 'score', MatchScore(self.genomic_overlap, self.matches, self.matches / total))
 
     def get_identity(self) -> float:
         return self.score.identity
 
     def has_better_identity_than(self, other: 'MrnaMatchInfo') -> bool:
-        return self.score.is_better_than(other.score)
+        return self.score.is_betterEq_than(other.score)
 
 
 
@@ -160,8 +164,10 @@ def compare_loci(ref_locus, alt_locus, verbose=False)-> MrnaMatchInfo:
     if ref_locus.direction != alt_locus.direction or loci_overlap == 0:
         return  best_mRNA_comparison
     for mRNA_ref_id, mRNA_ref in ref_locus.mRNAs.items():
+        phase_ref = ref_locus.phases.get(mRNA_ref_id)
         for mRNA_alt_id, mRNA_alt in alt_locus.mRNAs.items():
-            matchInfo: MrnaMatchInfo = compute_matches_mismatches_EI_RF(mRNA_ref_id, mRNA_alt_id, mRNA_ref,  mRNA_alt, verbose)
+            phase_alt = alt_locus.phases.get(mRNA_alt_id)
+            matchInfo: MrnaMatchInfo = compute_matches_mismatches_EI_RF(mRNA_ref_id, mRNA_alt_id, mRNA_ref,  mRNA_alt, phase_ref, phase_alt)
             if matchInfo.has_better_identity_than(best_mRNA_comparison):
                 best_mRNA_comparison = matchInfo
     
@@ -192,9 +198,8 @@ def compare_loci(ref_locus, alt_locus, verbose=False)-> MrnaMatchInfo:
 # is not in a CDS for the current position; 'RF' stands for 'Reading Frame' and
 # indicates the two annotations are not in the same codon position at the 
 # current position
-#
-# @remark This function was written by Vincent Ranwez
-def compute_matches_mismatches_EI_RF(mRNA_ref_id:str, mRNA_alt_id:str, mRNA_ref, mRNA_alt, verbose)->MrnaMatchInfo:
+
+def compute_matches_mismatches_EI_RF(mRNA_ref_id: str,  mRNA_alt_id: str, mRNA_ref, mRNA_alt, mRNA_ref_phase:int=0, mRNA_alt_phase:int=0)->MrnaMatchInfo:
     intervals_alt = iu.OrderedIntervals(mRNA_alt, True);
     intervals_ref = iu.OrderedIntervals(mRNA_ref, True);
     
@@ -210,8 +215,8 @@ def compute_matches_mismatches_EI_RF(mRNA_ref_id:str, mRNA_alt_id:str, mRNA_ref,
     inter_mrna_bounds=inter_mrna.get_intervals_with_included_ub();
     
     # get reading frames for each interval of the intersection
-    inter_mrna_ref_rf=pc.get_reading_frame(mRNA_ref, inter_mrna_bounds, True)
-    inter_mrna_alt_rf=pc.get_reading_frame(mRNA_alt, inter_mrna_bounds, True)
+    inter_mrna_ref_rf=pc.get_reading_frame(mRNA_ref, inter_mrna_bounds, mRNA_ref_phase, True)
+    inter_mrna_alt_rf=pc.get_reading_frame(mRNA_alt, inter_mrna_bounds, mRNA_alt_phase, True)
     
     # for each intersection interval of the reference and alternative, compare 
     # the reading frames to determine match or RF mismatch
@@ -366,7 +371,7 @@ def annotation_match(cluster, create_strings=False, verbose=False):
     for i in range(1, len(cluster_ref)+1):
         for j in range(1, len(cluster_alt)+1):
             try:
-                comparison = compare_loci(cluster_ref[i-1], cluster_alt[j-1], verbose)
+                comparison : MrnaMatchInfo = compare_loci(cluster_ref[i-1], cluster_alt[j-1], verbose)
             except Exception as e:
                 ref_name = getattr(cluster_ref[i-1], 'name', '?')
                 alt_name = getattr(cluster_alt[j-1], 'name', '?')
