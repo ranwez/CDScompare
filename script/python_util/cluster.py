@@ -17,7 +17,7 @@ Created on Sat Jun 15 21:04:24 2024
 #
 # @see Locus
 class Cluster:
-    
+    __slots__ = ('name', 'loci', 'end')
     ## This method initialises the class
     #
     # @param name (optional) the name of the cluster
@@ -34,7 +34,7 @@ class Cluster:
             loci = {"ref": [], "alt": []}
         
         ### list of Locus class instances present in the cluster
-        self.loci = loci.copy()
+        self.loci = loci
         
         ### end coordinate of the cluster. Equal to the end coordinate of 
         # the last cluster's locus
@@ -44,8 +44,18 @@ class Cluster:
     #
     # @returns Returns the 'loci' attribute of the class instance
     def get_loci(self):
-        return self.loci.copy()
+        return self.loci
     
+    def reverse_loci_coord(self):
+        """
+        Reverse the coordinates of all loci in the cluster.
+        This is used for loci on the reverse strand.
+        """
+        cluster_end = self.end
+        for annotation in self.loci:
+            for locus in self.loci[annotation]:
+                locus.reverse(cluster_end)
+
     ## Appends the given value to the list of the given annotation in the 
     # 'loci' attribute
     #

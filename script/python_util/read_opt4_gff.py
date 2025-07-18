@@ -2,7 +2,7 @@ from array import array
 from typing import Optional
 from collections import defaultdict
 import re
-
+from locus import Locus
 
 STRING_CACHE_DIRECT = "direct"
 STRING_CACHE_REVERSE = "reverse"
@@ -13,61 +13,6 @@ def compile_id_regex():
 
 def compile_parent_regex():
     return re.compile(r'\bParent=([^;\n\r]+)')
-
-class Locus:
-    """
-    Represents an annotation's locus identified from a GFF file.
-    Uses __slots__ to reduce memory footprint.
-    """
-    __slots__ = ('name', 'mRNAs', 'start', 'end', 'phases', 'ids')
-
-    def __init__(self, name="", mRNAs=None, phases=None, ids=None, start=-1, end=-1):
-        """
-        Initialize a Locus object.
-
-        Args:
-            name: ID of the locus
-            mRNAs: List of CDS coordinate arrays (array('L'))
-            phases: array('B') of CDS phases
-            ids: list of mRNA IDs
-            start: Start coordinate of the locus
-            end: End coordinate of the locus
-        """
-        self.name = name
-        self.mRNAs = mRNAs if mRNAs is not None else []
-        self.phases = phases if phases is not None else array('B')
-        self.ids = ids if ids is not None else []
-        self.start = start
-        self.end = end
-
-    @classmethod
-    def sentinel(cls, name: str, end: int) -> "Locus":
-        return cls(
-            name=name,
-            mRNAs=[],
-            phases=array("B"),
-            ids=[],
-            start=end,
-            end=end + 1
-        )
-
-    def reverse(self, cluster_end):
-        """
-        Reverse the coordinates of all mRNAs relative to cluster_end.
-        Used for loci on the reverse strand.
-
-        Args:
-            cluster_end: End position of the parent cluster
-        """
-        for i in range(len(self.mRNAs)):
-            reversed_coords = [cluster_end - pos for pos in reversed(self.mRNAs[i])]
-            self.mRNAs[i] = array('L', reversed_coords)
-
-    def __str__(self):
-        return f"Locus '{self.name}' ({self.start}-{self.end})"
-
-    def show_init(self):
-        return f"Locus(name='{self.name}', mRNAs={self.mRNAs}, start={self.start}, end={self.end}')"
 
 def gff_to_cdsInfo(gff_file: str, relevant_gene_ids: Optional[set[str]] = None) -> dict[str, Locus]:
     """
@@ -127,23 +72,21 @@ def gff_to_cdsInfo(gff_file: str, relevant_gene_ids: Optional[set[str]] = None) 
                 gene_strands.append(1 if infos[6] == "+" else 0)
 
     chrStrand_2_loci = {}
-
-    #print(f"Number of genes (opt): {len(gene_ids)}")
-    #input("Press Enter to continue...")
-
+    print(f"Number of genes (opt): {len(gene_ids)}")
+    input("Press Enter to continue...")
     for i, gene_id in enumerate(gene_ids):
-
-        gene_mrnas = gene_id2mRNA.pop(gene_id, [])
-        if not gene_mrnas:
-            continue
         chr_id = gene_chr_ids[i]
         start = gene_starts[i]
         end = gene_ends[i]
         strand_bool = gene_strands[i]
+        strand = "+" if strand_bool else "-"
 
-        mrna_list = []
-        phase_list = array('B')
-        mrna_ids = []
+        gene_mrnas = gene_id2mRNA.pop(gene_id, [])
+        if not gene_mrnas:
+            continue
+
+        mrna_dict = {}
+        phases_dict = {}
 
         for mrna_id in gene_mrnas:
             if mrna_id in mrna_id2CDS:
@@ -156,18 +99,16 @@ def gff_to_cdsInfo(gff_file: str, relevant_gene_ids: Optional[set[str]] = None) 
                         print(f"Error: mRNA {mrna_id} has overlapping CDS regions")
                         exit(1)
 
-                mrna_list.append(array('L', (coord for cds in cds_list for coord in (cds[1], cds[2]))))
-                phase_list.append(cds_list[0][0] if strand_bool else cds_list[-1][0])
-                mrna_ids.append(mrna_id)
+                mrna_dict[mrna_id] = array('L', (coord for cds in cds_list for coord in (cds[1], cds[2])))
+                phases_dict[mrna_id] = cds_list[0][0] if strand_bool else cds_list[-1][0]
 
-        if mrna_list:
+        if mrna_dict:
             locus = Locus(
                 name=gene_id,
-                mRNAs=mrna_list,
-                phases=phase_list,
-                ids=tuple(mrna_ids),
                 start=start,
-                end=end
+                end=end,
+                mRNAs=mrna_dict,
+                phases=phases_dict
             )
             direction = STRING_CACHE_DIRECT if strand_bool else STRING_CACHE_REVERSE
             chr_strand = f"{chr_id}_{direction}"
@@ -175,6 +116,5 @@ def gff_to_cdsInfo(gff_file: str, relevant_gene_ids: Optional[set[str]] = None) 
 
     for chr_strand in chrStrand_2_loci:
         chrStrand_2_loci[chr_strand].sort(key=lambda l: (l.start, l.end))
-
-    #input("convertin genes done ")
+    input("convertin genes done ")
     return chrStrand_2_loci

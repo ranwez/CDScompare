@@ -233,6 +233,16 @@ def gff_to_cdsInfo(gff_file: str, relevant_gene_ids: Optional[set[str]] = None) 
     merged_data = merged_data.with_columns(
         (pl.col("chr_id") + "_" + pl.when(pl.col("strand") == "+").then(pl.lit("direct")).otherwise(pl.lit("reverse"))).alias("chr_strand")
     )
+    #save merged_data to a CSV file for debugging
+    #export_data = merged_data.with_columns([
+    #    pl.col("start").map_elements(lambda x: str(x)).alias("start_str"),
+    #    pl.col("end").map_elements(lambda x: str(x)).alias("end_str"),
+    #    pl.col("phase").map_elements(lambda x: str(x)).alias("phase_str")
+    #]).drop(["start", "end", "phase"])
+    #extract file name prefix from gff_file
+    #file_name_prefix = gff_file.split("/")[-1].split(".")[0] 
+    #export_data.write_csv("/Users/ranwez/My_data/Projects/2023_ANNOT_WHEAT_LRR/BleTendre/01_sorted_input_gffs/results/merged_data_" + file_name_prefix + ".csv")
+
     # get the pairs of chromosome and strand
     chr_strand_pairs = merged_data.select("chr_strand").unique().to_dicts()
     chrStrand_2_geneInfos = {pair["chr_strand"]: [] for pair in chr_strand_pairs}

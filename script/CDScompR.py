@@ -20,11 +20,10 @@ import os
 script_dir = os.path.dirname( __file__ ) + "/python_util/"
 sys.path.append( script_dir )
 
-import read_gff as gff
 import pre_comparison as pc
 import comparison as comp
 import cluster as cl
-
+from locus import gff_to_cdsInfo, Locus
 ## This function writes to a new 'results.csv' file the results of the
 # annotation comparison retrieved from the identities dictionary returned by
 # the annotation_match function
@@ -59,7 +58,7 @@ def write_results(all_results, alt_name, out_dir, verbose=False):
     results_file.write("Chromosome,Cluster name,Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start,Reference end,Alternative start,Alternative end,Reference mRNA,Alternative mRNA,Exon_intron (EI) non-correspondance zones,Reading frame (RF) non-correspondance zones,Exon_Intron (EI) mismatches,Reading Frame (RF) mismatches,reference mRNA number,alternative mRNA number\n")
 
     for dna_mol, results in all_results.items():
-        print(f"\n**************** Results for chromosome {dna_mol} ****************\n")
+        #print(f"\n**************** Results for chromosome {dna_mol} ****************\n")
 
         # annotation origin of each locus in the results
         # (first value: both,  second: reference,  third: alternative)
@@ -83,14 +82,14 @@ def write_results(all_results, alt_name, out_dir, verbose=False):
                 # if no comparison was done for the loci, write '~' instead of
                 # the comparison values
                 if loc['mismatch/match'] == []:
-                    print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t_\t\t\t\t_")
+                    #print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t_\t\t\t\t_")
                     results_file.write(f"{dna_mol},{loc['cluster name']},{loc['reference']},{loc['alternative']},_,_,{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']},{loc['reference mRNA']},{loc['alternative mRNA']},_,_,_,_,{loc['reference mRNA number']},{loc['alternative mRNA number']}\n")
                     if loc['reference'] == '~':
                         locus_initial_annot[2] += 1
                     else:
                         locus_initial_annot[1] += 1
                 else:
-                    print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t{loc['mismatch/match']}\t\t\t\t{loc['identity']}%")
+                    #print(f"{loc['cluster name']}\t\t{loc['reference']}\t\t{loc['alternative']}\t\t\t{loc['mismatch/match']}\t\t\t\t{loc['identity']}%")
                     results_file.write(f"{dna_mol},{loc['cluster name']},{loc['reference']},{loc['alternative']},{loc['mismatch/match'][0]},{loc['mismatch/match'][1]+loc['mismatch/match'][2]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']},{loc['reference mRNA']},{loc['alternative mRNA']},{mismatch_EI},{mismatch_RF},{loc['mismatch/match'][1]},{loc['mismatch/match'][2]},{loc['reference mRNA number']},{loc['alternative mRNA number']}\n")
                     locus_initial_annot[0] += 1
 
@@ -108,6 +107,70 @@ def write_results(all_results, alt_name, out_dir, verbose=False):
     # display in the standard ouput the loci origins
     print(f"\nNumber of loci (whole data):\n- found in both annotations : {final_locus_annot[0]}\n- found only in the reference : {final_locus_annot[1]}\n- found only in the alternative : {final_locus_annot[2]}\n")
 
+def build_cluster_list_from_Locus(read_ref, read_alt, dna_mol, chr_id, direction):
+    """
+    Build clusters of loci from reference and alternative annotations.
+    
+    Args:
+        read_ref: Dictionary mapping chromosome_strand to list of Locus objects from reference annotation
+        read_alt: Dictionary mapping chromosome_strand to list of Locus objects from alternative annotation
+        dna_mol: Chromosome_strand key to process
+        
+    Returns:
+        List of Cluster objects
+    """
+    cluster_list = []
+    ref_loci = read_ref.pop(dna_mol, [])
+    alt_loci = read_alt.pop(dna_mol, [])
+    
+    # Get the max end positions of the loci from both annotations
+    sentinel = 1 + max(
+        max(locus.end for locus in ref_loci) if ref_loci else 0,
+        max(locus.end for locus in alt_loci) if alt_loci else 0
+    )
+
+    ref_sentinel = Locus.sentinel("sentinel_ref", sentinel)
+    alt_sentinel = Locus.sentinel("sentinel_alt", sentinel)
+
+    ref_loci.append(ref_sentinel)
+    alt_loci.append(alt_sentinel)
+    
+    ref_i, alt_i = 0, 0
+    ref_locus = ref_loci[ref_i]
+    alt_locus = alt_loci[alt_i]
+    
+    cluster_max = -1
+    cluster_loci = {"ref": [], "alt": []}
+    cluster_id = 0
+    
+    while ref_locus.start < sentinel or alt_locus.start < sentinel:
+        if ref_locus.start <= alt_locus.start:
+            locus = ref_locus
+            type = "ref"
+            ref_locus, ref_i = ref_loci[ref_i+1], ref_i + 1
+        else:
+            locus = alt_locus
+            type = "alt"
+            alt_locus, alt_i = alt_loci[alt_i+1], alt_i + 1
+        
+        if locus.start > cluster_max:
+            if cluster_max != -1:
+                cluster_name = f"{chr_id}_{direction}_{cluster_id}"
+                cluster_list.append(cl.Cluster(cluster_name, cluster_loci, cluster_max))
+            cluster_id += 1
+            cluster_loci = {"ref": [], "alt": []}
+            cluster_max = -1
+        
+        cluster_max = max(cluster_max, locus.end)
+        cluster_loci[type].append(locus)
+    
+    if cluster_max != -1:
+        cluster_name = f"{chr_id}_{cluster_id}"
+        cluster_list.append(cl.Cluster(cluster_name, cluster_loci, cluster_max))
+
+    ref_loci.clear()
+    alt_loci.clear()
+    return cluster_list
 
 def build_cluster_list(read_ref, read_alt, dna_mol):
     cluster_list = []
@@ -183,19 +246,32 @@ def build_cluster_list(read_ref, read_alt, dna_mol):
 # @return Returns a list of lists of dictionaries describing the
 # comparison of the structure identity between the loci of each annotation
 def annotation_comparison(ref_path, alt_path, out_dir, verbose=False, create_strings=False, exon_mode=False) :
-    read_ref= gff.gff_to_cdsInfo(ref_path)
-    read_alt= gff.gff_to_cdsInfo(alt_path)
+    #input("Starting annotation comparison...\n")
+    read_ref= gff_to_cdsInfo(ref_path)
+    #input("Starting annotation comparison... read 1\n")
+    read_alt= gff_to_cdsInfo(alt_path)
+    #input("Starting annotation comparison...read 2\n")
+    print(f"Number of genes in reference annotation: {len(read_ref)}")
     all_results = {}
     for dna_mol in read_ref.keys() | read_alt.keys():
-        clusters = build_cluster_list(read_ref, read_alt, dna_mol)
+        # extract chromosome ID and direction from dna_mol, direction is last part of dna_mol, chr is the rest
+        if dna_mol.endswith("_direct"):
+            direction = "direct"
+            chr_id = dna_mol[:-7]  
+        elif dna_mol.endswith("_reverse"):
+            direction = "reverse"
+            chr_id = dna_mol[:-8]  
+        clusters = build_cluster_list_from_Locus(read_ref, read_alt, dna_mol, chr_id, direction) 
         results = [None] * len(clusters)
         for i, cluster in enumerate(clusters):
-            results[i]=comp.annotation_match(cluster, create_strings, verbose)
+            if direction == "reverse":
+                cluster.reverse_loci_coord() 
+            results[i]=comp.annotation_match(cluster, direction, create_strings, verbose)
         all_results[dna_mol] = results
 
     alt_name = (os.path.basename(alt_path)).split(".")[0]
 
-    print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[match/mismatch_EI/mismatch_RF]\t\tIdentity_Score\n")
+    #print("\nCluster name\tReference_Locus\t\tAlternative_Locus\t\tComparison[match/mismatch_EI/mismatch_RF]\t\tIdentity_Score\n")
     write_results(all_results, alt_name, out_dir, verbose)
 
     return all_results
