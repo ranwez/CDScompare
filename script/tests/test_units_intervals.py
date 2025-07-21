@@ -3,7 +3,7 @@
 """
 Created on Tue Jun 18 10:57:25 2024
 
-@author: vetea
+@author: vetea, ranwez
 """
 
 
@@ -13,10 +13,10 @@ script_dir = os.path.dirname( __file__ )
 script_dir = "/".join(script_dir.split("/")[:-1]) + "/python_util/"
 sys.path.append( script_dir )
 
-import intervals_utils as iu
+import intervals as iu
 
 
-# test function for the 'intervals_utils.py' class method 'transform_intervals_to_exclude_ub'
+# test function for the 'intervals.py' class method 'transform_intervals_to_exclude_ub'
 def test_transform_intervals_to_exclude_ub():
     
     # dictionary of inputs and expected ouputs for the method
@@ -66,7 +66,7 @@ def test_transform_intervals_to_exclude_ub():
         result = interval.intervals
         print(f"result : {result}\n")
         print(test_dict[test][1])
-        assert result == test_dict[test][1]
+        assert list(result) == test_dict[test][1]
         
         
 # test function for the 'intervals_utils.py' class method 'total_length'
@@ -170,7 +170,7 @@ def test_intersection():
         
         interval1 = iu.OrderedIntervals(test_dict[test][0], True)
         interval2 = iu.OrderedIntervals(test_dict[test][1], True)
-        result = interval1.intersection(interval2).get_intervals_with_included_ub()
+        result = interval1.intersection(interval2).as_list_with_included_ub()
         print(f"result : {result}\n")
         print(test_dict[test][2])
         assert result == test_dict[test][2]
@@ -224,7 +224,7 @@ def test_union():
         
         interval1 = iu.OrderedIntervals(test_dict[test][0], True)
         interval2 = iu.OrderedIntervals(test_dict[test][1], True)
-        result = interval1.union(interval2).get_intervals_with_included_ub()
+        result = interval1.union(interval2).as_list_with_included_ub()
         print(f"result : {result}\n")
         print(test_dict[test][2])
         assert result == test_dict[test][2]

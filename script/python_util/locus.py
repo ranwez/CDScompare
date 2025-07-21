@@ -1,25 +1,54 @@
 from array import array
 from typing import Optional
 from collections import defaultdict
+import intervals as iu
 import re
-
+ 
 
 STRING_CACHE_DIRECT = "direct"
 STRING_CACHE_REVERSE = "reverse"
 
+parent_regex = re.compile(r'Parent=([^;\s]+)')
+id_regex = re.compile(r'ID=([^;\s]+)')
+id_parent_regex = re.compile(r'ID=([^;\s]+).*Parent=([^;\s]+)')
 
-def compile_id_regex():
-    return re.compile(r'\bID=([^;\n\r]+)')
+def extract_id(attr_str: str) -> Optional[str]:
+    for part in attr_str.split(';'):
+        part = part.strip()
+        if part.startswith("ID="):
+            return part[3:].strip()
+    return None
 
-def compile_parent_regex():
-    return re.compile(r'\bParent=([^;\n\r]+)')
+def extract_parent_old(attr_str: str) -> Optional[str]:
+    for part in attr_str.split(';'):
+        part = part.strip()
+        if part.startswith("Parent="):
+            return part[7:].strip()
+    return None
+def extract_parent(attr_str: str) -> Optional[str]:
+    return parent_regex.search(attr_str).group(1) 
+
+
+def extract_parent_id(attr_str: str) -> tuple[Optional[str], Optional[str]]:
+    id_val = parent_val = None
+    for part in attr_str.split(';'):
+        part = part.strip()
+        if part.startswith("ID="):
+            id_val = part[3:].strip()
+            if parent_val:
+                break
+        elif part.startswith("Parent="):
+            parent_val = part[7:].strip()
+            if id_val :
+                break
+    return id_val, parent_val
 
 class Locus:
     """
     Represents an annotation's locus identified from a GFF file.
     Uses __slots__ to reduce memory footprint.
     """
-    __slots__ = ('name', 'mRNAs', 'start', 'end', 'phases', 'ids')
+    __slots__ = ('name', 'mRNAs', 'start', 'end', 'phases', 'ids', 'mrna_intervals')
 
     def __init__(self, name="", mRNAs=None, phases=None, ids=None, start=-1, end=-1):
         """
@@ -39,6 +68,9 @@ class Locus:
         self.ids = ids if ids is not None else []
         self.start = start
         self.end = end
+        self.mrna_intervals = None
+    def set_mrna_intervals(self):
+        self.mrna_intervals = [iu.OrderedIntervals(mRNA, True) for mRNA in self.mRNAs]
 
     @classmethod
     def sentinel(cls, name: str, end: int) -> "Locus":
@@ -50,6 +82,44 @@ class Locus:
             start=end,
             end=end + 1
         )
+        
+    @classmethod
+    def builder(cls, name: str = "", mRNAs: dict = None, start: int = -1, end: int = -1, direction: str = "") -> "Locus":
+        """
+        Factory method to build a Locus object from dictionary-based mRNAs format.
+        This is for backward compatibility with tests written for the older Locus implementation.
+        
+        Args:
+            name: ID of the locus
+            mRNAs: Dictionary mapping mRNA ID to a list of CDS coordinates
+            start: Start coordinate of the locus
+            end: End coordinate of the locus
+            direction: Strand direction ('direct' or 'reverse')
+            
+        Returns:
+            A new Locus instance
+        """
+        if mRNAs is None:
+            mRNAs = {}
+            
+        # Convert dictionary to the new format
+        mrna_list = []
+        phase_list = array('B')
+        mrna_ids = []
+        
+        for mrna_id, coords in mRNAs.items():
+            mrna_list.append(array('L', coords))
+            phase_list.append(0)  # Default phase
+            mrna_ids.append(mrna_id)
+            
+        return cls(
+            name=name,
+            mRNAs=mrna_list,
+            phases=phase_list,
+            ids=tuple(mrna_ids),
+            start=start,
+            end=end
+        )
 
     def reverse(self, cluster_end):
         """
@@ -60,8 +130,14 @@ class Locus:
             cluster_end: End position of the parent cluster
         """
         for i in range(len(self.mRNAs)):
-            reversed_coords = [cluster_end - pos for pos in reversed(self.mRNAs[i])]
-            self.mRNAs[i] = array('L', reversed_coords)
+            mrna = self.mRNAs[i]
+            length = len(mrna)
+            
+            for j in range(length // 2):
+                front_val = cluster_end - mrna[length - j - 1]
+                mrna[length - j - 1]  = cluster_end - mrna[j]
+                mrna[j] = front_val
+                
 
     def __str__(self):
         return f"Locus '{self.name}' ({self.start}-{self.end})"
@@ -69,7 +145,7 @@ class Locus:
     def show_init(self):
         return f"Locus(name='{self.name}', mRNAs={self.mRNAs}, start={self.start}, end={self.end}')"
 
-def gff_to_cdsInfo(gff_file: str, relevant_gene_ids: Optional[set[str]] = None) -> dict[str, Locus]:
+def gff_to_cdsInfo(gff_file: str) -> dict[str, Locus]:
     """
     Optimized GFF parser: uses flat arrays and defaultdicts to reduce memory and improve speed.
 
@@ -80,8 +156,6 @@ def gff_to_cdsInfo(gff_file: str, relevant_gene_ids: Optional[set[str]] = None) 
     Returns:
         A dictionary mapping chromosome_strand keys to lists of Locus objects
     """
-    id_regex = compile_id_regex()
-    parent_regex = compile_parent_regex()
 
     mrna_id2CDS = defaultdict(lambda: array('L'))  # dict[str, array('L')]
     gene_id2mRNA = defaultdict(list)  # dict[str, list[str]]
@@ -94,11 +168,10 @@ def gff_to_cdsInfo(gff_file: str, relevant_gene_ids: Optional[set[str]] = None) 
 
     with open(gff_file, "r") as file:
         for line in file:
-            if line.startswith("#") or not line.strip():
+            if line.startswith("#") or line.isspace():
                 continue
-            infos = line.strip().split("\t")
+            infos = line.split("\t")
             type = infos[2]
-
             if type == "CDS":
                 start, end = int(infos[3]), int(infos[4])
                 mrna_id = parent_regex.search(infos[8]).group(1)
@@ -106,34 +179,25 @@ def gff_to_cdsInfo(gff_file: str, relevant_gene_ids: Optional[set[str]] = None) 
                 mrna_id2CDS[mrna_id].extend([phase, start, end])
 
             elif type == "mRNA":
-                mrna_id = id_regex.search(infos[8]).group(1)
-                gene_id = parent_regex.search(infos[8]).group(1)
-
-                if relevant_gene_ids and gene_id not in relevant_gene_ids:
-                    continue
-
+                id_parent = id_parent_regex.search(infos[8])
+                mrna_id = id_parent.group(1)
+                gene_id = id_parent.group(2)
                 gene_id2mRNA[gene_id].append(mrna_id)
 
             elif type == "gene":
                 gene_id = id_regex.search(infos[8]).group(1)
-
-                if relevant_gene_ids and gene_id not in relevant_gene_ids:
-                    continue
-
                 gene_ids.append(gene_id)
                 gene_chr_ids.append(infos[0])
                 gene_starts.append(int(infos[3]))
                 gene_ends.append(int(infos[4]))
                 gene_strands.append(1 if infos[6] == "+" else 0)
-
     chrStrand_2_loci = {}
-
-    #print(f"Number of genes (opt): {len(gene_ids)}")
+    print(f"Converting {len(gene_ids)} genes to loci...")
     #input("Press Enter to continue...")
-
+    empty=[]
     for i, gene_id in enumerate(gene_ids):
 
-        gene_mrnas = gene_id2mRNA.pop(gene_id, [])
+        gene_mrnas = gene_id2mRNA.pop(gene_id, empty)
         if not gene_mrnas:
             continue
         chr_id = gene_chr_ids[i]
@@ -144,12 +208,13 @@ def gff_to_cdsInfo(gff_file: str, relevant_gene_ids: Optional[set[str]] = None) 
         mrna_list = []
         phase_list = array('B')
         mrna_ids = []
-
         for mrna_id in gene_mrnas:
             if mrna_id in mrna_id2CDS:
                 flat = mrna_id2CDS.pop(mrna_id)
-                cds_list = [(flat[j], flat[j+1], flat[j+2]) for j in range(0, len(flat), 3)]
-                cds_list.sort(key=lambda x: x[1])
+                cds_list = sorted(
+                   ((flat[j], flat[j+1], flat[j+2]) for j in range(0, len(flat), 3)),
+                    key=lambda x: x[1]
+                )
 
                 for j in range(len(cds_list) - 1):
                     if cds_list[j][2] >= cds_list[j+1][1]:
@@ -172,9 +237,8 @@ def gff_to_cdsInfo(gff_file: str, relevant_gene_ids: Optional[set[str]] = None) 
             direction = STRING_CACHE_DIRECT if strand_bool else STRING_CACHE_REVERSE
             chr_strand = f"{chr_id}_{direction}"
             chrStrand_2_loci.setdefault(chr_strand, []).append(locus)
-
     for chr_strand in chrStrand_2_loci:
         chrStrand_2_loci[chr_strand].sort(key=lambda l: (l.start, l.end))
 
-    #input("convertin genes done ")
     return chrStrand_2_loci
+

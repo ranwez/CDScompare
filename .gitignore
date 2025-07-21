@@ -11,3 +11,4 @@ time_test.txt
 data/lrrtransfer_tests/
 script/python_util/__pycache__/
 script/tests/__pycache__/
+.vscode*
