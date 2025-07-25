@@ -145,7 +145,9 @@ def annotation_comparison(ref_path:str, alt_path:str, out_dir:str):
     read_alt= gff_to_cdsInfo(alt_path)
     all_results = {}
     reverse_str="_"+ STRING_CACHE_REVERSE
-    for dna_mol in read_ref.keys() | read_alt.keys():
+    dna_mols = list(read_ref.keys() | read_alt.keys())
+    dna_mols.sort()
+    for dna_mol in dna_mols:
         clusters = build_cluster_list_from_Locus(read_ref[dna_mol], read_alt[dna_mol], dna_mol) 
         results = [None] * len(clusters)
         for i, cluster in enumerate(clusters):

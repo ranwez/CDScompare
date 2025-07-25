@@ -145,7 +145,7 @@ class Locus:
     def show_init(self):
         return f"Locus(name='{self.name}', mRNAs={self.mRNAs}, start={self.start}, end={self.end}')"
 
-def gff_to_cdsInfo(gff_file: str) -> dict[str, Locus]:
+def gff_to_cdsInfo(gff_file: str) -> dict[str, list[Locus]]:
     """
     Optimized GFF parser: uses flat arrays and defaultdicts to reduce memory and improve speed.
 
@@ -191,7 +191,7 @@ def gff_to_cdsInfo(gff_file: str) -> dict[str, Locus]:
                 gene_starts.append(int(infos[3]))
                 gene_ends.append(int(infos[4]))
                 gene_strands.append(1 if infos[6] == "+" else 0)
-    chrStrand_2_loci = {}
+    chrStrand_2_loci = defaultdict(list) 
     print(f"Converting {len(gene_ids)} genes to loci...")
     #input("Press Enter to continue...")
     empty=[]
@@ -236,7 +236,8 @@ def gff_to_cdsInfo(gff_file: str) -> dict[str, Locus]:
             )
             direction = STRING_CACHE_DIRECT if strand_bool else STRING_CACHE_REVERSE
             chr_strand = f"{chr_id}_{direction}"
-            chrStrand_2_loci.setdefault(chr_strand, []).append(locus)
+            #chrStrand_2_loci.setdefault(chr_strand, []).append(locus)
+            chrStrand_2_loci[chr_strand].append(locus)
     for chr_strand in chrStrand_2_loci:
         chrStrand_2_loci[chr_strand].sort(key=lambda l: (l.start, l.end))
 
