@@ -155,9 +155,9 @@ def test_compare_loci():
                                           start=100, 
                                           end=299, 
                                           direction='reverse'),
-                              MrnaMatchInfo(matches=60,
+                              MrnaMatchInfo(matches=90,
                             mismatches_EI=MismatchInfo([80, 89]),
-                            mismatches_RF=MismatchInfo([90, 149, 170, 199]),
+                            mismatches_RF=MismatchInfo([0, 59]),
                             genomic_overlap=200,
                             ref_id="chr2A_00611930_mrna",
                             alt_id="chr2A_00611930_mrna")],
@@ -172,8 +172,13 @@ def test_compare_loci():
                                 start=100, 
                                 end=299, 
                                 direction='reverse'),
-                     MrnaMatchInfo()],
-        
+                     MrnaMatchInfo(matches=150,
+                            mismatches_EI=MismatchInfo([]),
+                            mismatches_RF=MismatchInfo([]),
+                            genomic_overlap=200,
+                            ref_id="chr2A_00611930_mrna",
+                            alt_id="chr2A_00611930_mrna")],
+
         "diff-start-before" : [Locus.builder(name='chr2A_00611930', 
                                             mRNAs={'chr2A_00611930_mrna': [100, 129, 150, 209, 240, 299]}, 
                                             start=100, 
@@ -267,10 +272,24 @@ def test_compare_loci():
     print("\n*************Testing the compare_loci function*************")
     
     for test in test_dict:
-        
-        print(f"\n{test} file test")
-        
-        result = comp.compare_loci(test_dict[test][0], test_dict[test][1])
+        print(f"\n{test} test")
+        ref_locus = test_dict[test][0]
+        alt_locus = test_dict[test][1]
+        cluster_end = max(ref_locus.end, alt_locus.end)+1
+        cluster = cl.Cluster(name="cluster 0", loci_ref=[ref_locus], loci_alt=[alt_locus], end=cluster_end)
+        reversed = test.find('reverse') != -1
+        if (reversed):
+            cluster.reverse_loci_coord()
+        cluster.set_intervals()
+        result = comp.compare_loci(ref_locus, alt_locus)
+        if (reversed):
+            (rev_mismatches_EI, rev_mismatches_RF) = comp.reverse_coord((result.mismatches_EI.zones, result.mismatches_RF.zones), cluster_end)
+            result = MrnaMatchInfo(matches=result.matches,
+                                mismatches_EI=MismatchInfo(zones=rev_mismatches_EI),
+                                mismatches_RF=MismatchInfo(zones=rev_mismatches_RF),
+                                genomic_overlap=result.genomic_overlap,
+                                ref_id=result.ref_id,
+                                alt_id=result.alt_id)
         print(f"Expected result = {test_dict[test][2]}")
         print(f"Result = {result}")
         assert result == test_dict[test][2]
@@ -521,7 +540,7 @@ def test_new_annotation_match():
         
         print(f"\n{test} test")
         is_reversed= test.find('reverse') != -1
-        result = comp.annotation_match(test_dict[test][0], is_reversed)
+        result = comp.annotation_match(test_dict[test][0], is_reversed,True)
         print(f"result : {result}\n")
         print(f"expected result : {test_dict[test][1]}\n")
         assert result == test_dict[test][1]

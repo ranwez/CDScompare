@@ -16,7 +16,7 @@ Created on Fri Jul  5 13:18:44 2024
 import getopt
 import sys
 import os
-import CDScompR as cc
+import script.CDScompare as cc
 
 
 ## Extracts the computed identity for each locus of the given result dictionary

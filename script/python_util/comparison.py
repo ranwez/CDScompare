@@ -169,7 +169,7 @@ def build_alignment_res(ref_locus, alt_locus, comparison, cluster, reversed):
         })
     return result
 
-def annotation_match(cluster: Cluster, reversed:bool):
+def annotation_match(cluster: Cluster, reversed:bool, mode_align: bool):
     cluster_ref : list[Locus]  = cluster.loci_ref
     cluster_alt : list [Locus] = cluster.loci_alt
     results = []
@@ -193,7 +193,40 @@ def annotation_match(cluster: Cluster, reversed:bool):
             results.append(build_alignment_res(cluster_ref[0], None ,None, cluster,reversed))
             results.append(build_alignment_res(None, cluster_alt[0],None, cluster,reversed))
         return results
-                 
+    
+    if(mode_align):
+        return annot_match_alignment(cluster, reversed)
+    else:
+        return annot_match_all(cluster, reversed)
+
+def annot_match_all(cluster: Cluster, reversed:bool):
+    cluster_ref : list[Locus]  = cluster.loci_ref
+    cluster_alt : list [Locus] = cluster.loci_alt
+    results = []
+    paired_ref= set()
+    paired_alt= set()
+    # handle all pairs of loci in the cluster
+    for i_ref in range(len(cluster_ref)):
+        for i_alt in range(len(cluster_alt)):
+            comparison = compare_loci(cluster_ref[i_ref], cluster_alt[i_alt])
+            if(comparison.score.genomic_overlap > 0):
+                results.append(build_alignment_res(cluster_ref[i_ref], cluster_alt[i_alt],comparison, cluster, reversed))
+                paired_alt.add(i_alt)
+                paired_ref.add(i_ref)
+    for i_ref in range(len(cluster_ref)):
+        if i_ref not in paired_ref:
+            results.append(build_alignment_res(cluster_ref[i_ref], None ,None, cluster,reversed))
+        for i_alt in range(len(cluster_alt)):
+            if i_alt not in paired_alt:
+                results.append(build_alignment_res(None, cluster_alt[i_alt],None, cluster,reversed))
+    return results 
+
+
+def annot_match_alignment(cluster: Cluster, reversed:bool):
+    cluster_ref : list[Locus]  = cluster.loci_ref
+    cluster_alt : list [Locus] = cluster.loci_alt
+    results = []
+
     # handle general case using dynamic programming 
     dyn_prog_matrix = [[MatchScore() for j in range(len(cluster_alt) + 1)] for i in range(len(cluster_ref) + 1)]       
             
