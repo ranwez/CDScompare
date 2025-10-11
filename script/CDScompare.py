@@ -173,7 +173,9 @@ def main():
         print(err)
         usage()
         sys.exit(2)
-
+    if len(opts) == 0:
+        usage()
+        sys.exit(2)
     out_dir = "results"
     mode_align=True
     for o, a in opts:
