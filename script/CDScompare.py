@@ -1,29 +1,15 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu May  2 11:57:29 2024
-
-@author: vetea, ranwez
+Compute the similarites between two or more structural annotations (GFF) of a same genome.
 """
 
-##@package CDScompare
-# This script is used to compute the similarites between two or more structural
-# annotations of a same genome.
-# It expects as input the paths to the annotation files (in GFF format),
-# displays the computed similarities between all annotation pairs, and creates
-# a results CSV file detailing the loci comparisons between the annotations.
+import sys, os
+from script.python_util.argparser import build_parser
+from script.python_util.comparison import annotation_comparison
+from script.python_util.multi import multicomp
 
-# import getopt
-import sys
-import os
-from python_util.argparser import build_parser
-from python_util.comparison import annotation_comparison
-from python_util.multi import multicomp
 
-script_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "python_util")
-sys.path.append( script_dir )
-
-def main():
+def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 

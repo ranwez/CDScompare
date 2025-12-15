@@ -5,25 +5,42 @@ This is the repository for the 2024 internship of Vetea Jacot in the GE²pop tea
 
 This project also includes a script to enable the comparison of multiple alternative annotations to a single reference: CDSmulticompR. It relies on CDScompR for the comparison of each annotations pair, and is called in a similar way.
 
+
+
 ## Installation
 
-To get the program, simply clone the github repository using the following command: 
+### Requirements
+One of the following must be available:
+- Python ≥ 3.9 with `pip` 
+- or Apptainer / Singularity
+
+### Install from the Git repository with `pip` (users)
 
 ```
-git clone https://github.com/ranwez/CDScompR
+git clone git@github.com:ranwez/CDScompare.git
+cd CDScompare
+pip install .
+```
+*NB: Once installed, the repository is no longer required.*  
+
+Successful installation can be tested with:
+```
+cdscompare --help
 ```
 
-Then get to the directory root to use the program:
+### Development installation (developers)
 
+This method installs the package in editable mode and includes development dependencies (pytest).
 ```
-cd CDScompR/
+git clone git@github.com:ranwez/CDScompare.git
+cd CDScompare
+pip install -e .[dev]
 ```
 
-No other installation steps are required. The program can be run as is.
-
-## Requirements
-
-None, except Python 3.
+To run the tests:
+```
+python -m pytest -v
+```
 
 ## Running the programs
 

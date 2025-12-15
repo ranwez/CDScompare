@@ -1,15 +1,10 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Jun 17 09:38:04 2024
 
-@author: vetea, ranwez
-"""
 import os
-from python_util.io import write_results
-from python_util.locus import Locus, gff_to_cdsInfo, STRING_CACHE_REVERSE
-from python_util.cluster import Cluster, build_cluster_list_from_Locus
-from python_util.match import MatchScore, MrnaMatchInfo, MismatchInfo
+from script.python_util.io import write_results
+from script.python_util.locus import Locus, gff_to_cdsInfo, STRING_CACHE_REVERSE
+from script.python_util.cluster import Cluster, build_cluster_list_from_Locus
+from script.python_util.match import MatchScore, MrnaMatchInfo, MismatchInfo
 
 
 def get_reading_frame(cds_bounds, area_bounds, phase_first_CDS=0, verbose=False):

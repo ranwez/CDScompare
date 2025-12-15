@@ -1,19 +1,7 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jun 18 10:57:25 2024
-
-@author: vetea, ranwez
-"""
-
 
 import os, sys
-
-script_dir = os.path.dirname( __file__ )
-script_dir = "/".join(script_dir.split("/")[:-1]) + "/python_util/"
-sys.path.append( script_dir )
-
-import python_util.intervals as iu
+import script.python_util.intervals as iu
 
 
 # test function for the 'intervals.py' class method 'transform_intervals_to_exclude_ub'

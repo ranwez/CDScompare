@@ -1,8 +1,7 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from python_util.comparison import annotation_comparison
-from python_util.io import write_multi_results
+from script.python_util.comparison import annotation_comparison
+from script.python_util.io import write_multi_results
 
 
 ## Extracts the computed identity for each locus of the given result dictionary

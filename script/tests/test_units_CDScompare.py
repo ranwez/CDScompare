@@ -1,18 +1,7 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jun 18 10:50:09 2024
-
-@author: vetea, ranwez
-"""
 
 import os, sys, tempfile
-
-script_dir = os.path.dirname( __file__ )
-script_dir = "/".join(script_dir.split("/")[:-1]) + "/"
-sys.path.append( script_dir )
-
-from python_util.comparison import annotation_comparison
+from script.python_util.comparison import annotation_comparison
 
 
 # test function for the 'CDScompare.py' function 'annotation_comparison' ('main' function of the program)
