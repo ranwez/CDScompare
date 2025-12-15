@@ -1,7 +1,7 @@
 from array import array
 from typing import Optional
 from collections import defaultdict
-import intervals as iu
+import python_util.intervals as iu
 import re
  
 

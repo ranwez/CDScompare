@@ -12,16 +12,16 @@ script_dir = os.path.dirname( __file__ )
 script_dir = "/".join(script_dir.split("/")[:-1]) + "/"
 sys.path.append( script_dir )
 
-import script.CDScompare as CDScompare
+from python_util.comparison import annotation_comparison
 
 
-# test function for the 'CDScompR.py' function 'annotation_comparison' ('main' function of the program) with the 'create_strings' parameter as 'False' (uses new program version)
+# test function for the 'CDScompare.py' function 'annotation_comparison' ('main' function of the program)
 def test_new_annotation_comparison():
 
-    # dictionary of inputs and expected ouputs for each test file for the 'CDScompR.py' function 'annotation_comparison' ('main' function of the program)
+    # dictionary of inputs and expected ouputs for each test file for the 'CDScompare.py' function 'annotation_comparison' ('main' function of the program)
     test_dict = test_dict = {
-        "basic" : ["./data/tests/basic_test.gff3",
-                   "./data/tests/identical_test.gff3",
+        "basic" : ["data/tests/basic_test.gff3",
+                   "data/tests/identical_test.gff3",
                         {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                            "reference start" : 100,
                            "reference end" : 299,
@@ -37,8 +37,8 @@ def test_new_annotation_comparison():
                            "reference mRNA number" : 1,
                            "alternative mRNA number" : 1}]]}],
 
-        "minus-CDS" : ["./data/tests/basic_test.gff3",
-                       "./data/tests/minus-CDS_test.gff3",
+        "minus-CDS" : ["data/tests/basic_test.gff3",
+                       "data/tests/minus-CDS_test.gff3",
                        {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                           "reference start" : 100,
                           "reference end" : 299,
@@ -54,8 +54,8 @@ def test_new_annotation_comparison():
                           "reference mRNA number" : 1,
                           "alternative mRNA number" : 1}]]}],
 
-        "fusion" : ["./data/tests/basic_test.gff3",
-                    "./data/tests/fusion_test.gff3",
+        "fusion" : ["data/tests/basic_test.gff3",
+                    "data/tests/fusion_test.gff3",
                     {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                        "reference start" : 100,
                        "reference end" : 299,
@@ -71,8 +71,8 @@ def test_new_annotation_comparison():
                        "reference mRNA number" : 1,
                        "alternative mRNA number" : 1}]]}],
 
-        "shift" : ["./data/tests/basic_test.gff3",
-                   "./data/tests/shift_test.gff3",
+        "shift" : ["data/tests/basic_test.gff3",
+                   "data/tests/shift_test.gff3",
                    {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                       "reference start" : 100,
                       "reference end" : 299,
@@ -88,8 +88,8 @@ def test_new_annotation_comparison():
                       "reference mRNA number" : 1,
                       "alternative mRNA number" : 1}]]}],
 
-        "reverse-reverse" : ["./data/tests/reverse_test.gff3",
-                     "./data/tests/reverse_test.gff3",
+        "reverse-reverse" : ["data/tests/reverse_test.gff3",
+                     "data/tests/reverse_test.gff3",
                      {'chr2A_reverse': [[{"reference" : 'chr2A_00611930',
                         "reference start" : 100,
                         "reference end" : 299,
@@ -105,8 +105,8 @@ def test_new_annotation_comparison():
                         "reference mRNA number" : 1,
                         "alternative mRNA number" : 1}]]}],
 
-        "reverse-modified" : ["./data/tests/reverse_test.gff3",
-                     "./data/tests/reverse_modified_test.gff3",
+        "reverse-modified" : ["data/tests/reverse_test.gff3",
+                     "data/tests/reverse_modified_test.gff3",
                      {'chr2A_reverse': [[{"reference" : 'chr2A_00611930',
                         "reference start" : 100,
                         "reference end" : 299,
@@ -122,8 +122,8 @@ def test_new_annotation_comparison():
                         "reference mRNA number" : 1,
                         "alternative mRNA number" : 1}]]}],
 
-        "diff-start-before" : ["./data/tests/basic_test.gff3",
-                               "./data/tests/diff-start-before_test.gff3",
+        "diff-start-before" : ["data/tests/basic_test.gff3",
+                               "data/tests/diff-start-before_test.gff3",
                                {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                                   "reference start" : 100,
                                   "reference end" : 299,
@@ -139,8 +139,8 @@ def test_new_annotation_comparison():
                                   "reference mRNA number" : 1,
                                   "alternative mRNA number" : 1}]]}],
 
-        "diff-start-after" : ["./data/tests/basic_test.gff3",
-                              "./data/tests/diff-start-after_test.gff3",
+        "diff-start-after" : ["data/tests/basic_test.gff3",
+                              "data/tests/diff-start-after_test.gff3",
                               {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                                  "reference start" : 100,
                                  "reference end" : 299,
@@ -156,8 +156,8 @@ def test_new_annotation_comparison():
                                  "reference mRNA number" : 1,
                                  "alternative mRNA number" : 1}]]}],
 
-        "basic-2-loci" : ["./data/tests/basic-2-loci_test.gff3",
-                          "./data/tests/identical-2-loci_test.gff3",
+        "basic-2-loci" : ["data/tests/basic-2-loci_test.gff3",
+                          "data/tests/identical-2-loci_test.gff3",
                               {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                                  "reference start" : 100,
                                  "reference end" : 299,
@@ -187,8 +187,8 @@ def test_new_annotation_comparison():
                                   "reference mRNA number" : 1,
                                   "alternative mRNA number" : 1}]]}],
 
-        "minus-loci" : ["./data/tests/basic_test.gff3",
-                          "./data/tests/identical-2-loci_test.gff3",
+        "minus-loci" : ["data/tests/basic_test.gff3",
+                          "data/tests/identical-2-loci_test.gff3",
                               {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                                  "reference start" : 100,
                                  "reference end" : 299,
@@ -218,8 +218,8 @@ def test_new_annotation_comparison():
                                   "reference mRNA number" : '_',
                                   "alternative mRNA number" : 1}]]}],
 
-        "overlapping-loci" : ["./data/tests/overlapping-loci_test.gff3",
-                              "./data/tests/overlapping-loci-alt_test.gff3",
+        "overlapping-loci" : ["data/tests/overlapping-loci_test.gff3",
+                              "data/tests/overlapping-loci-alt_test.gff3",
                               {'chr2A_direct': [[{'reference': 'chr2A_1000',
                                'reference start': 50,
                                'reference end': 149,
@@ -306,8 +306,8 @@ def test_new_annotation_comparison():
                                  "reference mRNA number" : '_',
                                  "alternative mRNA number" : 1}]]}],
 
-        'length_computation' : ["./data/tests/length_computation_ref_test.gff3",
-                                "./data/tests/length_computation_alt_test.gff3",
+        'length_computation' : ["data/tests/length_computation_ref_test.gff3",
+                                "data/tests/length_computation_alt_test.gff3",
                                  {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                                     "reference start" : 8,
                                     "reference end" : 13,
@@ -323,8 +323,8 @@ def test_new_annotation_comparison():
                                     "reference mRNA number" : 1,
                                     "alternative mRNA number" : 1}]]}],
       
-        "multi_chromosome" : ["./data/tests/multi_chromosome_test_ref.gff3",
-                   "./data/tests/multi_chromosome_test_alt.gff3",
+        "multi_chromosome" : ["data/tests/multi_chromosome_test_ref.gff3",
+                   "data/tests/multi_chromosome_test_alt.gff3",
                    {'chr2A_direct': [[{"reference" : 'chr2A_00611930',
                       "reference start" : 100,
                       "reference end" : 299,
@@ -354,8 +354,8 @@ def test_new_annotation_comparison():
                        "reference mRNA number" : 1,
                        "alternative mRNA number" : 1}]]}],
 
-        "diff_dnaMol1" : ["./data/tests/diff_dnaMol-1-chr_test.gff3",
-                           "./data/tests/diff_dnaMol-2-chr_test.gff3",
+        "diff_dnaMol1" : ["data/tests/diff_dnaMol-1-chr_test.gff3",
+                           "data/tests/diff_dnaMol-2-chr_test.gff3",
                            {'chr2A_direct': [[{'reference': 'chr2A_00611930',
                                'reference start': 100,
                                'reference end': 299,
@@ -385,8 +385,8 @@ def test_new_annotation_comparison():
                                'reference mRNA number': '_',
                                'alternative mRNA number': 1}]]}],
 
-        "diff_dnaMol2" : ["./data/tests/diff_dnaMol-2-chr_test.gff3",
-                           "./data/tests/diff_dnaMol-1-chr_test.gff3",
+        "diff_dnaMol2" : ["data/tests/diff_dnaMol-2-chr_test.gff3",
+                           "data/tests/diff_dnaMol-1-chr_test.gff3",
                            {'chr2A_direct': [[{'reference': 'chr2A_00611930',
                                'reference start': 100,
                                'reference end': 299,
@@ -424,47 +424,47 @@ def test_new_annotation_comparison():
       if("diff-start-before" ==test):
          print ("debugging diff-start-before test")
       with tempfile.TemporaryDirectory() as tmpdir:
-         result = CDScompare.annotation_comparison(test_dict[test][0], test_dict[test][1], tmpdir, True)
+         result = annotation_comparison(test_dict[test][0], test_dict[test][1], tmpdir, True)
          print(f"result : {result}\n")
          print(f"expected result : {test_dict[test][2]}\n")
          assert result == test_dict[test][2]
 
 def test_geneoverlap_mRNA_dont():
    with tempfile.TemporaryDirectory() as tmpdir:
-      gff_ref="./data/tests/cluster_3274_urgi.gff"
-      gff_alt="./data/tests/cluster_3274_ncbi.gff"
+      gff_ref="data/tests/cluster_3274_urgi.gff"
+      gff_alt="data/tests/cluster_3274_ncbi.gff"
 
    print(tmpdir)
-   result = CDScompare.annotation_comparison(gff_ref, gff_alt, tmpdir, True)
+   result = annotation_comparison(gff_ref, gff_alt, tmpdir, True)
    print(f"result : {result}\n")
 
 def test_missed_genomic_overlap():   
    with tempfile.TemporaryDirectory() as tmpdir:
-      gff_ref="./data/tests/missed_overlap_ref.gff"
-      gff_alt="./data/tests/missed_overlap_alt.gff"
+      gff_ref="data/tests/missed_overlap_ref.gff"
+      gff_alt="data/tests/missed_overlap_alt.gff"
 
    print(tmpdir)
-   result = CDScompare.annotation_comparison(gff_ref, gff_alt, tmpdir, True)
+   result = annotation_comparison(gff_ref, gff_alt, tmpdir, True)
    print(f"result : {result}\n")
 
 def test_phase():   
    with tempfile.TemporaryDirectory() as tmpdir:
-      gff_ref="./data/tests/phased2_ref.gff"
-      gff_alt="./data/tests/phased2_alt.gff"
+      gff_ref="data/tests/phased2_ref.gff"
+      gff_alt="data/tests/phased2_alt.gff"
 
    print(tmpdir)
-   result = CDScompare.annotation_comparison(gff_ref, gff_alt, tmpdir, True)
+   result = annotation_comparison(gff_ref, gff_alt, tmpdir, True)
    match = result["Chr6D_direct"][0][0]
    identity = match['identity']
    assert (identity>90)
 
 def test_phase_rev():   
    with tempfile.TemporaryDirectory() as tmpdir:
-      gff_ref="./data/tests/phased-rev_ref.gff"
-      gff_alt="./data/tests/phased-rev_alt.gff"
+      gff_ref="data/tests/phased-rev_ref.gff"
+      gff_alt="data/tests/phased-rev_alt.gff"
 
    print(tmpdir)
-   result = CDScompare.annotation_comparison(gff_ref, gff_alt, tmpdir, True)
+   result = annotation_comparison(gff_ref, gff_alt, tmpdir, True)
    print (result)
    match = result["Chr6D_reverse"][0][0]
    identity = match['identity']
@@ -472,11 +472,11 @@ def test_phase_rev():
 
 def test_multi_mrnas():   
    with tempfile.TemporaryDirectory() as tmpdir:
-      gff_ref="./data/tests/multi_mrna_BW_ref.gff"
-      gff_alt="./data/tests/multi_mrna_BW_alt.gff"
+      gff_ref="data/tests/multi_mrna_BW_ref.gff"
+      gff_alt="data/tests/multi_mrna_BW_alt.gff"
 
    print(tmpdir)
-   result = CDScompare.annotation_comparison(gff_ref, gff_alt, tmpdir, True)
+   result = annotation_comparison(gff_ref, gff_alt, tmpdir, True)
    match = result["Chr7D_reverse"][0][0]
    identity = match['identity']
    assert (identity>90)
@@ -488,7 +488,7 @@ def test_full():
       
 
    print(tmpdir)
-   result = CDScompare.annotation_comparison(gff_ref, gff_alt, tmpdir, True)
+   result = annotation_comparison(gff_ref, gff_alt, tmpdir, True)
    match = result["Chr6D_direct"][0][0]
    identity = match['identity']
    assert (identity>90)

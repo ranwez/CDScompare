@@ -13,10 +13,10 @@ script_dir = os.path.dirname( __file__ )
 script_dir = "/".join(script_dir.split("/")[:-1]) + "/python_util/"
 sys.path.append( script_dir )
 
-import comparison as comp
-import cluster as cl
-from comparison import MrnaMatchInfo, MismatchInfo
-from locus import Locus
+import python_util.comparison as comp
+import python_util.cluster as cl
+from python_util.comparison import MrnaMatchInfo, MismatchInfo
+from python_util.locus import Locus
 
 # helper function to convert a list of CDS bounds into a Locus object
 def cds2locus(cds_list, name):

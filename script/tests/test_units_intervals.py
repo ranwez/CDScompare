@@ -13,7 +13,7 @@ script_dir = os.path.dirname( __file__ )
 script_dir = "/".join(script_dir.split("/")[:-1]) + "/python_util/"
 sys.path.append( script_dir )
 
-import intervals as iu
+import python_util.intervals as iu
 
 
 # test function for the 'intervals.py' class method 'transform_intervals_to_exclude_ub'
