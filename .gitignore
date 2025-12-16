@@ -1,7 +1,6 @@
 documentation/html
 documentation/latex
-script/__pycache__/
-data/tests/__pycache__/
+__pycache__/
 data/real_data/
 data/tests/.~lock.test_files.odp#
 results/
@@ -9,6 +8,12 @@ data/time_tests/
 benchmark*
 time_test.txt
 data/lrrtransfer_tests/
-script/python_util/__pycache__/
-script/tests/__pycache__/
+.pytest_cache/
 .vscode*
+*.egg-info/
+build/
+dist/
+.venv/
+.env/
+.pixi/
+*.py[cod]

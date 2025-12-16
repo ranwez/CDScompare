@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from attrs import define, field
 
 @define(slots=True, eq=True)

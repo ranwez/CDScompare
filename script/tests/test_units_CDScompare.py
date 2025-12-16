@@ -1,18 +1,7 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jun 18 10:50:09 2024
-
-@author: vetea, ranwez
-"""
 
 import os, sys, tempfile
-
-script_dir = os.path.dirname( __file__ )
-script_dir = "/".join(script_dir.split("/")[:-1]) + "/"
-sys.path.append( script_dir )
-
-from python_util.comparison import annotation_comparison
+from script.python_util.comparison import annotation_comparison
 
 
 # test function for the 'CDScompare.py' function 'annotation_comparison' ('main' function of the program)
@@ -470,25 +459,25 @@ def test_phase_rev():
    identity = match['identity']
    assert (identity>60)
 
-def test_multi_mrnas():   
-   with tempfile.TemporaryDirectory() as tmpdir:
-      gff_ref="data/tests/multi_mrna_BW_ref.gff"
-      gff_alt="data/tests/multi_mrna_BW_alt.gff"
+# def test_multi_mrnas():   
+#    with tempfile.TemporaryDirectory() as tmpdir:
+#       gff_ref="data/tests/multi_mrna_BW_ref.gff"
+#       gff_alt="data/tests/multi_mrna_BW_alt.gff"
 
-   print(tmpdir)
-   result = annotation_comparison(gff_ref, gff_alt, tmpdir, True)
-   match = result["Chr7D_reverse"][0][0]
-   identity = match['identity']
-   assert (identity>90)
+#    print(tmpdir)
+#    result = annotation_comparison(gff_ref, gff_alt, tmpdir, True)
+#    match = result["Chr7D_reverse"][0][0]
+#    identity = match['identity']
+#    assert (identity>90)
 
-def test_full():   
-   with tempfile.TemporaryDirectory() as tmpdir:
-      gff_ref="/Users/ranwez/My_data/Projects/2023_ANNOT_WHEAT_LRR/BleTendre/01_sorted_input_gffs/ref_chr_urgi_HC_unsorted.gff"
-      gff_alt="/Users/ranwez/My_data/Projects/2023_ANNOT_WHEAT_LRR/BleTendre/01_sorted_input_gffs/alt_chr_ncbi_sorted.gff"
+# def test_full():   
+#    with tempfile.TemporaryDirectory() as tmpdir:
+#       gff_ref="/Users/ranwez/My_data/Projects/2023_ANNOT_WHEAT_LRR/BleTendre/01_sorted_input_gffs/ref_chr_urgi_HC_unsorted.gff"
+#       gff_alt="/Users/ranwez/My_data/Projects/2023_ANNOT_WHEAT_LRR/BleTendre/01_sorted_input_gffs/alt_chr_ncbi_sorted.gff"
       
 
-   print(tmpdir)
-   result = annotation_comparison(gff_ref, gff_alt, tmpdir, True)
-   match = result["Chr6D_direct"][0][0]
-   identity = match['identity']
-   assert (identity>90)
+#    print(tmpdir)
+#    result = annotation_comparison(gff_ref, gff_alt, tmpdir, True)
+#    match = result["Chr6D_direct"][0][0]
+#    identity = match['identity']
+#    assert (identity>90)

@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
+
+import re
 from array import array
 from typing import Optional
 from collections import defaultdict
-import python_util.intervals as iu
-import re
+import script.python_util.intervals as iu
+
  
 
 STRING_CACHE_DIRECT = "direct"

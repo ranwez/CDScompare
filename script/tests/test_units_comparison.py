@@ -1,22 +1,10 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jun 18 10:53:48 2024
-
-@author: vetea, ranwez
-"""
-
 
 import os, sys
-
-script_dir = os.path.dirname( __file__ )
-script_dir = "/".join(script_dir.split("/")[:-1]) + "/python_util/"
-sys.path.append( script_dir )
-
-import python_util.comparison as comp
-import python_util.cluster as cl
-from python_util.comparison import MrnaMatchInfo, MismatchInfo
-from python_util.locus import Locus
+import script.python_util.comparison as comp
+import script.python_util.cluster as cl
+from script.python_util.comparison import MrnaMatchInfo, MismatchInfo
+from script.python_util.locus import Locus
 
 # helper function to convert a list of CDS bounds into a Locus object
 def cds2locus(cds_list, name):

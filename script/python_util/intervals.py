@@ -1,9 +1,5 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
 
-@author: vetea, ranwez
-"""
 import array
 from itertools import chain
 ## This class represents a list of sorted, non overlapping intervals and implements multiple basic

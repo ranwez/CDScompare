@@ -1,12 +1,6 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Jun 15 21:04:24 2024
 
-@author: vetea, ranwez
-"""
-
-from python_util.locus import Locus
+from script.python_util.locus import Locus
 
 ### Class representing a cluster of overlapping loci
 class Cluster:
