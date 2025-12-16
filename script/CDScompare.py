@@ -2,18 +2,18 @@
 """
 Compute the similarites between two or more structural annotations (GFF) of a same genome.
 """
-
-import sys, os
+from pathlib import Path
 from script.python_util.argparser import build_parser
 from script.python_util.comparison import annotation_comparison
 from script.python_util.multi import multicomp
-
+from script.python_util.annotation import AnnotationSet
 
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
-    gffs = args.gff_files
+    gffs = [Path(p) for p in args.gff_files]
+    out_dir = Path(args.out_dir)
 
     if len(gffs) < 2:
         parser.error("At least two GFF files must be provided.")
@@ -27,15 +27,18 @@ def main() -> None:
 
     mode_align = args.pairing_mode == "best"
     
+    annotations = AnnotationSet.from_paths(
+        ref_path=gffs[0],
+        alt_paths=gffs[1:],
+    )
+
     # Simple mode
-    if len(gffs) == 2:
-        ref_path, alt_path = gffs
-        return annotation_comparison(ref_path, alt_path, args.out_dir, mode_align)
+    if len(annotations.alts) == 1:
+        pair = annotations.pairs()[0]
+        return annotation_comparison(pair, out_dir, mode_align)
 
     # Multi mode
-    ref_path = gffs[0]
-    alt_paths = gffs[1:]
-    return multicomp(ref_path, alt_paths, args.out_dir, mode_align)
+    return multicomp(annotations, out_dir, mode_align)
 
 
 if __name__ == "__main__":

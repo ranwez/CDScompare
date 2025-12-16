@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from pathlib import Path
 from script.python_util.comparison import annotation_comparison
 from script.python_util.io import write_multi_results
+from script.python_util.annotation import AnnotationSet
 
 
 ## Extracts the computed identity for each locus of the given result dictionary
@@ -54,7 +56,7 @@ def result_to_dict(result):
 #
 # @returns Returns the list of all loci identities (dictionaries) of all 
 # alternatives
-def multicomp(ref_path, alt_paths, out_dir, mode_align):
+def multicomp(annotations: AnnotationSet, out_dir:Path, mode_align: bool):
     
     # list of all results dictionaries returned by CDScompare
     multi_results = []
@@ -62,11 +64,11 @@ def multicomp(ref_path, alt_paths, out_dir, mode_align):
     # for each alternative annotation given to the program, use CDScompare to 
     # compute results for the comparison with the reference, write the results
     # in a CSV file, and append the returned loci identities to a list
-    for alt_path in alt_paths:
-        multi_results.append(result_to_dict(annotation_comparison(ref_path, alt_path, out_dir, mode_align)))
+    for pair in annotations.pairs():
+        results = annotation_comparison(pair, out_dir, mode_align)
+        multi_results.append(result_to_dict(results))
 
-        
-    write_multi_results(multi_results, ref_path, alt_paths)
+    write_multi_results(multi_results, annotations, out_dir)
     
     return multi_results
     

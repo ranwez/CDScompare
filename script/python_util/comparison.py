@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import os
+from pathlib import Path
 from script.python_util.io import write_results
 from script.python_util.locus import Locus, gff_to_cdsInfo, STRING_CACHE_REVERSE
 from script.python_util.cluster import Cluster, build_cluster_list_from_Locus
 from script.python_util.match import MatchScore, MrnaMatchInfo, MismatchInfo
+from script.python_util.annotation import AnnotationPair
 
 
 def get_reading_frame(cds_bounds, area_bounds, phase_first_CDS=0, verbose=False):
     nb_nt = (3 - phase_first_CDS) % 3
-    nb_nt_in_cds=0;
+    nb_nt_in_cds=0
     cdsb = 0
     cds_len = len(cds_bounds)
     reading_frames =[]
@@ -268,10 +269,10 @@ def annot_match_alignment(cluster: Cluster, reversed:bool):
     final_results = results[::-1]  
     return final_results
     
-def annotation_comparison(ref_path:str, alt_path:str, out_dir:str, mode_align:bool):
+def annotation_comparison(pair: AnnotationPair, out_dir:Path, mode_align:bool):
     """Compare two GFF annotations and write results to a file."""
-    read_ref= gff_to_cdsInfo(ref_path)
-    read_alt= gff_to_cdsInfo(alt_path)
+    read_ref= gff_to_cdsInfo(pair.ref.path)
+    read_alt= gff_to_cdsInfo(pair.alt.path)
     all_results = {}
     reverse_str="_"+ STRING_CACHE_REVERSE
     dna_mols = list(read_ref.keys() | read_alt.keys())
@@ -283,8 +284,9 @@ def annotation_comparison(ref_path:str, alt_path:str, out_dir:str, mode_align:bo
             results[i]=annotation_match(cluster, dna_mol.endswith(reverse_str), mode_align)
         all_results[dna_mol] = results
 
-    alt_name = (os.path.basename(alt_path)).split(".")[0]
-    write_results(all_results, alt_name, out_dir)
+    csv_path, txt_path = pair.output_filenames(out_dir)
+
+    write_results(all_results, csv_path, txt_path)
 
     return all_results
     
