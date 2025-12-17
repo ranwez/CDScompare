@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os, sys
-import script.python_util.intervals as iu
+import cdscompare.python_util.intervals as iu
 
 
 # test function for the 'intervals.py' class method 'transform_intervals_to_exclude_ub'

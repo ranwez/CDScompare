@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
-from script.python_util.io import write_results
-from script.python_util.locus import Locus, gff_to_cdsInfo, STRING_CACHE_REVERSE
-from script.python_util.cluster import Cluster, build_cluster_list_from_Locus
-from script.python_util.match import MatchScore, MrnaMatchInfo, MismatchInfo
-from script.python_util.annotation import AnnotationPair
+from cdscompare.python_util.io import write_results
+from cdscompare.python_util.locus import Locus, gff_to_cdsInfo, STRING_CACHE_REVERSE
+from cdscompare.python_util.cluster import Cluster, build_cluster_list_from_Locus
+from cdscompare.python_util.match import MatchScore, MrnaMatchInfo, MismatchInfo
+from cdscompare.python_util.annotation import AnnotationPair
 
 
 def get_reading_frame(cds_bounds, area_bounds, phase_first_CDS=0, verbose=False):
@@ -64,22 +64,20 @@ def compute_matches_mismatches_EI_RF(i_ref, i_alt, ref:Locus, alt:Locus)->MrnaMa
     inter_mrna, union_mrna, diff_EI = intervals_ref.inter_union_symdiff(intervals_alt)
 
     # get exon and intron (EI) mismatches and mismatches zones (simple symmetric difference)
-    mismatches_EI=union_mrna.total_length()-inter_mrna.total_length()
 
-    inter_mrna_bounds=inter_mrna.as_list_with_included_ub()
+    inter_mrna_bounds = inter_mrna.as_list_with_included_ub()
 
-    inter_mrna_ref_rf=get_reading_frame(mrna_ref, inter_mrna_bounds, ref.phases[i_ref], True)
-    inter_mrna_alt_rf=get_reading_frame(mrna_alt, inter_mrna_bounds, alt.phases[i_alt], True)
+    inter_mrna_ref_rf = get_reading_frame(mrna_ref, inter_mrna_bounds, ref.phases[i_ref], True)
+    inter_mrna_alt_rf = get_reading_frame(mrna_alt, inter_mrna_bounds, alt.phases[i_alt], True)
 
     # for each intersection interval of the reference and alternative, compare
     # the reading frames to determine match or RF mismatch
-    matches : int=0 
-    mismatches_RF : int = 0
-    diff_RF : list = [] # reading frame (RF) mismatches zones
+    matches: int = 0
+    diff_RF: list[int] = []  # reading frame (RF) mismatches zones
     for interval_id in range(0, len(inter_mrna_ref_rf)):
         interval_lg = inter_mrna_bounds[2*interval_id+1] - inter_mrna_bounds[2*interval_id] + 1
         if inter_mrna_ref_rf[interval_id] != inter_mrna_alt_rf[interval_id]:
-            mismatches_RF += interval_lg
+            # reading-frame mismatch over this interval
             diff_RF.append(inter_mrna_bounds[2*interval_id])
             diff_RF.append(inter_mrna_bounds[2*interval_id+1])
         else:
@@ -279,9 +277,7 @@ def annotation_comparison(pair: AnnotationPair, out_dir:Path, mode_align:bool):
     dna_mols.sort()
     for dna_mol in dna_mols:
         clusters = build_cluster_list_from_Locus(read_ref[dna_mol], read_alt[dna_mol], dna_mol) 
-        results = [None] * len(clusters)
-        for i, cluster in enumerate(clusters):
-            results[i]=annotation_match(cluster, dna_mol.endswith(reverse_str), mode_align)
+        results = [annotation_match(cluster, dna_mol.endswith(reverse_str), mode_align) for cluster in clusters]
         all_results[dna_mol] = results
 
     csv_path, txt_path = pair.output_filenames(out_dir)

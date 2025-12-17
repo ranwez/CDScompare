@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
-from script.python_util.annotation import AnnotationSet
+from cdscompare.python_util.annotation import AnnotationSet
 
 
 def format_mismatch_zones(zones):

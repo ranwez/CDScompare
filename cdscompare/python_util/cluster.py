@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from script.python_util.locus import Locus
+from cdscompare.python_util.locus import Locus
 
 ### Class representing a cluster of overlapping loci
 class Cluster:

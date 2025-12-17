@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import os, sys
-import script.python_util.comparison as comp
-import script.python_util.cluster as cl
-from script.python_util.comparison import MrnaMatchInfo, MismatchInfo
-from script.python_util.locus import Locus
+import cdscompare.python_util.comparison as comp
+import cdscompare.python_util.cluster as cl
+from cdscompare.python_util.comparison import MrnaMatchInfo, MismatchInfo
+from cdscompare.python_util.locus import Locus
 
 # helper function to convert a list of CDS bounds into a Locus object
 def cds2locus(cds_list, name):
@@ -31,16 +30,9 @@ def test_reverse_coord():
         
         }
     
-    print("\n*************Testing the reverse_coord function*************")
-    
-    for test in test_dict:
-        
-        print(f"\n{test} file test")
-        
-        result = comp.reverse_coord(test_dict[test][0], test_dict[test][1])
-        print(f"result : {result}\n")
-        print(test_dict[test][2])
-        assert result == test_dict[test][2]
+    for name, (ref_locus, alt_locus, expected) in test_dict.items():       
+        result = comp.reverse_coord(ref_locus, alt_locus)
+        assert result == expected
         
         
 # test function for the 'comparison.py' function 'compare_loci' (new locus comparison function)
@@ -256,16 +248,11 @@ def test_compare_loci():
                                 ref_id="chr2A_00611930_mrna",
                                 alt_id="chr2A_00611930_mrna")],
         }
-    
-    print("\n*************Testing the compare_loci function*************")
-    
-    for test in test_dict:
-        print(f"\n{test} test")
-        ref_locus = test_dict[test][0]
-        alt_locus = test_dict[test][1]
+     
+    for name, (ref_locus, alt_locus, expected) in test_dict.items():
         cluster_end = max(ref_locus.end, alt_locus.end)+1
         cluster = cl.Cluster(name="cluster 0", loci_ref=[ref_locus], loci_alt=[alt_locus], end=cluster_end)
-        reversed = test.find('reverse') != -1
+        reversed = name.find('reverse') != -1
         if (reversed):
             cluster.reverse_loci_coord()
         cluster.set_intervals()
@@ -278,9 +265,7 @@ def test_compare_loci():
                                 genomic_overlap=result.genomic_overlap,
                                 ref_id=result.ref_id,
                                 alt_id=result.alt_id)
-        print(f"Expected result = {test_dict[test][2]}")
-        print(f"Result = {result}")
-        assert result == test_dict[test][2]
+        assert result == expected
         
            
         
@@ -521,21 +506,13 @@ def test_new_annotation_match():
                                              "reference mRNA number" : 1,
                                              "alternative mRNA number" : 1}]]
         }
-
-    print("\n*************Testing the 'new' annotation_match function*************")
-    
-    for test in test_dict:
-        
-        print(f"\n{test} test")
-        is_reversed= test.find('reverse') != -1
-        result = comp.annotation_match(test_dict[test][0], is_reversed,True)
-        print(f"result : {result}\n")
-        print(f"expected result : {test_dict[test][1]}\n")
-        assert result == test_dict[test][1]
+   
+    for name, (cluster, expected) in test_dict.items():
+        is_reversed= name.find('reverse') != -1
+        result = comp.annotation_match(cluster, is_reversed,True)
+        assert result == expected
         
         
-        
-
 def test_mismatchInfo_init():
     MI = comp.MismatchInfo([150,150])
     assert MI.nb == 1
@@ -653,10 +630,8 @@ def test_compute_matches_mismatches_EI_RF():
         ]
     }
     
-    print("\n*************Testing the compute_matches_mismatches_EI_RF function*************")
     
     for test in test_dict:
-        print(f"\n{test} file test")
         ref_mrna, alt_mrna, expected_counts, expected_matchInfo = test_dict[test]
         ref_locus = cds2locus( ref_mrna, "ref_mrna_id")
         alt_locus = cds2locus( alt_mrna, "alt_mrna_id")

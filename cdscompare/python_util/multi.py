@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
-from script.python_util.comparison import annotation_comparison
-from script.python_util.io import write_multi_results
-from script.python_util.annotation import AnnotationSet
+from cdscompare.python_util.comparison import annotation_comparison
+from cdscompare.python_util.io import write_multi_results
+from cdscompare.python_util.annotation import AnnotationSet
 
 
 ## Extracts the computed identity for each locus of the given result dictionary

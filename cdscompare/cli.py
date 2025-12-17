@@ -3,10 +3,10 @@
 Compute the similarites between two or more structural annotations (GFF) of a same genome.
 """
 from pathlib import Path
-from script.python_util.argparser import build_parser
-from script.python_util.comparison import annotation_comparison
-from script.python_util.multi import multicomp
-from script.python_util.annotation import AnnotationSet
+from cdscompare.python_util.argparser import build_parser
+from cdscompare.python_util.comparison import annotation_comparison
+from cdscompare.python_util.multi import multicomp
+from cdscompare.python_util.annotation import AnnotationSet
 
 def main() -> None:
     parser = build_parser()
@@ -35,10 +35,11 @@ def main() -> None:
     # Simple mode
     if len(annotations.alts) == 1:
         pair = annotations.pairs()[0]
-        return annotation_comparison(pair, out_dir, mode_align)
+        annotation_comparison(pair, out_dir, mode_align)
+        return
 
     # Multi mode
-    return multicomp(annotations, out_dir, mode_align)
+    multicomp(annotations, out_dir, mode_align)
 
 
 if __name__ == "__main__":

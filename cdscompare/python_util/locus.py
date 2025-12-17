@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import re
+from pathlib import Path
 from array import array
 from typing import Optional
 from collections import defaultdict
-import script.python_util.intervals as iu
+import cdscompare.python_util.intervals as iu
 
  
 
@@ -29,7 +30,8 @@ def extract_parent_old(attr_str: str) -> Optional[str]:
             return part[7:].strip()
     return None
 def extract_parent(attr_str: str) -> Optional[str]:
-    return parent_regex.search(attr_str).group(1) 
+    match = parent_regex.search(attr_str)
+    return match.group(1) if match else None
 
 
 def extract_parent_id(attr_str: str) -> tuple[Optional[str], Optional[str]]:
@@ -71,7 +73,8 @@ class Locus:
         self.ids = ids if ids is not None else []
         self.start = start
         self.end = end
-        self.mrna_intervals = None
+        # mrna_intervals is initialized as an empty list; filled by set_mrna_intervals()
+        self.mrna_intervals = []
     def set_mrna_intervals(self):
         self.mrna_intervals = [iu.OrderedIntervals(mRNA, True) for mRNA in self.mRNAs]
 
@@ -87,7 +90,7 @@ class Locus:
         )
         
     @classmethod
-    def builder(cls, name: str = "", mRNAs: dict = None, start: int = -1, end: int = -1, direction: str = "") -> "Locus":
+    def builder(cls, name: str = "", mRNAs: Optional[dict] = None, start: int = -1, end: int = -1, direction: str = "") -> "Locus":
         """
         Factory method to build a Locus object from dictionary-based mRNAs format.
         This is for backward compatibility with tests written for the older Locus implementation.
@@ -148,7 +151,7 @@ class Locus:
     def show_init(self):
         return f"Locus(name='{self.name}', mRNAs={self.mRNAs}, start={self.start}, end={self.end}')"
 
-def gff_to_cdsInfo(gff_file: str) -> dict[str, list[Locus]]:
+def gff_to_cdsInfo(gff_file: Path) -> dict[str, list[Locus]]:
     """
     Optimized GFF parser: uses flat arrays and defaultdicts to reduce memory and improve speed.
 
@@ -177,18 +180,29 @@ def gff_to_cdsInfo(gff_file: str) -> dict[str, list[Locus]]:
             type = infos[2]
             if type == "CDS":
                 start, end = int(infos[3]), int(infos[4])
-                mrna_id = parent_regex.search(infos[8]).group(1)
+                parent_match = parent_regex.search(infos[8])
+                if not parent_match:
+                    # malformed CDS line without Parent attribute -> skip
+                    continue
+                mrna_id = parent_match.group(1)
                 phase = int(infos[7]) if infos[7] != "." else 0
                 mrna_id2CDS[mrna_id].extend([phase, start, end])
 
             elif type == "mRNA":
                 id_parent = id_parent_regex.search(infos[8])
+                if not id_parent:
+                    # malformed mRNA line without ID/Parent attributes -> skip
+                    continue
                 mrna_id = id_parent.group(1)
                 gene_id = id_parent.group(2)
                 gene_id2mRNA[gene_id].append(mrna_id)
 
             elif type == "gene":
-                gene_id = id_regex.search(infos[8]).group(1)
+                id_match = id_regex.search(infos[8])
+                if not id_match:
+                    # malformed gene line without ID attribute -> skip
+                    continue
+                gene_id = id_match.group(1)
                 gene_ids.append(gene_id)
                 gene_chr_ids.append(infos[0])
                 gene_starts.append(int(infos[3]))
@@ -242,7 +256,7 @@ def gff_to_cdsInfo(gff_file: str) -> dict[str, list[Locus]]:
             #chrStrand_2_loci.setdefault(chr_strand, []).append(locus)
             chrStrand_2_loci[chr_strand].append(locus)
     for chr_strand in chrStrand_2_loci:
-        chrStrand_2_loci[chr_strand].sort(key=lambda l: (l.start, l.end))
+        chrStrand_2_loci[chr_strand].sort(key=lambda loc: (loc.start, loc.end))
 
     return chrStrand_2_loci
 
