@@ -19,7 +19,7 @@ One of the following must be available:
 
 ### Install from the Git repository with `pip`
 
-```
+```bash
 git clone git@github.com:ranwez/CDScompare.git
 cd CDScompare
 pip install .
@@ -27,7 +27,7 @@ pip install .
 *NB: Once installed, the repository is no longer required.*  
 
 Successful installation can be tested with:
-```
+```bash
 cdscompare --help
 ```
 
@@ -36,36 +36,21 @@ cdscompare --help
 CDScompare can also be run from an Apptainer container.  
 
 Download the SIF image:
-```
+```bash
 ...
 ```
 
 Example usage:
-```
+```bash
 apptainer run cdscompare.sif --help
 ```
 
 *NB: Input GFF files must be accessible inside the container (bind mounts if needed)*
 
 
-### Development installation (for developers only)
-
-This method installs the package in editable mode and includes development dependencies (pytest and flake8).
-```
-git clone git@github.com:ranwez/CDScompare.git
-cd CDScompare
-pip install -e .[dev]
-```
-
-To run the tests:
-```
-python -m pytest -v
-```
-
-
 ## Command-line interface
 
-```
+```bash
 cdscompare [OPTIONS] GFF_1 GFF_2 [GFF_3 ...]
 ```
 
@@ -180,10 +165,28 @@ When more than two annotation files are provided:
 ...
 
 
+## Developers notes
 
+### Development installation
 
+This method installs the package in editable mode and includes development dependencies (pytest and flake8).
+```bash
+git clone git@github.com:ranwez/CDScompare.git
+cd CDScompare
+pip install -e .[dev]
+```
 
+To run the tests:
+```bash
+python -m pytest -v
+```
 
+### Developer documentation
+The internal code structure documentation is generated using Sphinx.
 
-
-
+To build the documentation locally:
+```bash
+pip install -e .[docs]
+python -m sphinx -b html docs/source docs/build/html
+```
+The generated documentation can be opened locally in a web browser (docs/build/html/index.html).

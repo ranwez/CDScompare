@@ -1,5 +1,3 @@
-documentation/html
-documentation/latex
 __pycache__/
 data/real_data/
 data/tests/.~lock.test_files.odp#
@@ -17,3 +15,4 @@ dist/
 .env/
 .pixi/
 *.py[cod]
+docs/build/
