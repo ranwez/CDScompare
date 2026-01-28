@@ -7,7 +7,7 @@ class MatchScore:
     """Class representing a score for a comparison."""
     genomic_overlap: int = field(default=0)
     matches : int = field(default=0)
-    identity: float = field(default=0.0)
+    identity: float = field(default=0.00)
 
     def is_betterEq_than(self, other) -> bool:
         """Compare two scores based on genomic overlap and identity."""

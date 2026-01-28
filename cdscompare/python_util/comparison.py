@@ -111,7 +111,7 @@ def build_alignment_res(ref_locus, alt_locus, comparison, cluster, reversed):
             "reference mRNA" : "_",
             "alternative mRNA" : "_",
             "mismatch/match" : [],
-            "identity" : 0.0,
+            "identity" : 0.00,
             "mismatch zones" : "_",
             "cluster name" : cluster.name,
             "reference mRNA number" : "_",
@@ -160,7 +160,7 @@ def build_alignment_res(ref_locus, alt_locus, comparison, cluster, reversed):
             "mismatch/match": [comparison.matches, 
                                comparison.mismatches_EI.nb, 
                                comparison.mismatches_RF.nb],
-            "identity": round(identity * 100, 1) if identity is not None else 0.0,
+            "identity": round(identity * 100, 2) if identity is not None else 0.00,
             "mismatch zones": mismatch_zones
         })
     return result

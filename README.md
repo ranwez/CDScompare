@@ -2,7 +2,7 @@
 
 **CDScompare performs the quantitative comparison of structural genome annotations (GFF3) of the same genome.**  
 For each pair of overlapping genes, it computes numerical similarity scores based on CDS organization, exon–intron structure and reading frame conservation.  
-It is implemented as a Python package and distributed with a command-line interface.
+It is implemented in Python and distributed as a command-line tool.
 
 
 The tool supports:
@@ -17,7 +17,39 @@ One of the following must be available:
 - Python ≥ 3.9 with `pip` 
 - or Apptainer / Singularity
 
-### Install from the Git repository with `pip`
+### Install from PyPi (recommended)
+```bash
+pipx install cdscompare
+```
+
+Alternatively using `pip`:
+```bash
+pipx install cdscompare
+```
+
+Successful installation can be tested with:
+```bash
+cdscompare --help
+```
+
+### Using the Apptainer image
+
+CDScompare can also be run from a pre-built Apptainer image.  
+
+The latest Apptainer image is archived on Zenodo:
+```bash
+apptainer pull cdscompare.sif \
+  https://zenodo.org/records/XXXXXXX/files/cdscompare-0.2.0.sif
+```
+
+Example usage:
+```bash
+apptainer run cdscompare-0.2.0.sif --help
+```
+
+*NB: Input GFF files must be accessible inside the container (bind mounts if needed)*
+
+### Install unreleased versions from the Git repository
 
 ```bash
 git clone git@github.com:ranwez/CDScompare.git
@@ -25,27 +57,6 @@ cd CDScompare
 pip install .
 ```
 *NB: Once installed, the repository is no longer required.*  
-
-Successful installation can be tested with:
-```bash
-cdscompare --help
-```
-
-### Using the Apptainer / Singularity image
-
-CDScompare can also be run from an Apptainer container.  
-
-Download the SIF image:
-```bash
-...
-```
-
-Example usage:
-```bash
-apptainer run cdscompare.sif --help
-```
-
-*NB: Input GFF files must be accessible inside the container (bind mounts if needed)*
 
 
 ## Command-line interface
@@ -87,25 +98,25 @@ This file contains one line per gene comparison, with the following columns:
 
 | Column | Description |
 |------|-------------|
-| `Chromosome` | Chromosome identifier including strand (`_direct` or `_reverse`). |
-| `Cluster name` | Identifier of the cluster of overlapping genes. |
-| `Reference locus` | Gene identifier in the first input annotation. |
-| `Alternative locus` | Gene identifier in the second input annotation. |
-| `Comparison matches` | Number of nucleotide positions matching between CDS structures. |
-| `Comparison mismatches` | Total number of mismatched nucleotides (exon–intron + reading frame mismatches). |
-| `Identity score (%)` | Percentage identity computed as matches / (matches + mismatches). |
-| `Reference start` | Genomic start coordinate of the reference gene. |
-| `Reference end` | Genomic end coordinate of the reference gene. |
-| `Alternative start` | Genomic start coordinate of the alternative gene. |
-| `Alternative end` | Genomic end coordinate of the alternative gene. |
-| `Reference mRNA` | Identifier of the selected reference mRNA used for the comparison. |
-| `Alternative mRNA` | Identifier of the selected alternative mRNA used for the comparison. |
-| `Exon_intron (EI) non-correspondance zones` | Genomic intervals where exon–intron structures differ between annotations. |
-| `Reading frame (RF) non-correspondance zones` | Genomic intervals where reading frames differ between annotations. |
-| `Exon_Intron (EI) mismatches` | Total length (in nucleotides) of exon–intron mismatches. |
-| `Reading Frame (RF) mismatches` | Total length (in nucleotides) of reading frame mismatches. |
-| `reference mRNA number` | Number of mRNAs annotated for the reference gene. |
-| `alternative mRNA number` | Number of mRNAs annotated for the alternative gene. |
+| `chromosome` | Chromosome identifier including strand (`_direct` or `_reverse`). |
+| `cluster` | Identifier of the cluster of overlapping genes. |
+| `annot1_gene` | Gene identifier in the first input annotation. |
+| `annot2_gene` | Gene identifier in the second input annotation. |
+| `matches` | Number of nucleotide positions matching between CDS structures. |
+| `mismatches` | Total number of mismatched nucleotides (exon–intron + reading frame mismatches). |
+| `identity_score` | Percentage identity computed as matches / (matches + mismatches). |
+| `annot1_start` | Genomic start coordinate of the reference gene. |
+| `annot1_end` | Genomic end coordinate of the reference gene. |
+| `annot2_start` | Genomic start coordinate of the alternative gene. |
+| `annot2_end` | Genomic end coordinate of the alternative gene. |
+| `annot1_mRNA` | Identifier of the selected reference mRNA used for the comparison. |
+| `annot2_mRNA` | Identifier of the selected alternative mRNA used for the comparison. |
+| `EI_mismatches_zones` | Genomic intervals where exon–intron structures differ between annotations. |
+| `RF_mismatches_zones` | Genomic intervals where reading frames differ between annotations. |
+| `EI_mismatches` | Total length (in nucleotides) of exon–intron mismatches. |
+| `RF_mismatches` | Total length (in nucleotides) of reading frame mismatches. |
+| `annot1_mRNA_number` | Number of mRNAs annotated for the reference gene. |
+| `annot2_mRNA_number` | Number of mRNAs annotated for the alternative gene. |
 
 Special values:
 - `_` : undefined or not applicable
@@ -169,7 +180,7 @@ When more than two annotation files are provided:
 
 ### Development installation
 
-This method installs the package in editable mode and includes development dependencies (pytest and flake8).
+This method installs the package in editable mode and includes development dependencies (pytest and ruff).
 ```bash
 git clone git@github.com:ranwez/CDScompare.git
 cd CDScompare

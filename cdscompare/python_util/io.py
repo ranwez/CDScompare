@@ -15,7 +15,7 @@ def write_results(all_results: dict, csv_path: Path, txt_path: Path):
     csv_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(csv_path, "w") as results_file:
-        results_file.write("Chromosome,Cluster name,Reference locus,Alternative locus,Comparison matches,Comparison mismatches,Identity score (%),Reference start,Reference end,Alternative start,Alternative end,Reference mRNA,Alternative mRNA,Exon_intron (EI) non-correspondance zones,Reading frame (RF) non-correspondance zones,Exon_Intron (EI) mismatches,Reading Frame (RF) mismatches,reference mRNA number,alternative mRNA number\n")
+        results_file.write("chromosome,cluster,annot1_gene,annot2_gene,matches,mismatches,identity_score,annot1_start,annot1_end,annot2_start,annot2_end,annot1_mRNA,annot2_mRNA,EI_mismatches_zones,RF_mismatches_zones,EI_mismatches,RF_mismatches,annot1_mRNA_number,annot2_mRNA_number\n")
 
         for dna_mol, results in all_results.items():
             chromosome_strand_stat = [0,0,0]
@@ -32,13 +32,13 @@ def write_results(all_results: dict, csv_path: Path, txt_path: Path):
                         mismatch_RF = loc['mismatch zones']
 
                     if loc['mismatch/match'] == []:
-                        results_file.write(f"{dna_mol},{loc['cluster name']},{loc['reference']},{loc['alternative']},_,_,{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']},{loc['reference mRNA']},{loc['alternative mRNA']},_,_,_,_,{loc['reference mRNA number']},{loc['alternative mRNA number']}\n")
+                        results_file.write(f"{dna_mol},{loc['cluster name']},{loc['reference']},{loc['alternative']},_,_,{loc['identity']:.2f},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']},{loc['reference mRNA']},{loc['alternative mRNA']},_,_,_,_,{loc['reference mRNA number']},{loc['alternative mRNA number']}\n")
                         if loc['reference'] == '~':
                             chromosome_strand_stat[2] += 1
                         else:
                             chromosome_strand_stat[1] += 1
                     else:
-                        results_file.write(f"{dna_mol},{loc['cluster name']},{loc['reference']},{loc['alternative']},{loc['mismatch/match'][0]},{loc['mismatch/match'][1]+loc['mismatch/match'][2]},{loc['identity']},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']},{loc['reference mRNA']},{loc['alternative mRNA']},{mismatch_EI},{mismatch_RF},{loc['mismatch/match'][1]},{loc['mismatch/match'][2]},{loc['reference mRNA number']},{loc['alternative mRNA number']}\n")
+                        results_file.write(f"{dna_mol},{loc['cluster name']},{loc['reference']},{loc['alternative']},{loc['mismatch/match'][0]},{loc['mismatch/match'][1]+loc['mismatch/match'][2]},{loc['identity']:.2f},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']},{loc['reference mRNA']},{loc['alternative mRNA']},{mismatch_EI},{mismatch_RF},{loc['mismatch/match'][1]},{loc['mismatch/match'][2]},{loc['reference mRNA number']},{loc['alternative mRNA number']}\n")
                         chromosome_strand_stat[0] += 1
 
             print(f"\nNumber of loci of {dna_mol}:\n- found in both annotations : {chromosome_strand_stat[0]}\n- found only in the reference : {chromosome_strand_stat[1]}\n- found only in the alternative : {chromosome_strand_stat[2]}\n")
@@ -72,9 +72,9 @@ def write_multi_results(multi_results: list[dict], annotations: AnnotationSet, o
     
     with open(csv_path, "w") as results_file:        
         # write the header    
-        header = "Reference_locus"
+        header = f"{annotations.ref.id}_gene"
         for alt in annotations.alts:
-            header += f",{alt.id} locus,{alt.id} identity"
+            header += f",{alt.id}_gene,{alt.id}_identity_score"
         results_file.write(header+"\n")
         
         # write the results
@@ -86,8 +86,8 @@ def write_multi_results(multi_results: list[dict], annotations: AnnotationSet, o
             line = ref_key
             for alt_result in multi_results:
                 if ref_key in alt_result:
-                    line += f",{alt_result[ref_key][0]},{alt_result[ref_key][1]}"
+                    line += f",{alt_result[ref_key][0]},{alt_result[ref_key][1]:.2f}"
                 else:
-                    line += ",~,0.0"
+                    line += ",~,0.00"
             results_file.write(line+"\n")
                     

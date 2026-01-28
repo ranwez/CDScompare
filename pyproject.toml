@@ -27,5 +27,5 @@ docs = [
 [project.scripts]
 cdscompare = "cdscompare.cli:main"
 
-[tool.setuptools]
-packages = ["cdscompare", "cdscompare.python_util"]
+[tool.setuptools.packages.find]
+exclude = ["cdscompare.tests*"]
