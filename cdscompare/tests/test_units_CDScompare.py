@@ -63,7 +63,7 @@ def test_new_annotation_comparison(tmp_path: Path):
                      "reference mRNA" : 'chr2A_00611930_mrna',
                      "alternative mRNA" : 'chr2A_00611930_mrna',
                      "mismatch/match" : [30, 20, 120],
-                     "identity" : 17.6,
+                     "identity" : 17.65,
                      "mismatch zones" : ([130, 149], [150, 209, 240, 299]),
                      "cluster name" : "chr2A_direct_1",
                      "reference mRNA number" : 1,
