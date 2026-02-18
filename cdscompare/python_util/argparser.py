@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+from importlib.metadata import version
+
 
 def build_parser():
     parser = argparse.ArgumentParser(
@@ -36,4 +38,10 @@ def build_parser():
         help="Pairing mode for CDS comparison."
     )
 
+    parser.add_argument(
+        "-v", "--version",
+        action="version",
+        version=f"cdscompare {version('cdscompare')}",
+    )
+    
     return parser
