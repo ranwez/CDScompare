@@ -13,43 +13,9 @@ The tool supports:
 ## Installation
 
 ### Requirements
-One of the following must be available:
 - Python ≥ 3.9 with `pip` 
-- or Apptainer / Singularity
 
-### Install from PyPi (recommended)
-```bash
-pipx install cdscompare
-```
-
-Alternatively using `pip`:
-```bash
-pipx install cdscompare
-```
-
-Successful installation can be tested with:
-```bash
-cdscompare --help
-```
-
-### Using the Apptainer image
-
-CDScompare can also be run from a pre-built Apptainer image.  
-
-The latest Apptainer image is archived on Zenodo:
-```bash
-apptainer pull cdscompare.sif \
-  https://zenodo.org/records/XXXXXXX/files/cdscompare-0.2.0.sif
-```
-
-Example usage:
-```bash
-apptainer run cdscompare-0.2.0.sif --help
-```
-
-*NB: Input GFF files must be accessible inside the container (bind mounts if needed)*
-
-### Install unreleased versions from the Git repository
+### Install from the Git repository
 
 ```bash
 git clone git@github.com:ranwez/CDScompare.git
@@ -57,6 +23,11 @@ cd CDScompare
 pip install .
 ```
 *NB: Once installed, the repository is no longer required.*  
+
+Successful installation can be tested with:
+```bash
+cdscompare --version
+```
 
 
 ## Command-line interface

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cdscompare"
-version = "0.3.0rc2"
+version = "0.3.0rc3"
 description = "Compare CDS annotations from one or multiple GFF files"
 readme = "README.md"
 requires-python = ">=3.9"
