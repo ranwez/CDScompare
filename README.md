@@ -13,23 +13,73 @@ The tool supports:
 ## Installation
 
 ### Requirements
-- Python ≥ 3.9 with `pip` 
+One of the following must be available:
+- Python ≥ 3.9 with `pip` or `pipx`
+- Docker or Apptainer / Singularity
 
-### Install from the Git repository
+---
+### Installation from PyPI (recommended)
+#### Using `pipx` (isolated CLI install)
+```bash
+pipx install cdscompare==<version>
+```
+*Replace \<version\> with a specific release number (e.g. 0.3.0rc4).*
+
+#### Using `pip`
+```bash
+pip install cdscompare==<version>
+```
+Test the installation:
+```bash
+cdscompare --version
+```
+
+### Container image (Docker / Apptainer)
+A pre-built OCI image is available via GitHub Container Registry:
+```bash
+ghcr.io/johgi/cdscompare:<version>
+```
+
+#### Docker
+Pull the image:
+```bash
+docker pull ghcr.io/johgi/cdscompare:<version>
+```
+
+To run on local files:
+```bash
+docker run --rm \
+  -v "$PWD:/work" \
+  -w /work \
+  ghcr.io/johgi/cdscompare:<version> \
+  file1.gff file2.gff
+```
+
+#### Apptainer / Singularity
+Pull the image:
+```bash
+apptainer pull docker://ghcr.io/johgi/cdscompare:<version>
+```
+
+To run on local files:
+```bash
+apptainer run \
+  --bind "$PWD:/work" \
+  cdscompare_<version>.sif \
+  /work/file1.gff /work/file2.gff
+```
+
+
+### Installing development / unreleased versions
 
 ```bash
 git clone git@github.com:ranwez/CDScompare.git
 cd CDScompare
 pip install .
 ```
-*NB: Once installed, the repository is no longer required.*  
+*After installation, the repository is no longer required.*  
 
-Successful installation can be tested with:
-```bash
-cdscompare --version
-```
-
-
+---
 ## Command-line interface
 
 ```bash
@@ -144,7 +194,7 @@ When more than two annotation files are provided:
 
 ## Citation
 
-...
+[...]
 
 
 ## Developers notes
