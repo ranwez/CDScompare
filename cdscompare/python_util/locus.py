@@ -235,7 +235,14 @@ def gff_to_cdsInfo(gff_file: Path) -> dict[str, list[Locus]]:
 
                 for j in range(len(cds_list) - 1):
                     if cds_list[j][2] >= cds_list[j+1][1]:
-                        print(f"Error: mRNA {mrna_id} has overlapping CDS regions")
+                        print(
+                            f"\nError: mRNA {mrna_id} has overlapping CDS regions. "
+                            "CDScompare expects non-overlapping CDS features within each transcript. "
+                            "Please fix or standardize your input GFF file before running CDScompare. "
+                            "\nWe recommend using AGAT, for example with: "
+                            "\nagat_convert_sp_gxf2gxf.pl -g input.gff3 -o input.agat.gff3. "
+                            "\nMore details: https://github.com/NBISweden/AGAT and the CDScompare documentation."
+                        )
                         exit(1)
 
                 mrna_list.append(array('L', (coord for cds in cds_list for coord in (cds[1], cds[2]))))
@@ -259,4 +266,3 @@ def gff_to_cdsInfo(gff_file: Path) -> dict[str, list[Locus]]:
         chrStrand_2_loci[chr_strand].sort(key=lambda loc: (loc.start, loc.end))
 
     return chrStrand_2_loci
-
