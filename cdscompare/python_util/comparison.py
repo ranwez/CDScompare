@@ -6,7 +6,7 @@ from cdscompare.python_util.locus import Locus, gff_to_cdsInfo, STRING_CACHE_REV
 from cdscompare.python_util.cluster import Cluster, build_cluster_list_from_Locus
 from cdscompare.python_util.match import MatchScore, MrnaMatchInfo, MismatchInfo
 from cdscompare.python_util.annotation import AnnotationPair
-
+from cdscompare.python_util.seqid_harmonization import attempt_chr_prefix_harmonization, check_common_seqids
 
 def get_reading_frame(cds_bounds, area_bounds, phase_first_CDS=0, verbose=False):
     nb_nt = (3 - phase_first_CDS) % 3
@@ -271,6 +271,8 @@ def annotation_comparison(pair: AnnotationPair, out_dir:Path, mode_align:bool):
     """Compare two GFF annotations and write results to a file."""
     read_ref= gff_to_cdsInfo(pair.ref.path)
     read_alt= gff_to_cdsInfo(pair.alt.path)
+    read_ref, read_alt = attempt_chr_prefix_harmonization(read_ref, read_alt)
+    check_common_seqids(read_ref, read_alt)
     all_results = {}
     reverse_str="_"+ STRING_CACHE_REVERSE
     dna_mols = list(read_ref.keys() | read_alt.keys())

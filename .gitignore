@@ -18,3 +18,4 @@ dist/
 *.py[cod]
 docs/build/
 .ruff_cache/
+tmp/
