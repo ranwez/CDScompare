@@ -15,7 +15,7 @@ def write_results(all_results: dict, csv_path: Path, txt_path: Path):
     csv_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(csv_path, "w") as results_file:
-        results_file.write("chromosome,cluster,annot1_gene,annot2_gene,matches,mismatches,identity_score,annot1_start,annot1_end,annot2_start,annot2_end,annot1_mRNA,annot2_mRNA,EI_mismatches_zones,RF_mismatches_zones,EI_mismatches,RF_mismatches,annot1_mRNA_number,annot2_mRNA_number\n")
+        results_file.write("chromosome,cluster,annot1_gene,annot2_gene,matches,mismatches,identity_score,annot1_start,annot1_end,annot2_start,annot2_end,annot1_mRNA,annot2_mRNA,CNC_mismatches_zones,RF_mismatches_zones,CNC_mismatches,RF_mismatches,annot1_mRNA_number,annot2_mRNA_number\n")
 
         for dna_mol, results in all_results.items():
             chromosome_strand_stat = [0,0,0]

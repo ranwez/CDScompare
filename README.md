@@ -176,8 +176,8 @@ This file contains one line per gene comparison, with the following columns:
 | `cluster`             | Identifier of the cluster of overlapping genes.                                  |
 | `annot1_gene`         | Gene identifier in the first input annotation.                                   |
 | `annot2_gene`         | Gene identifier in the second input annotation.                                  |
-| `matches`             | Number of nucleotide positions matching between CDS structures.                  |
-| `mismatches`          | Total number of mismatched nucleotides (exon–intron + reading frame mismatches). |
+| `matches`             | Number of nucleotide positions that are coding in both annotations and in the same reading frame.                  |
+| `mismatches`          | Total number of mismatched nucleotides (coding/non-coding + reading frame mismatches). |
 | `identity_score`      | Percentage identity computed as matches / (matches + mismatches).                |
 | `annot1_start`        | Genomic start coordinate of the reference gene.                                  |
 | `annot1_end`          | Genomic end coordinate of the reference gene.                                    |
@@ -185,9 +185,9 @@ This file contains one line per gene comparison, with the following columns:
 | `annot2_end`          | Genomic end coordinate of the alternative gene.                                  |
 | `annot1_mRNA`         | Identifier of the selected reference mRNA used for the comparison.               |
 | `annot2_mRNA`         | Identifier of the selected alternative mRNA used for the comparison.             |
-| `EI_mismatches_zones` | Genomic intervals where exon–intron structures differ between annotations.       |
+| `CNC_mismatches_zones` | Genomic intervals where nucleotides are annotated as CDS in only one of the two annotations.       |
 | `RF_mismatches_zones` | Genomic intervals where reading frames differ between annotations.               |
-| `EI_mismatches`       | Total length (in nucleotides) of exon–intron mismatches.                         |
+| `CNC_mismatches`       | Total length (in nucleotides) of coding/non-coding mismatches.                         |
 | `RF_mismatches`       | Total length (in nucleotides) of reading frame mismatches.                       |
 | `annot1_mRNA_number`  | Number of mRNAs annotated for the reference gene.                                |
 | `annot2_mRNA_number`  | Number of mRNAs annotated for the alternative gene.                              |
