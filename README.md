@@ -102,19 +102,18 @@ _After installation, the repository is no longer required._
 
 CDScompare expects both input annotation files to describe protein-coding gene models in a consistent GFF3-like structure. Because GFF/GTF files may differ substantially between annotation tools and databases, we strongly recommend standardizing input files before running CDScompare.
 
-In particular, each input file should contain:
+In particular, CDScompare assumes that all input annotation files:
 
-- tab-delimited GFF3 records with 9 columns;
-- `gene`, `mRNA` and `CDS` features organized in a consistent `gene -> mRNA -> CDS` hierarchy;
-- valid and unique `ID`/`Parent` attributes linking genes, transcripts and CDS features;
-- coherent genomic coordinates;
-- non-overlapping CDS features within each transcript;
-- valid CDS phases (`0`, `1`, `2`, or `.`);
-- compatible seqids in column 1 between the two annotations.
-
-The two annotations must refer to the same genome assembly and coordinate system.
-
-CDScompare compares only coding sequences. Non-coding genes, pseudogenes without CDS features, and transcripts without CDS features are not considered.
+* describe the **same genome assembly**;
+* follow standard **GFF3 conventions**, including:
+  * tab-delimited records with 9 columns;
+  * `gene`, `mRNA` and `CDS` features organized in a consistent `gene -> mRNA -> CDS` hierarchy;
+  * valid `ID` and `Parent` attributes linking genes, transcripts and CDS features;
+  * unique gene and mRNA identifiers within each file;
+  * coherent genomic coordinates;
+  * non-overlapping CDS features within each transcript;
+  * valid CDS phases (`0`, `1`, `2`, or `.`);
+* use **compatible seqids** in column 1 across annotations.
 
 ### Seqid compatibility
 
@@ -131,6 +130,13 @@ agat_convert_sp_gxf2gxf.pl -g annotation.gff3 -o annotation.agat.gff3
 ```
 
 AGAT can help standardize GFF/GTF files, sort features, fix duplicated IDs, add missing `ID` and `Parent` attributes, add missing parent features when possible, and produce a more consistent GFF3 structure. This preprocessing step is especially recommended when input files come from different annotation tools or databases.
+
+### Scope and assumptions
+
+- Gene overlap is detected based on **gene genomic coordinates**.
+- Identity scores are computed **only from CDS features**.
+- Only gene models represented as a `gene -> mRNA -> CDS` hierarchy are considered. Genes without CDS-containing mRNAs, transcripts without CDS features, and features not represented as `gene` entries are ignored.
+- Alternative splicing is handled by selecting the **best-matching mRNA pair** for each gene pairing.
 
 ---
 
@@ -223,24 +229,6 @@ When more than two annotation files are provided:
 | `Reference_locus` | Gene identifier in the reference annotation.                                      |
 | `<alt>.locus`     | Identifier of the best matching gene in the corresponding alternative annotation. |
 | `<alt>.identity`  | Identity score (%) for the corresponding gene pairing.                            |
-
-## Scope and assumptions
-
-- Gene overlap is detected based on **gene genomic coordinates**.
-
-- Identity scores are computed **only from CDS features**.
-  UTRs are ignored, and exon–intron structure is inferred from CDS organization.
-
-- Alternative splicing is handled by selecting the **best matching mRNA pair** for each gene pairing.
-
-- CDScompare assumes that all input annotation files:
-  - describe the **same genome assembly**
-  - follow standard **GFF3 conventions**, with the following feature hierarchy:
-    - `gene` features with an `ID` attribute
-    - `mRNA` features with `ID` and `Parent` attributes
-    - `CDS` features with a `Parent` attribute pointing to an mRNA
-  - contain **non-overlapping CDS coordinates within a single mRNA**
-  - use **unique gene identifiers (`ID`) within each file**
 
 ## Citation
 
