@@ -284,7 +284,7 @@ def annotation_comparison(pair: AnnotationPair, out_dir:Path, mode_align:bool):
 
     csv_path, txt_path = pair.output_filenames(out_dir)
 
-    write_results(all_results, csv_path, txt_path)
+    write_results(all_results, csv_path, txt_path, pair)
 
     return all_results
     

@@ -1,93 +1,205 @@
 # -*- coding: utf-8 -*-
 
+import csv
 from pathlib import Path
-from cdscompare.python_util.annotation import AnnotationSet
+
+from cdscompare.python_util.annotation import AnnotationPair, AnnotationSet
 
 
-def format_mismatch_zones(zones):
-    """Format a list of mismatch coordinates into a readable string"""
-    return " ".join(f"[{zones[i]}//{zones[i+1]}]" for i in range(0, len(zones), 2))
+PAIRWISE_HEADER = (
+    "seqid_strand",
+    "cluster",
+    "annot1_gene",
+    "annot2_gene",
+    "matches",
+    "mismatches",
+    "similarity_score",
+    "annot1_start",
+    "annot1_end",
+    "annot2_start",
+    "annot2_end",
+    "annot1_mRNA",
+    "annot2_mRNA",
+    "C_NC_mismatch_zones",
+    "RF_mismatch_zones",
+    "C_NC_mismatches",
+    "RF_mismatches",
+    "annot1_mRNA_count",
+    "annot2_mRNA_count",
+)
 
-def write_results(all_results: dict, csv_path: Path, txt_path: Path):
-    # gene stats [gene found in both; found only in ref; found only in alt]
-    full_annotation_stat = [0, 0, 0]
+
+def format_mismatch_zones(zones: list[int]) -> str:
+    """Format mismatch coordinate pairs for CSV output."""
+    return " ".join(
+        f"[{zones[i]}//{zones[i + 1]}]"
+        for i in range(0, len(zones), 2)
+    )
+
+
+def format_comparison_summary(
+    stats: list[int],
+    pair: AnnotationPair,
+    seqid_strand: str | None = None,
+) -> str:
+    """Format pairwise comparison counts."""
+    location = f" on {seqid_strand}" if seqid_strand else ""
+
+    return (
+        f"Comparison summary for {pair.ref.id} vs {pair.alt.id}{location}:\n"
+        f"- reported gene pairs: {stats[0]}\n"
+        f"- unpaired genes in annotation 1: {stats[1]}\n"
+        f"- unpaired genes in annotation 2: {stats[2]}\n"
+    )
+
+
+def build_result_row(
+    seqid_strand: str,
+    result: dict,
+) -> list[str | int]:
+    """Build one detailed pairwise CSV row."""
+    row: list[str | int] = [
+        seqid_strand,
+        result["cluster name"],
+        result["reference"],
+        result["alternative"],
+    ]
+
+    if not result["mismatch/match"]:
+        return row + [
+            "_",
+            "_",
+            f"{result['identity']:.2f}",
+            result["reference start"],
+            result["reference end"],
+            result["alternative start"],
+            result["alternative end"],
+            result["reference mRNA"],
+            result["alternative mRNA"],
+            "_",
+            "_",
+            "_",
+            "_",
+            result["reference mRNA number"],
+            result["alternative mRNA number"],
+        ]
+
+    matches, c_nc_mismatches, rf_mismatches = result["mismatch/match"]
+    c_nc_zones, rf_zones = result["mismatch zones"]
+
+    return row + [
+        matches,
+        c_nc_mismatches + rf_mismatches,
+        f"{result['identity']:.2f}",
+        result["reference start"],
+        result["reference end"],
+        result["alternative start"],
+        result["alternative end"],
+        result["reference mRNA"],
+        result["alternative mRNA"],
+        format_mismatch_zones(c_nc_zones),
+        format_mismatch_zones(rf_zones),
+        c_nc_mismatches,
+        rf_mismatches,
+        result["reference mRNA number"],
+        result["alternative mRNA number"],
+    ]
+
+
+def update_comparison_stats(stats: list[int], result: dict) -> None:
+    """Update pair and unpaired-gene counters from one result."""
+    if result["mismatch/match"]:
+        stats[0] += 1
+        return
+
+    if result["reference"] == "~":
+        stats[2] += 1
+        return
+
+    stats[1] += 1
+
+
+def write_results(
+    all_results: dict,
+    csv_path: Path,
+    txt_path: Path,
+    pair: AnnotationPair,
+) -> None:
+    """Write detailed pairwise results and comparison summaries."""
+    full_stats = [0, 0, 0]
 
     csv_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(csv_path, "w") as results_file:
-        results_file.write("chromosome,cluster,annot1_gene,annot2_gene,matches,mismatches,identity_score,annot1_start,annot1_end,annot2_start,annot2_end,annot1_mRNA,annot2_mRNA,CNC_mismatches_zones,RF_mismatches_zones,CNC_mismatches,RF_mismatches,annot1_mRNA_number,annot2_mRNA_number\n")
+    with csv_path.open("w", newline="", encoding="utf-8") as results_file:
+        csv_writer = csv.writer(results_file, lineterminator="\n")
+        csv_writer.writerow(PAIRWISE_HEADER)
 
-        for dna_mol, results in all_results.items():
-            chromosome_strand_stat = [0,0,0]
+        for seqid_strand, clusters in all_results.items():
+            seqid_stats = [0, 0, 0]
 
-            for cluster in results:
-                for loc in cluster:
-                    if loc['mismatch zones'] not in ["_", "?"]:
-                        # convert mismatch zones so commas don't modify the CSV output
-                        mismatch_EI = format_mismatch_zones(loc['mismatch zones'][0])
-                        mismatch_RF = format_mismatch_zones(loc['mismatch zones'][1])
+            for cluster in clusters:
+                for result in cluster:
+                    csv_writer.writerow(
+                        build_result_row(seqid_strand, result)
+                    )
+                    update_comparison_stats(seqid_stats, result)
 
-                    else:
-                        mismatch_EI = loc['mismatch zones']
-                        mismatch_RF = loc['mismatch zones']
+            summary = format_comparison_summary(
+                seqid_stats,
+                pair,
+                seqid_strand,
+            )
+            print(f"\n{summary}", end="")
 
-                    if loc['mismatch/match'] == []:
-                        results_file.write(f"{dna_mol},{loc['cluster name']},{loc['reference']},{loc['alternative']},_,_,{loc['identity']:.2f},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']},{loc['reference mRNA']},{loc['alternative mRNA']},_,_,_,_,{loc['reference mRNA number']},{loc['alternative mRNA number']}\n")
-                        if loc['reference'] == '~':
-                            chromosome_strand_stat[2] += 1
-                        else:
-                            chromosome_strand_stat[1] += 1
-                    else:
-                        results_file.write(f"{dna_mol},{loc['cluster name']},{loc['reference']},{loc['alternative']},{loc['mismatch/match'][0]},{loc['mismatch/match'][1]+loc['mismatch/match'][2]},{loc['identity']:.2f},{loc['reference start']},{loc['reference end']},{loc['alternative start']},{loc['alternative end']},{loc['reference mRNA']},{loc['alternative mRNA']},{mismatch_EI},{mismatch_RF},{loc['mismatch/match'][1]},{loc['mismatch/match'][2]},{loc['reference mRNA number']},{loc['alternative mRNA number']}\n")
-                        chromosome_strand_stat[0] += 1
+            full_stats = [
+                total + current
+                for total, current in zip(full_stats, seqid_stats)
+            ]
 
-            print(f"\nNumber of loci of {dna_mol}:\n- found in both annotations : {chromosome_strand_stat[0]}\n- found only in the reference : {chromosome_strand_stat[1]}\n- found only in the alternative : {chromosome_strand_stat[2]}\n")
-            full_annotation_stat = [sum(x) for x in zip(full_annotation_stat, chromosome_strand_stat)]
-
-    with open(txt_path, "w") as results_file:
-        results_file.write(f"\nNumber of loci (whole data):\n- found in both annotations : {full_annotation_stat[0]}\n- found only in the reference : {full_annotation_stat[1]}\n- found only in the alternative : {full_annotation_stat[2]}\n")
-
-    print(f"\nNumber of loci (whole data):\n- found in both annotations : {full_annotation_stat[0]}\n- found only in the reference : {full_annotation_stat[1]}\n- found only in the alternative : {full_annotation_stat[2]}\n")
+    summary = format_comparison_summary(full_stats, pair)
+    txt_path.write_text(summary, encoding="utf-8")
+    print(f"\n{summary}", end="")
 
 
-## Writes the results returned by the function multicomp into a results 
-# synthesis CSV file detailing the loci identity for each alternative
-#
-# @see multicomp()
-#
-# @param multi_results List of loci identities (dictionaries), as returned 
-# by multicomp
-#
-# @param ref_path Path to the reference annotation GFF file
-def write_multi_results(multi_results: list[dict], annotations: AnnotationSet, out_dir: Path):
-    
+def write_multi_results(
+    multi_results: list[dict],
+    annotations: AnnotationSet,
+    out_dir: Path,
+) -> None:
+    """Write the multi-comparison synthesis CSV file."""
     out_dir.mkdir(parents=True, exist_ok=True)
-
     csv_path = annotations.synthesis_filename(out_dir)
 
-    # get each reference key of the first dictionary (since the reference is 
-    # the same for all comparisons) and use it to retrieve the corresponding
-    # comparisons for all result dictionaries, then write them in a synthesis
-    # CSV file
-    
-    with open(csv_path, "w") as results_file:        
-        # write the header    
-        header = f"{annotations.ref.id}_gene"
-        for alt in annotations.alts:
-            header += f",{alt.id}_gene,{alt.id}_identity_score"
-        results_file.write(header+"\n")
-        
-        # write the results
-        ref_keys = set()
-        for result in multi_results:
-            ref_keys=ref_keys.union(result.keys())
-        
-        for ref_key in sorted(ref_keys):
-            line = ref_key
-            for alt_result in multi_results:
-                if ref_key in alt_result:
-                    line += f",{alt_result[ref_key][0]},{alt_result[ref_key][1]:.2f}"
-                else:
-                    line += ",~,0.00"
-            results_file.write(line+"\n")
-                    
+    header = [f"{annotations.ref.id}_gene"]
+
+    for annotation in annotations.alts:
+        header.extend(
+            [
+                f"{annotation.id}_gene",
+                f"{annotation.id}_similarity_score",
+            ]
+        )
+
+    reference_genes: set[str] = set()
+
+    for result in multi_results:
+        reference_genes.update(result)
+
+    with csv_path.open("w", newline="", encoding="utf-8") as results_file:
+        csv_writer = csv.writer(results_file, lineterminator="\n")
+        csv_writer.writerow(header)
+
+        for reference_gene in sorted(reference_genes):
+            row: list[str] = [reference_gene]
+
+            for compared_result in multi_results:
+                comparison = compared_result.get(reference_gene)
+
+                if comparison is None:
+                    row.extend(["~", "0.00"])
+                    continue
+
+                compared_gene, similarity = comparison
+                row.extend([compared_gene, f"{similarity:.2f}"])
+
+            csv_writer.writerow(row)
