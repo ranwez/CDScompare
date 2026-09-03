@@ -212,9 +212,9 @@ def annot_match_all(cluster: Cluster, reversed:bool):
     for i_ref in range(len(cluster_ref)):
         if i_ref not in paired_ref:
             results.append(build_alignment_res(cluster_ref[i_ref], None ,None, cluster,reversed))
-        for i_alt in range(len(cluster_alt)):
-            if i_alt not in paired_alt:
-                results.append(build_alignment_res(None, cluster_alt[i_alt],None, cluster,reversed))
+    for i_alt in range(len(cluster_alt)):
+        if i_alt not in paired_alt:
+            results.append(build_alignment_res(None, cluster_alt[i_alt],None, cluster,reversed))
     return results 
 
 
