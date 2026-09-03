@@ -14,7 +14,7 @@ def build_parser():
         epilog = (
             "Pairing modes:\n"
             "  best (default): Genes from both annotations within the same cluster are aligned using a pairwise alignment to find the best global gene pairing.\n"
-            "  all: Within a cluster, all annotation1/annotation2 gene pairings are output as soon as their mRNA regions overlap.\n"
+            "  all: Within a cluster, all annotation1/annotation2 gene pairings are output as soon as their mRNA regions overlap. This mode is only available when comparing exactly two GFF files.\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter
     )

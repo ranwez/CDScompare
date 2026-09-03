@@ -18,6 +18,9 @@ def main() -> None:
     if len(gffs) < 2:
         parser.error("At least two GFF files must be provided.")
 
+    if args.pairing_mode == "all" and len(gffs) > 2:
+        parser.error("Pairing mode 'all' is only supported when comparing exactly two GFF files.")
+
     if args.pairing_mode == "best":
         print("\nPairing mode set to 'best'. Genes from both annotations within the same cluster "
               "are aligned using a pairwise alignment to find the best global gene pairing.\n")

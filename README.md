@@ -8,7 +8,9 @@ The tool supports:
 
 - pairwise comparison between two genome annotations
 - multi-comparison of several annotations against a common reference
-- two pairing strategies (best or all)
+- two pairing strategies:
+  - `best` (default), available for pairwise and multi-comparison modes
+  - `all`, available only when comparing exactly two GFF files
 
 ## Installation
 
@@ -29,7 +31,7 @@ One of the following must be available:
 pipx install cdscompare==<version>
 ```
 
-_Replace \<version\> with a specific release number (e.g. 0.3.0rc5)._
+_Replace \<version\> with a specific release number (e.g. 0.3.0rc6)._
 
 #### Using `pip`
 
@@ -159,13 +161,14 @@ cdscompare [OPTIONS] ANNOT1_GFF ANNOT2_GFF [ANNOT3_GFF ...]
 > - At least **two GFF files** are required.
 > - In pairwise comparisons (exactly two GFF files), similarity scores and gene pairings are invariant to the input file order.
 > - GFF input file basenames must be unique (used as annotation identifiers).
+> - Pairing mode `all` is only supported when comparing exactly two GFF files. Multi-comparison mode requires `best` pairing.
 
 ### Options
 
 | Option               | Description                                                           |
 | -------------------- | --------------------------------------------------------------------- |
 | `-d, --out_dir`      | Output directory where result files are written (default: `results`). |
-| `-p, --pairing_mode` | Pairing strategy used within clusters of overlapping genes. Possible values are:<br>• `best` (default): selects a globally optimal gene pairing using dynamic programming.<br>• `all`: reports all overlapping gene pairings without global optimization. |
+| `-p, --pairing_mode` |  Pairing strategy used within clusters of overlapping genes. Possible values are:<br>• `best` (default): selects a globally optimal gene pairing using dynamic programming. Available for comparisons of two or more GFF files.<br>• `all`: reports all overlapping gene pairings without global optimization. Available only when comparing exactly two GFF files. |
 
 ## Output files
 
